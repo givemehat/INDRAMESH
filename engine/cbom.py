@@ -605,6 +605,13 @@ def _ecd_properties(finding, risk, recommendation):
     out.append({"name": f"{PROPERTY_NS}:assurance", "value": assurance})
     out.append({"name": f"{PROPERTY_NS}:assurance_meaning", "value": assurance_reason})
 
+    # runtime-resolved: name the resolver file ON the component. A consumer that sees an
+    # algorithm name without this property reads it as "this is what runs"; with it, as
+    # "this is what was asked for -- the file below decides what runs". Absence of the
+    # property means the scanner pinned the identity from the scanned bytes.
+    if finding.get("resolver"):
+        out.append({"name": f"{PROPERTY_NS}:resolver", "value": str(finding["resolver"])[:500]})
+
     # Say WHY nistQuantumSecurityLevel is missing. A consumer that sees the field absent cannot
     # distinguish "this asset was assessed and has no category" from "IndraMesh never looked", and
     # the first reading of an absent field is usually the optimistic one.

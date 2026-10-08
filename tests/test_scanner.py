@@ -250,6 +250,12 @@ def test_every_rule_is_actually_executed(tmp_path, scanner):
         "IM-SRC-SSHNAME-002": "HostKeyAlgorithms rsa-sha2-512-cert-v01@openssh.com",
         "IM-SRC-SSHNAME-003": "HostKeyAlgorithms ssh-ed25519-cert-v01@openssh.com",
         "IM-SRC-SSHNAME-007": "KexAlgorithms mlkem768x25519-sha256@openssh.com",
+        # --- JCA provider indirection & runtime-resolved rules
+        # RTRES-003's sample is ONLY the variable call: adding a `String t = "..."` line to
+        # the snippet would exercise the dedup path and the rule would rightly stay silent.
+        "IM-JAVA-RTRES-001": 'SSLContext ctx = SSLContext.getInstance("TLS");',
+        "IM-JAVA-RTRES-002": 'Cipher c = Cipher.getInstance("AES");',
+        "IM-JAVA-RTRES-003": 'Cipher c = Cipher.getInstance(transformation, "SunJCE");',
     }
 
     assert set(samples) == {r["id"] for r in RULES}, "a rule has no positive test"
@@ -257,10 +263,12 @@ def test_every_rule_is_actually_executed(tmp_path, scanner):
     # configuration. Writing every sample to `<rule_id>.txt.py` made the config rules
     # unreachable while the reachability test still passed for the rest, which is how a rule
     # could be shipped that never matches anything.
+    # RTRES-003's sample must reach the real scanner path as `.java`: the dedup check inspects
+    # the whole file content, and the dedicated tests below cover both branches end to end.
     config_rules = {r["id"] for r in RULES if r["artefact_class"] == "config"}
     unreachable = []
     for rule_id, snippet in samples.items():
-        suffix = ".conf" if rule_id in config_rules else ".txt.py"
+        suffix = ".conf" if rule_id in config_rules else ".java" if rule_id.startswith("IM-JAVA-RTRES-") else ".txt.py"
         p = _write(str(tmp_path / f"{rule_id}{suffix}"), snippet)
         fired = {f["rule_id"] for f in scanner._match_rules(p, snippet)}
         if rule_id not in fired:
@@ -718,6 +726,159 @@ def test_real_sshd_config_negotiation_policy_is_visible(tmp_path, scanner):
     for f in findings:
         assert f["evidence_class"] == "configured", (
             "a policy line is declared policy, not observed execution")
+
+
+# ===========================================================================================
+# JCA provider indirection: runtime-resolved rules
+#
+# A factory call is a REQUEST, not a decision. `SSLContext.getInstance("TLS")` names a family;
+# which versions and suites the peer gets is answered by `java.security` plus launch flags,
+# not by this line. `Cipher.getInstance("AES")` is the same shape one level down (no mode or
+# padding -- the provider supplies its defaults). `Cipher.getInstance(crypto)` is indirection
+# further out: the string lives at the variable's declaration site, or outside this file.
+
+def test_sslcontext_tls_family_emits_a_runtime_resolved_finding(tmp_path, scanner):
+    """The archetype from the review: `getInstance("TLS")` names no algorithm."""
+    p = _write(str(tmp_path / "TlsClient.java"),
+               "import javax.net.ssl.SSLContext;\n"
+               "public class TlsClient {\n"
+               "  void connect() throws Exception {\n"
+               '    SSLContext ctx = SSLContext.getInstance("TLS");\n'
+               "  }\n"
+               "}\n")
+    findings = [f for f in scanner.scan_directory(str(tmp_path))
+                if f["rule_id"] == "IM-JAVA-RTRES-001"]
+    assert len(findings) == 1, (
+        "one call site must produce exactly one finding, got %r" % findings)
+    f = findings[0]
+    assert f["evidence_class"] == "runtime-resolved"
+    assert "java.security" in (f.get("resolver") or ""), (
+        "the finding must name the resolver file")
+    assert "jdk.tls.disabledAlgorithms" in (f.get("resolver") or ""), (
+        "the resolver must name the exact deny-list property")
+    from engine.purpose import ASSURANCE_RUNTIME_RESOLVED, resolve_assurance
+    assert resolve_assurance(f)[0] == ASSURANCE_RUNTIME_RESOLVED
+
+
+def test_bare_cipher_family_names_the_family_not_the_construction(tmp_path, scanner):
+    """`Cipher.getInstance("AES")` is not `used` AES-anything: mode and padding are the
+    provider's defaults. The finding names the family and refuses the construction."""
+    _write(str(tmp_path / "Enc.java"),
+           "import javax.crypto.Cipher;\n"
+           "public class Enc {\n"
+           "  void go() throws Exception {\n"
+           '    Cipher c = Cipher.getInstance("AES");\n'
+           "  }\n"
+           "}\n")
+    findings = [f for f in scanner.scan_directory(str(tmp_path))
+                if f["rule_id"] == "IM-JAVA-RTRES-002"]
+    assert len(findings) == 1
+    assert findings[0]["name"] == "AES"
+    assert findings[0]["evidence_class"] == "runtime-resolved"
+
+
+def test_fully_pinned_transformation_is_not_runtime_resolved(tmp_path, scanner):
+    """Counterpart guard: `Cipher.getInstance("AES/GCM/NoPadding")` pins algorithm, mode
+    and padding in the scanned bytes, so nothing may demote it to runtime-resolved."""
+    _write(str(tmp_path / "Pinned.java"),
+           "import javax.crypto.Cipher;\n"
+           "public class Pinned {\n"
+           "  void go() throws Exception {\n"
+           '    Cipher c = Cipher.getInstance("AES/GCM/NoPadding");\n'
+           "  }\n"
+           "}\n")
+    rtres = [f for f in scanner.scan_directory(str(tmp_path))
+             if f["rule_id"] in ("IM-JAVA-RTRES-001", "IM-JAVA-RTRES-002",
+                                 "IM-JAVA-RTRES-003")]
+    assert not rtres, (
+        "a fully specified transformation must not be demoted: %r" % rtres)
+
+
+def test_variable_indirection_defaults_unresolved_and_names_the_variable(tmp_path, scanner):
+    """`Cipher.getInstance(crypto, "SunJCE")`: algorithm from a variable, provider named
+    explicitly -- both decided outside this line. Silence neither (a finding is emitted),
+    overstate nothing (identity unresolved, and the resolver names what to go read)."""
+    _write(str(tmp_path / "Indirect.java"),
+           "import javax.crypto.Cipher;\n"
+           "public class Indirect {\n"
+           "  void go(String transformation) throws Exception {\n"
+           '    Cipher c = Cipher.getInstance(transformation, "SunJCE");\n'
+           "  }\n"
+           "}\n")
+    findings = [f for f in scanner.scan_directory(str(tmp_path))
+                if f["rule_id"] == "IM-JAVA-RTRES-003"]
+    assert len(findings) == 1, (
+        "genuinely unresolvable indirection must still emit a finding, got %r" % findings)
+    f = findings[0]
+    assert "transformation" in (f.get("resolver") or ""), (
+        "the resolver must name the variable whose declaration decides the algorithm")
+    from engine.purpose import PURPOSE_UNRESOLVED, resolve_purpose
+    assert resolve_purpose(f)[0] == PURPOSE_UNRESOLVED, (
+        "indirection with no literal must default to unresolved purpose")
+
+
+def test_in_file_constant_declaration_suppresses_the_factory_finding(tmp_path, scanner):
+    """The dedup direction: a `String ... = "DES/..."` declaration is already carried by the
+    CONST rules. Emitting a factory finding too would report one crypto use twice."""
+    _write(str(tmp_path / "Declared.java"),
+           "import javax.crypto.Cipher;\n"
+           "public class Declared {\n"
+           '  static final String CRYPTO = "DES/ECB/PKCS5Padding";\n'
+           "  void go() throws Exception {\n"
+           '    Cipher c = Cipher.getInstance(CRYPTO, "SunJCE");\n'
+           "  }\n"
+           "}\n")
+    rtres3 = [f for f in scanner.scan_directory(str(tmp_path))
+              if f["rule_id"] == "IM-JAVA-RTRES-003"]
+    assert not rtres3, (
+        "the declaration carries the evidence; the factory call must not double-report")
+
+
+def test_one_arg_variable_indirection_is_deliberately_not_reported(tmp_path, scanner):
+    """The measured exclusion. `Cipher.getInstance(crypto)` -- one argument, algorithm from a
+    parameter -- is NOT reported by RTRES-003.
+
+    Implemented first and measured: 27 hits on CryptoAPI-Bench, precision 0.994 -> 0.858 for
+    +0.019 recall. The corpus's frozen ground truth marks those lines NEGATIVE outright --
+    "no quantum-vulnerable primitive is named or determined on this line". The annotators
+    already considered this exact shape and ruled it out of scope for a primitive-finding
+    benchmark; a tool that out-votes the ground truth to inflate its own inventory is not a
+    tool anyone should trust. If this is ever reversed, the benchmark must be re-run and the
+    number in benchmark/RESULTS.md corrected in the same commit.
+    """
+    _write(str(tmp_path / "OneArg.java"),
+           "import javax.crypto.Cipher;\n"
+           "public class OneArg {\n"
+           "  void go(String transformation) throws Exception {\n"
+           "    Cipher c = Cipher.getInstance(transformation);\n"
+           "  }\n"
+           "}\n")
+    rtres = [f for f in scanner.scan_directory(str(tmp_path))
+             if f["rule_id"].startswith("IM-JAVA-RTRES-")]
+    assert not rtres, (
+        "the one-arg form is a measured precision regression and must stay excluded: %r" % rtres)
+
+
+def test_runtime_resolved_finding_reaches_the_cbom_with_its_resolver(tmp_path, scanner):
+    """The resolver must survive to the CycloneDX document, or it is a comment, not data."""
+    from engine.cbom import generate_cbom
+    import json as _json
+    _write(str(tmp_path / "TlsClient.java"),
+           "import javax.net.ssl.SSLContext;\n"
+           "public class TlsClient {\n"
+           "  void connect() throws Exception {\n"
+           '    SSLContext ctx = SSLContext.getInstance("TLS");\n'
+           "  }\n"
+           "}\n")
+    findings = scanner.scan_directory(str(tmp_path))
+    doc = _json.loads(generate_cbom(findings))
+    props = {p["name"]: p["value"]
+             for comp in doc.get("components", [])
+             for p in comp.get("properties", [])}
+    assert props.get("im:assurance") == "runtime-resolved", (
+        "the CBOM must carry the new assurance level")
+    assert "java.security" in props.get("im:resolver", ""), (
+        "the CBOM must name the resolver file")
 
 
 # ---- The general form of the defect above, checked across the WHOLE table --------------------

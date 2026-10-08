@@ -105,12 +105,28 @@ def resolve_purpose(finding):
 # ---------------------------------------------------------------------------------------
 ASSURANCE_CAPABILITY = "capability"   # reachable; nothing shows it is called
 ASSURANCE_DECLARED = "declared"       # configuration permits it
-ASSURANCE_USED = "used"               # code invokes it -- the strongest static claim
+# Late-binding runtime resolution: the code INVOKES a crypto factory at this line, but which
+# concrete algorithm, provider or protocol version actually runs is decided by a resolver that
+# lives in ANOTHER FILE -- `java.security` (provider preference order, jdk.tls.disabledAlgorithms,
+# jdk.tls.client.protocols), an OpenSSL `openssl.cnf` CipherString, the Windows SCHANNEL registry
+# key, or the Go toolchain version that compiled the binary. `SSLContext.getInstance("TLS")` is
+# the archetype: the string names a family, not an algorithm, and everything that makes it
+# concrete is outside the file we scanned.
+#
+# This is deliberately NOT `used`. `used` asserts "this algorithm runs"; runtime-resolved asserts
+# "something runs here and the file that decides what is X". Silence is the failure mode being
+# fixed -- reporting nothing because we could not pin the identity from source throws away a real
+# call site; reporting `used` would overstate what the evidence proves.
+ASSURANCE_RUNTIME_RESOLVED = "runtime-resolved"
+ASSURANCE_USED = "used"               # code invokes THIS algorithm -- the strongest static claim
 ASSURANCE_OBSERVED = "observed"       # seen in a real artefact (parsed cert, completed handshake)
 
 ASSURANCE_RANK = {
-    ASSURANCE_OBSERVED: 3,
-    ASSURANCE_USED: 2,
+    ASSURANCE_OBSERVED: 4,
+    ASSURANCE_USED: 3,
+    # Between `used` and `declared`: a real invocation happened (stronger than a config line
+    # permitting one) but the algorithm identity is not pinned at this line (weaker than `used`).
+    ASSURANCE_RUNTIME_RESOLVED: 2,
     ASSURANCE_DECLARED: 1,
     ASSURANCE_CAPABILITY: 0,
 }
@@ -118,6 +134,10 @@ ASSURANCE_RANK = {
 ASSURANCE_MEANING = {
     ASSURANCE_CAPABILITY: "The algorithm is reachable. Nothing shows it is called.",
     ASSURANCE_DECLARED: "Configuration permits it. Stated policy, not an execution.",
+    ASSURANCE_RUNTIME_RESOLVED: (
+        "Code invokes a cryptographic factory here, but which algorithm, provider or protocol "
+        "version actually runs is decided outside this file. The resolver is named on the "
+        "finding -- go read it before trusting the algorithm name."),
     ASSURANCE_USED: "Code invokes it. The strongest claim static analysis can make.",
     ASSURANCE_OBSERVED: "Seen in a real artefact.",
 }
@@ -132,6 +152,11 @@ EVIDENCE_TO_ASSURANCE = {
     "observed": ASSURANCE_OBSERVED,
     "capability": ASSURANCE_CAPABILITY,
     "dependency": ASSURANCE_CAPABILITY,
+    # A JCA/JCE factory call (`SSLContext.getInstance("TLS")`, a bare `Cipher.getInstance("AES")`,
+    # a transformation passed by variable) IS an invocation, but the concrete algorithm is decided
+    # by a resolver outside this file. That must never be flattened to `used` (which asserts the
+    # identity) or dropped to silence. The resolver is carried on the finding's `resolver` field.
+    "runtime-resolved": ASSURANCE_RUNTIME_RESOLVED,
 }
 
 

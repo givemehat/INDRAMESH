@@ -4,6 +4,4142 @@
  "matching_rule": "a finding is a true positive iff its (file, line) is a labelled positive location; distinct locations are counted, so a second finding on an already-matched positive line is neither a TP nor an FP",
  "corpora": [
   {
+   "corpus": "cryptoapi_bench",
+   "corpus_kind": "external",
+   "corpus_url": "https://github.com/CryptoAPI-Bench/CryptoAPI-Bench.git",
+   "corpus_pinned_commit": "e6b6b50fef6970151300c1ac2de62e188ba6de19",
+   "citation": "Afrose, Rahaman, Yao. 'CryptoAPI-Bench: A Comprehensive Benchmark on Java Cryptographic API Misuses.' IEEE Cybersecurity Development (SecDev), 2019, pp. 49-61. DOI 10.1109/SecDev.2019.00017",
+   "corpus_notes": "203 Java micro-programmes, published and third-party. Note: these are CONSTRUCTED benchmark cases, not production code.",
+   "scan_root_relative": "src/main/java",
+   "ground_truth": {
+    "label_file": "benchmark/labels/cryptoapi_bench_pq.json",
+    "label_kind": "hand-annotated line-level ground truth (author of this harness)",
+    "labels_verified_against_corpus": 529,
+    "annotation": {
+     "annotated_by": "IndraMesh benchmark harness author, by direct reading of every file in scope",
+     "unit": "one (file, 1-based line) location",
+     "files_in_scope": 203,
+     "candidate_lines_reviewed": 529,
+     "positive_labels": 210,
+     "negative_labels_audited": 319,
+     "method": "Every line in scope was read. A location is POSITIVE iff it names, or binds a name to, a quantum-vulnerable cryptographic primitive in a position that determines the algorithm. A location that merely OPERATES on a primitive chosen elsewhere (cipher.init, md.update, cipher.encryptor(), .digest()) is NEGATIVE in label set L1 and is counted POSITIVE only in sensitivity variant L2, which is reported alongside L1. Comments, imports of non-primitives, PRNGs, IVs/salts, PBKDF parameter objects, key-store container formats and key/block size plumbing are NEGATIVE with a recorded reason.",
+     "independence": "Criteria are written from JCA/SSH semantics and never consult engine/scanner.py's rule table. Labels are frozen data; the harness verifies each label's verbatim source line against the pinned corpus and fails loudly on drift rather than re-deriving labels."
+    }
+   },
+   "coverage": {
+    "scanners_run": [
+     "source-scanner"
+    ],
+    "files_seen": 203,
+    "files_scanned": 203,
+    "files_skipped": 0,
+    "ml_reason": "disabled",
+    "ml_window_chars": 4000,
+    "errors": [],
+    "never_in_scope": [
+     "network-negotiated crypto (requires a capture sensor)",
+     "cloud KMS / managed keys (requires provider APIs)",
+     "HSM / TPM internal keys (requires attestation)",
+     "SaaS / third-party boundary crypto (requires attestation)",
+     "silicon-embedded keys (requires attestation)"
+    ],
+    "findings_total": 188,
+    "assurance_histogram": {
+     "observed": 0,
+     "used": 180,
+     "runtime-resolved": 0,
+     "declared": 8,
+     "capability": 0
+    },
+    "proven_use": 180,
+    "unresolved_purpose": 6
+   },
+   "scan_errors": [],
+   "findings_by_rule": {
+    "DES | IM-SRC-JAVA-LEGACY-001": 44,
+    "AES | IM-SRC-JAVA-KEYGEN-001": 31,
+    "AES | IM-SRC-AES-001": 23,
+    "AES | IM-SRC-JAVA-CIPHER-001": 21,
+    "AES | IM-SRC-JAVA-SECRETKEY-001": 15,
+    "MD5 | IM-SRC-JAVA-CONST-004-MD5": 12,
+    "LEGACY-CIPHER | IM-CFG-LEGACY-001": 8,
+    "AES | IM-SRC-JAVA-CONST-001": 7,
+    "RSA | IM-SRC-RSA-003": 6,
+    "SHA256 | IM-SRC-SHA2-001": 5,
+    "SHA | IM-SRC-JAVA-CONST-004": 4,
+    "MD5 | IM-SRC-JAVA-DIGEST-001": 4,
+    "HMAC | IM-SRC-JAVA-MAC-001": 3,
+    "SHA1 | IM-SRC-SHA1-001": 2,
+    "MD5 | IM-SRC-MD5-001": 2,
+    "PRNG | IM-SRC-JAVA-WEAKRNG-001": 1
+   },
+   "variants": {
+    "L1": {
+     "counts": {
+      "TP": 165,
+      "FP": 1,
+      "FN": 45,
+      "labelled_positives": 210,
+      "findings_total": 188
+     },
+     "precision": 0.994,
+     "precision_fraction": "165/166",
+     "recall": 0.7857,
+     "recall_fraction": "165/210",
+     "f1": 0.8777,
+     "f1_note": "F1 is computed from the ROUNDED precision/recall, so it may differ in the 4th decimal from an F1 computed from the raw counts.",
+     "false_positives": [
+      {
+       "file": "src/main/java/org/cryptoapi/bench/untrustedprng/UntrustedPRNGCase1.java",
+       "line": 9,
+       "labelled_primitive": null,
+       "labelled_code": null,
+       "labelled_break_model": null,
+       "labelled_reason": null,
+       "indramesh_names": [
+        "PRNG"
+       ],
+       "indramesh_rule_ids": [
+        "IM-SRC-JAVA-WEAKRNG-001"
+       ],
+       "indramesh_match": [
+        "new Random("
+       ]
+      }
+     ],
+     "false_negatives": [
+      {
+       "file": "src/main/java/org/cryptoapi/bench/brokencrypto/BrokenCryptoABICase1.java",
+       "line": 12,
+       "labelled_primitive": "DES",
+       "labelled_code": "KeyGenerator keyGen = KeyGenerator.getInstance(keyAlgo);",
+       "labelled_break_model": "grover",
+       "labelled_reason": "P1: KeyGenerator.getInstance is given 'keyAlgo', which holds algorithm 'DES'",
+       "indramesh_names": [
+        "None"
+       ],
+       "indramesh_rule_ids": [
+        "None"
+       ],
+       "indramesh_match": [
+        null
+       ]
+      },
+      {
+       "file": "src/main/java/org/cryptoapi/bench/brokencrypto/BrokenCryptoABICase1.java",
+       "line": 14,
+       "labelled_primitive": "DES",
+       "labelled_code": "Cipher cipher = Cipher.getInstance(crypto);",
+       "labelled_break_model": "grover",
+       "labelled_reason": "P1: Cipher.getInstance is given 'crypto', which holds algorithm 'DES/ECB/PKCS5Padding'",
+       "indramesh_names": [
+        "None"
+       ],
+       "indramesh_rule_ids": [
+        "None"
+       ],
+       "indramesh_match": [
+        null
+       ]
+      },
+      {
+       "file": "src/main/java/org/cryptoapi/bench/brokencrypto/BrokenCryptoABICase11.java",
+       "line": 18,
+       "labelled_primitive": "DES",
+       "labelled_code": "Cipher cipher = Cipher.getInstance(crypto);",
+       "labelled_break_model": "grover",
+       "labelled_reason": "P1: Cipher.getInstance is given 'crypto', which holds algorithm 'DES/ECB/PKCS5Padding'",
+       "indramesh_names": [
+        "None"
+       ],
+       "indramesh_rule_ids": [
+        "None"
+       ],
+       "indramesh_match": [
+        null
+       ]
+      },
+      {
+       "file": "src/main/java/org/cryptoapi/bench/brokencrypto/BrokenCryptoABICase12.java",
+       "line": 15,
+       "labelled_primitive": "Blowfish",
+       "labelled_code": "KeyGenerator keyGen = KeyGenerator.getInstance(crypto);",
+       "labelled_break_model": "grover",
+       "labelled_reason": "P1: KeyGenerator.getInstance is given 'crypto', which holds algorithm 'Blowfish'",
+       "indramesh_names": [
+        "None"
+       ],
+       "indramesh_rule_ids": [
+        "None"
+       ],
+       "indramesh_match": [
+        null
+       ]
+      },
+      {
+       "file": "src/main/java/org/cryptoapi/bench/brokencrypto/BrokenCryptoABICase12.java",
+       "line": 17,
+       "labelled_primitive": "Blowfish",
+       "labelled_code": "Cipher cipher = Cipher.getInstance(crypto);",
+       "labelled_break_model": "grover",
+       "labelled_reason": "P1: Cipher.getInstance is given 'crypto', which holds algorithm 'Blowfish'",
+       "indramesh_names": [
+        "None"
+       ],
+       "indramesh_rule_ids": [
+        "None"
+       ],
+       "indramesh_match": [
+        null
+       ]
+      },
+      {
+       "file": "src/main/java/org/cryptoapi/bench/brokencrypto/BrokenCryptoABICase13.java",
+       "line": 17,
+       "labelled_primitive": "RC4",
+       "labelled_code": "KeyGenerator keyGen = KeyGenerator.getInstance(crypto);",
+       "labelled_break_model": "grover",
+       "labelled_reason": "P1: KeyGenerator.getInstance is given 'crypto', which holds algorithm 'RC4'",
+       "indramesh_names": [
+        "None"
+       ],
+       "indramesh_rule_ids": [
+        "None"
+       ],
+       "indramesh_match": [
+        null
+       ]
+      },
+      {
+       "file": "src/main/java/org/cryptoapi/bench/brokencrypto/BrokenCryptoABICase13.java",
+       "line": 19,
+       "labelled_primitive": "RC4",
+       "labelled_code": "Cipher cipher = Cipher.getInstance(crypto);",
+       "labelled_break_model": "grover",
+       "labelled_reason": "P1: Cipher.getInstance is given 'crypto', which holds algorithm 'RC4'",
+       "indramesh_names": [
+        "None"
+       ],
+       "indramesh_rule_ids": [
+        "None"
+       ],
+       "indramesh_match": [
+        null
+       ]
+      },
+      {
+       "file": "src/main/java/org/cryptoapi/bench/brokencrypto/BrokenCryptoABICase14.java",
+       "line": 16,
+       "labelled_primitive": "RC2",
+       "labelled_code": "KeyGenerator keyGen = KeyGenerator.getInstance(crypto);",
+       "labelled_break_model": "grover",
+       "labelled_reason": "P1: KeyGenerator.getInstance is given 'crypto', which holds algorithm 'RC2'",
+       "indramesh_names": [
+        "None"
+       ],
+       "indramesh_rule_ids": [
+        "None"
+       ],
+       "indramesh_match": [
+        null
+       ]
+      },
+      {
+       "file": "src/main/java/org/cryptoapi/bench/brokencrypto/BrokenCryptoABICase14.java",
+       "line": 18,
+       "labelled_primitive": "RC2",
+       "labelled_code": "Cipher cipher = Cipher.getInstance(crypto);",
+       "labelled_break_model": "grover",
+       "labelled_reason": "P1: Cipher.getInstance is given 'crypto', which holds algorithm 'RC2'",
+       "indramesh_names": [
+        "None"
+       ],
+       "indramesh_rule_ids": [
+        "None"
+       ],
+       "indramesh_match": [
+        null
+       ]
+      },
+      {
+       "file": "src/main/java/org/cryptoapi/bench/brokencrypto/BrokenCryptoABICase15.java",
+       "line": 16,
+       "labelled_primitive": "IDEA",
+       "labelled_code": "KeyGenerator keyGen = KeyGenerator.getInstance(crypto);",
+       "labelled_break_model": "grover",
+       "labelled_reason": "P1: KeyGenerator.getInstance is given 'crypto', which holds algorithm 'IDEA'",
+       "indramesh_names": [
+        "None"
+       ],
+       "indramesh_rule_ids": [
+        "None"
+       ],
+       "indramesh_match": [
+        null
+       ]
+      },
+      {
+       "file": "src/main/java/org/cryptoapi/bench/brokencrypto/BrokenCryptoABICase15.java",
+       "line": 18,
+       "labelled_primitive": "IDEA",
+       "labelled_code": "Cipher cipher = Cipher.getInstance(crypto);",
+       "labelled_break_model": "grover",
+       "labelled_reason": "P1: Cipher.getInstance is given 'crypto', which holds algorithm 'IDEA'",
+       "indramesh_names": [
+        "None"
+       ],
+       "indramesh_rule_ids": [
+        "None"
+       ],
+       "indramesh_match": [
+        null
+       ]
+      },
+      {
+       "file": "src/main/java/org/cryptoapi/bench/brokencrypto/BrokenCryptoABICase2.java",
+       "line": 12,
+       "labelled_primitive": "Blowfish",
+       "labelled_code": "KeyGenerator keyGen = KeyGenerator.getInstance(crypto);",
+       "labelled_break_model": "grover",
+       "labelled_reason": "P1: KeyGenerator.getInstance is given 'crypto', which holds algorithm 'Blowfish'",
+       "indramesh_names": [
+        "None"
+       ],
+       "indramesh_rule_ids": [
+        "None"
+       ],
+       "indramesh_match": [
+        null
+       ]
+      },
+      {
+       "file": "src/main/java/org/cryptoapi/bench/brokencrypto/BrokenCryptoABICase2.java",
+       "line": 14,
+       "labelled_primitive": "Blowfish",
+       "labelled_code": "Cipher cipher = Cipher.getInstance(crypto);",
+       "labelled_break_model": "grover",
+       "labelled_reason": "P1: Cipher.getInstance is given 'crypto', which holds algorithm 'Blowfish'",
+       "indramesh_names": [
+        "None"
+       ],
+       "indramesh_rule_ids": [
+        "None"
+       ],
+       "indramesh_match": [
+        null
+       ]
+      },
+      {
+       "file": "src/main/java/org/cryptoapi/bench/brokencrypto/BrokenCryptoABICase3.java",
+       "line": 12,
+       "labelled_primitive": "RC4",
+       "labelled_code": "KeyGenerator keyGen = KeyGenerator.getInstance(crypto);",
+       "labelled_break_model": "grover",
+       "labelled_reason": "P1: KeyGenerator.getInstance is given 'crypto', which holds algorithm 'RC4'",
+       "indramesh_names": [
+        "None"
+       ],
+       "indramesh_rule_ids": [
+        "None"
+       ],
+       "indramesh_match": [
+        null
+       ]
+      },
+      {
+       "file": "src/main/java/org/cryptoapi/bench/brokencrypto/BrokenCryptoABICase3.java",
+       "line": 14,
+       "labelled_primitive": "RC4",
+       "labelled_code": "Cipher cipher = Cipher.getInstance(crypto);",
+       "labelled_break_model": "grover",
+       "labelled_reason": "P1: Cipher.getInstance is given 'crypto', which holds algorithm 'RC4'",
+       "indramesh_names": [
+        "None"
+       ],
+       "indramesh_rule_ids": [
+        "None"
+       ],
+       "indramesh_match": [
+        null
+       ]
+      },
+      {
+       "file": "src/main/java/org/cryptoapi/bench/brokencrypto/BrokenCryptoABICase4.java",
+       "line": 12,
+       "labelled_primitive": "RC2",
+       "labelled_code": "KeyGenerator keyGen = KeyGenerator.getInstance(crypto);",
+       "labelled_break_model": "grover",
+       "labelled_reason": "P1: KeyGenerator.getInstance is given 'crypto', which holds algorithm 'RC2'",
+       "indramesh_names": [
+        "None"
+       ],
+       "indramesh_rule_ids": [
+        "None"
+       ],
+       "indramesh_match": [
+        null
+       ]
+      },
+      {
+       "file": "src/main/java/org/cryptoapi/bench/brokencrypto/BrokenCryptoABICase4.java",
+       "line": 14,
+       "labelled_primitive": "RC2",
+       "labelled_code": "Cipher cipher = Cipher.getInstance(crypto);",
+       "labelled_break_model": "grover",
+       "labelled_reason": "P1: Cipher.getInstance is given 'crypto', which holds algorithm 'RC2'",
+       "indramesh_names": [
+        "None"
+       ],
+       "indramesh_rule_ids": [
+        "None"
+       ],
+       "indramesh_match": [
+        null
+       ]
+      },
+      {
+       "file": "src/main/java/org/cryptoapi/bench/brokencrypto/BrokenCryptoABICase9.java",
+       "line": 12,
+       "labelled_primitive": "IDEA",
+       "labelled_code": "KeyGenerator keyGen = KeyGenerator.getInstance(crypto);",
+       "labelled_break_model": "grover",
+       "labelled_reason": "P1: KeyGenerator.getInstance is given 'crypto', which holds algorithm 'IDEA'",
+       "indramesh_names": [
+        "None"
+       ],
+       "indramesh_rule_ids": [
+        "None"
+       ],
+       "indramesh_match": [
+        null
+       ]
+      },
+      {
+       "file": "src/main/java/org/cryptoapi/bench/brokencrypto/BrokenCryptoABICase9.java",
+       "line": 14,
+       "labelled_primitive": "IDEA",
+       "labelled_code": "Cipher cipher = Cipher.getInstance(crypto);",
+       "labelled_break_model": "grover",
+       "labelled_reason": "P1: Cipher.getInstance is given 'crypto', which holds algorithm 'IDEA'",
+       "indramesh_names": [
+        "None"
+       ],
+       "indramesh_rule_ids": [
+        "None"
+       ],
+       "indramesh_match": [
+        null
+       ]
+      },
+      {
+       "file": "src/main/java/org/cryptoapi/bench/brokenhash/BrokenHashABICase1.java",
+       "line": 13,
+       "labelled_primitive": "SHA-1",
+       "labelled_code": "MessageDigest md = MessageDigest.getInstance(crypto);",
+       "labelled_break_model": "grover",
+       "labelled_reason": "P1: MessageDigest.getInstance is given 'crypto', which holds algorithm 'SHA1'",
+       "indramesh_names": [
+        "None"
+       ],
+       "indramesh_rule_ids": [
+        "None"
+       ],
+       "indramesh_match": [
+        null
+       ]
+      },
+      {
+       "file": "src/main/java/org/cryptoapi/bench/brokenhash/BrokenHashABICase10.java",
+       "line": 18,
+       "labelled_primitive": "MD5",
+       "labelled_code": "MessageDigest md = MessageDigest.getInstance(crypto);",
+       "labelled_break_model": "grover",
+       "labelled_reason": "P1: MessageDigest.getInstance is given 'crypto', which holds algorithm 'MD5'",
+       "indramesh_names": [
+        "None"
+       ],
+       "indramesh_rule_ids": [
+        "None"
+       ],
+       "indramesh_match": [
+        null
+       ]
+      },
+      {
+       "file": "src/main/java/org/cryptoapi/bench/brokenhash/BrokenHashABICase11.java",
+       "line": 18,
+       "labelled_primitive": "MD4",
+       "labelled_code": "MessageDigest md = MessageDigest.getInstance(crypto);",
+       "labelled_break_model": "grover",
+       "labelled_reason": "P1: MessageDigest.getInstance is given 'crypto', which holds algorithm 'MD4'",
+       "indramesh_names": [
+        "None"
+       ],
+       "indramesh_rule_ids": [
+        "None"
+       ],
+       "indramesh_match": [
+        null
+       ]
+      },
+      {
+       "file": "src/main/java/org/cryptoapi/bench/brokenhash/BrokenHashABICase12.java",
+       "line": 18,
+       "labelled_primitive": "MD2",
+       "labelled_code": "MessageDigest md = MessageDigest.getInstance(crypto);",
+       "labelled_break_model": "grover",
+       "labelled_reason": "P1: MessageDigest.getInstance is given 'crypto', which holds algorithm 'MD2'",
+       "indramesh_names": [
+        "None"
+       ],
+       "indramesh_rule_ids": [
+        "None"
+       ],
+       "indramesh_match": [
+        null
+       ]
+      },
+      {
+       "file": "src/main/java/org/cryptoapi/bench/brokenhash/BrokenHashABICase2.java",
+       "line": 13,
+       "labelled_primitive": "MD5",
+       "labelled_code": "MessageDigest md = MessageDigest.getInstance(crypto);",
+       "labelled_break_model": "grover",
+       "labelled_reason": "P1: MessageDigest.getInstance is given 'crypto', which holds algorithm 'MD5'",
+       "indramesh_names": [
+        "None"
+       ],
+       "indramesh_rule_ids": [
+        "None"
+       ],
+       "indramesh_match": [
+        null
+       ]
+      },
+      {
+       "file": "src/main/java/org/cryptoapi/bench/brokenhash/BrokenHashABICase3.java",
+       "line": 13,
+       "labelled_primitive": "MD4",
+       "labelled_code": "MessageDigest md = MessageDigest.getInstance(crypto);",
+       "labelled_break_model": "grover",
+       "labelled_reason": "P1: MessageDigest.getInstance is given 'crypto', which holds algorithm 'MD4'",
+       "indramesh_names": [
+        "None"
+       ],
+       "indramesh_rule_ids": [
+        "None"
+       ],
+       "indramesh_match": [
+        null
+       ]
+      },
+      {
+       "file": "src/main/java/org/cryptoapi/bench/brokenhash/BrokenHashABICase4.java",
+       "line": 13,
+       "labelled_primitive": "MD2",
+       "labelled_code": "MessageDigest md = MessageDigest.getInstance(crypto);",
+       "labelled_break_model": "grover",
+       "labelled_reason": "P1: MessageDigest.getInstance is given 'crypto', which holds algorithm 'MD2'",
+       "indramesh_names": [
+        "None"
+       ],
+       "indramesh_rule_ids": [
+        "None"
+       ],
+       "indramesh_match": [
+        null
+       ]
+      },
+      {
+       "file": "src/main/java/org/cryptoapi/bench/brokenhash/BrokenHashABICase9.java",
+       "line": 18,
+       "labelled_primitive": "SHA-1",
+       "labelled_code": "MessageDigest md = MessageDigest.getInstance(crypto);",
+       "labelled_break_model": "grover",
+       "labelled_reason": "P1: MessageDigest.getInstance is given 'crypto', which holds algorithm 'SHA1'",
+       "indramesh_names": [
+        "None"
+       ],
+       "indramesh_rule_ids": [
+        "None"
+       ],
+       "indramesh_match": [
+        null
+       ]
+      },
+      {
+       "file": "src/main/java/org/cryptoapi/bench/brokenhash/BrokenHashABSCase1.java",
+       "line": 12,
+       "labelled_primitive": "SHA-1",
+       "labelled_code": "crypto = new CryptoHash1(\"SHA1\");",
+       "labelled_break_model": "grover",
+       "labelled_reason": "P3: taint source -- binds 'crypto'='SHA1', which selects the cryptographic algorithm downstream",
+       "indramesh_names": [
+        "None"
+       ],
+       "indramesh_rule_ids": [
+        "None"
+       ],
+       "indramesh_match": [
+        null
+       ]
+      },
+      {
+       "file": "src/main/java/org/cryptoapi/bench/brokenhash/BrokenHashABSCase1.java",
+       "line": 29,
+       "labelled_primitive": "SHA-1",
+       "labelled_code": "MessageDigest md = MessageDigest.getInstance(crypto);",
+       "labelled_break_model": "grover",
+       "labelled_reason": "P1: MessageDigest.getInstance is given 'crypto', which holds algorithm 'SHA1'",
+       "indramesh_names": [
+        "None"
+       ],
+       "indramesh_rule_ids": [
+        "None"
+       ],
+       "indramesh_match": [
+        null
+       ]
+      },
+      {
+       "file": "src/main/java/org/cryptoapi/bench/brokenhash/BrokenHashABSCase2.java",
+       "line": 14,
+       "labelled_primitive": "MD5",
+       "labelled_code": "crypto = new CryptoHash2(\"MD5\");",
+       "labelled_break_model": "grover",
+       "labelled_reason": "P3: taint source -- binds 'crypto'='MD5', which selects the cryptographic algorithm downstream",
+       "indramesh_names": [
+        "None"
+       ],
+       "indramesh_rule_ids": [
+        "None"
+       ],
+       "indramesh_match": [
+        null
+       ]
+      },
+      {
+       "file": "src/main/java/org/cryptoapi/bench/brokenhash/BrokenHashABSCase2.java",
+       "line": 31,
+       "labelled_primitive": "MD5",
+       "labelled_code": "MessageDigest md = MessageDigest.getInstance(crypto);",
+       "labelled_break_model": "grover",
+       "labelled_reason": "P1: MessageDigest.getInstance is given 'crypto', which holds algorithm 'MD5'",
+       "indramesh_names": [
+        "None"
+       ],
+       "indramesh_rule_ids": [
+        "None"
+       ],
+       "indramesh_match": [
+        null
+       ]
+      },
+      {
+       "file": "src/main/java/org/cryptoapi/bench/brokenhash/BrokenHashABSCase3.java",
+       "line": 14,
+       "labelled_primitive": "MD4",
+       "labelled_code": "crypto = new CryptoHash3(\"MD4\");",
+       "labelled_break_model": "grover",
+       "labelled_reason": "P3: taint source -- binds 'crypto'='MD4', which selects the cryptographic algorithm downstream",
+       "indramesh_names": [
+        "None"
+       ],
+       "indramesh_rule_ids": [
+        "None"
+       ],
+       "indramesh_match": [
+        null
+       ]
+      },
+      {
+       "file": "src/main/java/org/cryptoapi/bench/brokenhash/BrokenHashABSCase3.java",
+       "line": 31,
+       "labelled_primitive": "MD4",
+       "labelled_code": "MessageDigest md = MessageDigest.getInstance(crypto);",
+       "labelled_break_model": "grover",
+       "labelled_reason": "P1: MessageDigest.getInstance is given 'crypto', which holds algorithm 'MD4'",
+       "indramesh_names": [
+        "None"
+       ],
+       "indramesh_rule_ids": [
+        "None"
+       ],
+       "indramesh_match": [
+        null
+       ]
+      },
+      {
+       "file": "src/main/java/org/cryptoapi/bench/brokenhash/BrokenHashABSCase4.java",
+       "line": 14,
+       "labelled_primitive": "MD2",
+       "labelled_code": "crypto = new CryptoHash4(\"MD2\");",
+       "labelled_break_model": "grover",
+       "labelled_reason": "P3: taint source -- binds 'crypto'='MD2', which selects the cryptographic algorithm downstream",
+       "indramesh_names": [
+        "None"
+       ],
+       "indramesh_rule_ids": [
+        "None"
+       ],
+       "indramesh_match": [
+        null
+       ]
+      },
+      {
+       "file": "src/main/java/org/cryptoapi/bench/brokenhash/BrokenHashABSCase4.java",
+       "line": 31,
+       "labelled_primitive": "MD2",
+       "labelled_code": "MessageDigest md = MessageDigest.getInstance(crypto);",
+       "labelled_break_model": "grover",
+       "labelled_reason": "P1: MessageDigest.getInstance is given 'crypto', which holds algorithm 'MD2'",
+       "indramesh_names": [
+        "None"
+       ],
+       "indramesh_rule_ids": [
+        "None"
+       ],
+       "indramesh_match": [
+        null
+       ]
+      },
+      {
+       "file": "src/main/java/org/cryptoapi/bench/credentialinstring/CredentialInStringABSCase1.java",
+       "line": 40,
+       "labelled_primitive": "AES",
+       "labelled_code": "String algo = \"AES\";",
+       "labelled_break_model": "grover",
+       "labelled_reason": "P3: taint source -- binds 'algo'='AES', which selects the cryptographic algorithm downstream",
+       "indramesh_names": [
+        "None"
+       ],
+       "indramesh_rule_ids": [
+        "None"
+       ],
+       "indramesh_match": [
+        null
+       ]
+      },
+      {
+       "file": "src/main/java/org/cryptoapi/bench/credentialinstring/CredentialInStringABSCase1.java",
+       "line": 43,
+       "labelled_primitive": "AES",
+       "labelled_code": "cipher = Cipher.getInstance(algoSpec);",
+       "labelled_break_model": "grover",
+       "labelled_reason": "P1: Cipher.getInstance is given 'algoSpec', which holds algorithm 'AES/CBC/PKCS5Padding'",
+       "indramesh_names": [
+        "None"
+       ],
+       "indramesh_rule_ids": [
+        "None"
+       ],
+       "indramesh_match": [
+        null
+       ]
+      },
+      {
+       "file": "src/main/java/org/cryptoapi/bench/credentialinstring/CredentialInStringABSCase1.java",
+       "line": 55,
+       "labelled_primitive": "AES",
+       "labelled_code": "SecretKeySpec keySpec = new SecretKeySpec(keyBytes,algo);",
+       "labelled_break_model": "grover",
+       "labelled_reason": "P2: SecretKeySpec algorithm argument 'algo' holds 'AES'",
+       "indramesh_names": [
+        "None"
+       ],
+       "indramesh_rule_ids": [
+        "None"
+       ],
+       "indramesh_match": [
+        null
+       ]
+      },
+      {
+       "file": "src/main/java/org/cryptoapi/bench/ecbcrypto/EcbInSymmCryptoABICase1.java",
+       "line": 14,
+       "labelled_primitive": "AES",
+       "labelled_code": "Cipher cipher = Cipher.getInstance(crypto);",
+       "labelled_break_model": "grover",
+       "labelled_reason": "P1: Cipher.getInstance is given 'crypto', which holds algorithm 'AES/ECB/PKCS5Padding'",
+       "indramesh_names": [
+        "None"
+       ],
+       "indramesh_rule_ids": [
+        "None"
+       ],
+       "indramesh_match": [
+        null
+       ]
+      },
+      {
+       "file": "src/main/java/org/cryptoapi/bench/ecbcrypto/EcbInSymmCryptoABICase3.java",
+       "line": 18,
+       "labelled_primitive": "AES",
+       "labelled_code": "Cipher cipher = Cipher.getInstance(crypto);",
+       "labelled_break_model": "grover",
+       "labelled_reason": "P1: Cipher.getInstance is given 'crypto', which holds algorithm 'AES/ECB/PKCS5Padding'",
+       "indramesh_names": [
+        "None"
+       ],
+       "indramesh_rule_ids": [
+        "None"
+       ],
+       "indramesh_match": [
+        null
+       ]
+      },
+      {
+       "file": "src/main/java/org/cryptoapi/bench/predictablecryptographickey/PredictableCryptographicKeyABSCase1.java",
+       "line": 40,
+       "labelled_primitive": "AES",
+       "labelled_code": "String algo = \"AES\";",
+       "labelled_break_model": "grover",
+       "labelled_reason": "P3: taint source -- binds 'algo'='AES', which selects the cryptographic algorithm downstream",
+       "indramesh_names": [
+        "None"
+       ],
+       "indramesh_rule_ids": [
+        "None"
+       ],
+       "indramesh_match": [
+        null
+       ]
+      },
+      {
+       "file": "src/main/java/org/cryptoapi/bench/predictablecryptographickey/PredictableCryptographicKeyABSCase1.java",
+       "line": 43,
+       "labelled_primitive": "AES",
+       "labelled_code": "cipher = Cipher.getInstance(algoSpec);",
+       "labelled_break_model": "grover",
+       "labelled_reason": "P1: Cipher.getInstance is given 'algoSpec', which holds algorithm 'AES/CBC/PKCS5Padding'",
+       "indramesh_names": [
+        "None"
+       ],
+       "indramesh_rule_ids": [
+        "None"
+       ],
+       "indramesh_match": [
+        null
+       ]
+      },
+      {
+       "file": "src/main/java/org/cryptoapi/bench/predictablecryptographickey/PredictableCryptographicKeyABSCase1.java",
+       "line": 55,
+       "labelled_primitive": "AES",
+       "labelled_code": "SecretKeySpec keySpec = new SecretKeySpec(keyBytes,algo);",
+       "labelled_break_model": "grover",
+       "labelled_reason": "P2: SecretKeySpec algorithm argument 'algo' holds 'AES'",
+       "indramesh_names": [
+        "None"
+       ],
+       "indramesh_rule_ids": [
+        "None"
+       ],
+       "indramesh_match": [
+        null
+       ]
+      },
+      {
+       "file": "src/main/java/org/cryptoapi/bench/staticinitializationvector/StaticInitializationVectorCorrected.java",
+       "line": 17,
+       "labelled_primitive": "AES",
+       "labelled_code": "KeyGenerator keyGen = KeyGenerator.getInstance(\"AES\");",
+       "labelled_break_model": "grover",
+       "labelled_reason": "P1: KeyGenerator.getInstance selects algorithm 'AES'",
+       "indramesh_names": [
+        "None"
+       ],
+       "indramesh_rule_ids": [
+        "None"
+       ],
+       "indramesh_match": [
+        null
+       ]
+      },
+      {
+       "file": "src/main/java/org/cryptoapi/bench/staticinitializationvector/StaticInitializationVectorCorrected.java",
+       "line": 19,
+       "labelled_primitive": "AES",
+       "labelled_code": "Cipher cipher = Cipher.getInstance(\"AES/CBC/PKCS5Padding\");",
+       "labelled_break_model": "grover",
+       "labelled_reason": "P1: Cipher.getInstance selects algorithm 'AES/CBC/PKCS5Padding'",
+       "indramesh_names": [
+        "None"
+       ],
+       "indramesh_rule_ids": [
+        "None"
+       ],
+       "indramesh_match": [
+        null
+       ]
+      }
+     ],
+     "file_level": {
+      "counts": {
+       "TP": 106,
+       "FP": 1,
+       "FN": 4,
+       "labelled_positive_files": 110
+      },
+      "precision": 0.9907,
+      "precision_fraction": "106/107",
+      "recall": 0.9636,
+      "recall_fraction": "106/110",
+      "false_positive_files": [
+       "src/main/java/org/cryptoapi/bench/untrustedprng/UntrustedPRNGCase1.java"
+      ],
+      "false_negative_files": [
+       "src/main/java/org/cryptoapi/bench/brokenhash/BrokenHashABSCase1.java",
+       "src/main/java/org/cryptoapi/bench/brokenhash/BrokenHashABSCase2.java",
+       "src/main/java/org/cryptoapi/bench/brokenhash/BrokenHashABSCase3.java",
+       "src/main/java/org/cryptoapi/bench/brokenhash/BrokenHashABSCase4.java"
+      ]
+     },
+     "by_primitive": {
+      "AES (grover)": {
+       "labelled": 82,
+       "detected": 72,
+       "recall": 0.878
+      },
+      "Blowfish (grover)": {
+       "labelled": 12,
+       "detected": 8,
+       "recall": 0.6667
+      },
+      "DES (grover)": {
+       "labelled": 15,
+       "detected": 12,
+       "recall": 0.8
+      },
+      "HMAC (grover)": {
+       "labelled": 3,
+       "detected": 3,
+       "recall": 1.0
+      },
+      "IDEA (grover)": {
+       "labelled": 12,
+       "detected": 8,
+       "recall": 0.6667
+      },
+      "MD2 (grover)": {
+       "labelled": 10,
+       "detected": 6,
+       "recall": 0.6
+      },
+      "MD4 (grover)": {
+       "labelled": 10,
+       "detected": 6,
+       "recall": 0.6
+      },
+      "MD5 (grover)": {
+       "labelled": 10,
+       "detected": 6,
+       "recall": 0.6
+      },
+      "RC2 (grover)": {
+       "labelled": 12,
+       "detected": 8,
+       "recall": 0.6667
+      },
+      "RC4 (grover)": {
+       "labelled": 12,
+       "detected": 8,
+       "recall": 0.6667
+      },
+      "RSA (shor)": {
+       "labelled": 17,
+       "detected": 17,
+       "recall": 1.0
+      },
+      "SHA-1 (grover)": {
+       "labelled": 10,
+       "detected": 6,
+       "recall": 0.6
+      },
+      "SHA-256 (grover)": {
+       "labelled": 5,
+       "detected": 5,
+       "recall": 1.0
+      }
+     }
+    },
+    "L2": {
+     "counts": {
+      "TP": 165,
+      "FP": 1,
+      "FN": 158,
+      "labelled_positives": 323,
+      "findings_total": 188
+     },
+     "precision": 0.994,
+     "precision_fraction": "165/166",
+     "recall": 0.5108,
+     "recall_fraction": "165/323",
+     "f1": 0.6748,
+     "f1_note": "F1 is computed from the ROUNDED precision/recall, so it may differ in the 4th decimal from an F1 computed from the raw counts.",
+     "false_positives": [
+      {
+       "file": "src/main/java/org/cryptoapi/bench/untrustedprng/UntrustedPRNGCase1.java",
+       "line": 9,
+       "labelled_primitive": null,
+       "labelled_code": null,
+       "labelled_break_model": null,
+       "labelled_reason": null,
+       "indramesh_names": [
+        "PRNG"
+       ],
+       "indramesh_rule_ids": [
+        "IM-SRC-JAVA-WEAKRNG-001"
+       ],
+       "indramesh_match": [
+        "new Random("
+       ]
+      }
+     ],
+     "false_negatives": [
+      {
+       "file": "src/main/java/org/cryptoapi/bench/brokencrypto/BrokenCryptoABICase1.java",
+       "line": 12,
+       "labelled_primitive": "DES",
+       "labelled_code": "KeyGenerator keyGen = KeyGenerator.getInstance(keyAlgo);",
+       "labelled_break_model": "grover",
+       "labelled_reason": "P1: KeyGenerator.getInstance is given 'keyAlgo', which holds algorithm 'DES'",
+       "indramesh_names": [
+        "None"
+       ],
+       "indramesh_rule_ids": [
+        "None"
+       ],
+       "indramesh_match": [
+        null
+       ]
+      },
+      {
+       "file": "src/main/java/org/cryptoapi/bench/brokencrypto/BrokenCryptoABICase1.java",
+       "line": 14,
+       "labelled_primitive": "DES",
+       "labelled_code": "Cipher cipher = Cipher.getInstance(crypto);",
+       "labelled_break_model": "grover",
+       "labelled_reason": "P1: Cipher.getInstance is given 'crypto', which holds algorithm 'DES/ECB/PKCS5Padding'",
+       "indramesh_names": [
+        "None"
+       ],
+       "indramesh_rule_ids": [
+        "None"
+       ],
+       "indramesh_match": [
+        null
+       ]
+      },
+      {
+       "file": "src/main/java/org/cryptoapi/bench/brokencrypto/BrokenCryptoABICase1.java",
+       "line": 15,
+       "labelled_primitive": null,
+       "labelled_code": "cipher.init(Cipher.ENCRYPT_MODE, key);",
+       "labelled_break_model": "not-affected",
+       "labelled_reason": "operates on a primitive chosen elsewhere; names no primitive (counted positive only in sensitivity variant L2)",
+       "indramesh_names": [
+        "None"
+       ],
+       "indramesh_rule_ids": [
+        "None"
+       ],
+       "indramesh_match": [
+        null
+       ]
+      },
+      {
+       "file": "src/main/java/org/cryptoapi/bench/brokencrypto/BrokenCryptoABICase10.java",
+       "line": 18,
+       "labelled_primitive": null,
+       "labelled_code": "cipher.init(Cipher.ENCRYPT_MODE, key);",
+       "labelled_break_model": "not-affected",
+       "labelled_reason": "operates on a primitive chosen elsewhere; names no primitive (counted positive only in sensitivity variant L2)",
+       "indramesh_names": [
+        "None"
+       ],
+       "indramesh_rule_ids": [
+        "None"
+       ],
+       "indramesh_match": [
+        null
+       ]
+      },
+      {
+       "file": "src/main/java/org/cryptoapi/bench/brokencrypto/BrokenCryptoABICase11.java",
+       "line": 18,
+       "labelled_primitive": "DES",
+       "labelled_code": "Cipher cipher = Cipher.getInstance(crypto);",
+       "labelled_break_model": "grover",
+       "labelled_reason": "P1: Cipher.getInstance is given 'crypto', which holds algorithm 'DES/ECB/PKCS5Padding'",
+       "indramesh_names": [
+        "None"
+       ],
+       "indramesh_rule_ids": [
+        "None"
+       ],
+       "indramesh_match": [
+        null
+       ]
+      },
+      {
+       "file": "src/main/java/org/cryptoapi/bench/brokencrypto/BrokenCryptoABICase11.java",
+       "line": 19,
+       "labelled_primitive": null,
+       "labelled_code": "cipher.init(Cipher.ENCRYPT_MODE, key);",
+       "labelled_break_model": "not-affected",
+       "labelled_reason": "operates on a primitive chosen elsewhere; names no primitive (counted positive only in sensitivity variant L2)",
+       "indramesh_names": [
+        "None"
+       ],
+       "indramesh_rule_ids": [
+        "None"
+       ],
+       "indramesh_match": [
+        null
+       ]
+      },
+      {
+       "file": "src/main/java/org/cryptoapi/bench/brokencrypto/BrokenCryptoABICase12.java",
+       "line": 15,
+       "labelled_primitive": "Blowfish",
+       "labelled_code": "KeyGenerator keyGen = KeyGenerator.getInstance(crypto);",
+       "labelled_break_model": "grover",
+       "labelled_reason": "P1: KeyGenerator.getInstance is given 'crypto', which holds algorithm 'Blowfish'",
+       "indramesh_names": [
+        "None"
+       ],
+       "indramesh_rule_ids": [
+        "None"
+       ],
+       "indramesh_match": [
+        null
+       ]
+      },
+      {
+       "file": "src/main/java/org/cryptoapi/bench/brokencrypto/BrokenCryptoABICase12.java",
+       "line": 17,
+       "labelled_primitive": "Blowfish",
+       "labelled_code": "Cipher cipher = Cipher.getInstance(crypto);",
+       "labelled_break_model": "grover",
+       "labelled_reason": "P1: Cipher.getInstance is given 'crypto', which holds algorithm 'Blowfish'",
+       "indramesh_names": [
+        "None"
+       ],
+       "indramesh_rule_ids": [
+        "None"
+       ],
+       "indramesh_match": [
+        null
+       ]
+      },
+      {
+       "file": "src/main/java/org/cryptoapi/bench/brokencrypto/BrokenCryptoABICase12.java",
+       "line": 18,
+       "labelled_primitive": null,
+       "labelled_code": "cipher.init(Cipher.ENCRYPT_MODE, key);",
+       "labelled_break_model": "not-affected",
+       "labelled_reason": "operates on a primitive chosen elsewhere; names no primitive (counted positive only in sensitivity variant L2)",
+       "indramesh_names": [
+        "None"
+       ],
+       "indramesh_rule_ids": [
+        "None"
+       ],
+       "indramesh_match": [
+        null
+       ]
+      },
+      {
+       "file": "src/main/java/org/cryptoapi/bench/brokencrypto/BrokenCryptoABICase13.java",
+       "line": 17,
+       "labelled_primitive": "RC4",
+       "labelled_code": "KeyGenerator keyGen = KeyGenerator.getInstance(crypto);",
+       "labelled_break_model": "grover",
+       "labelled_reason": "P1: KeyGenerator.getInstance is given 'crypto', which holds algorithm 'RC4'",
+       "indramesh_names": [
+        "None"
+       ],
+       "indramesh_rule_ids": [
+        "None"
+       ],
+       "indramesh_match": [
+        null
+       ]
+      },
+      {
+       "file": "src/main/java/org/cryptoapi/bench/brokencrypto/BrokenCryptoABICase13.java",
+       "line": 19,
+       "labelled_primitive": "RC4",
+       "labelled_code": "Cipher cipher = Cipher.getInstance(crypto);",
+       "labelled_break_model": "grover",
+       "labelled_reason": "P1: Cipher.getInstance is given 'crypto', which holds algorithm 'RC4'",
+       "indramesh_names": [
+        "None"
+       ],
+       "indramesh_rule_ids": [
+        "None"
+       ],
+       "indramesh_match": [
+        null
+       ]
+      },
+      {
+       "file": "src/main/java/org/cryptoapi/bench/brokencrypto/BrokenCryptoABICase13.java",
+       "line": 20,
+       "labelled_primitive": null,
+       "labelled_code": "cipher.init(Cipher.ENCRYPT_MODE, key);",
+       "labelled_break_model": "not-affected",
+       "labelled_reason": "operates on a primitive chosen elsewhere; names no primitive (counted positive only in sensitivity variant L2)",
+       "indramesh_names": [
+        "None"
+       ],
+       "indramesh_rule_ids": [
+        "None"
+       ],
+       "indramesh_match": [
+        null
+       ]
+      },
+      {
+       "file": "src/main/java/org/cryptoapi/bench/brokencrypto/BrokenCryptoABICase14.java",
+       "line": 16,
+       "labelled_primitive": "RC2",
+       "labelled_code": "KeyGenerator keyGen = KeyGenerator.getInstance(crypto);",
+       "labelled_break_model": "grover",
+       "labelled_reason": "P1: KeyGenerator.getInstance is given 'crypto', which holds algorithm 'RC2'",
+       "indramesh_names": [
+        "None"
+       ],
+       "indramesh_rule_ids": [
+        "None"
+       ],
+       "indramesh_match": [
+        null
+       ]
+      },
+      {
+       "file": "src/main/java/org/cryptoapi/bench/brokencrypto/BrokenCryptoABICase14.java",
+       "line": 18,
+       "labelled_primitive": "RC2",
+       "labelled_code": "Cipher cipher = Cipher.getInstance(crypto);",
+       "labelled_break_model": "grover",
+       "labelled_reason": "P1: Cipher.getInstance is given 'crypto', which holds algorithm 'RC2'",
+       "indramesh_names": [
+        "None"
+       ],
+       "indramesh_rule_ids": [
+        "None"
+       ],
+       "indramesh_match": [
+        null
+       ]
+      },
+      {
+       "file": "src/main/java/org/cryptoapi/bench/brokencrypto/BrokenCryptoABICase14.java",
+       "line": 19,
+       "labelled_primitive": null,
+       "labelled_code": "cipher.init(Cipher.ENCRYPT_MODE, key);",
+       "labelled_break_model": "not-affected",
+       "labelled_reason": "operates on a primitive chosen elsewhere; names no primitive (counted positive only in sensitivity variant L2)",
+       "indramesh_names": [
+        "None"
+       ],
+       "indramesh_rule_ids": [
+        "None"
+       ],
+       "indramesh_match": [
+        null
+       ]
+      },
+      {
+       "file": "src/main/java/org/cryptoapi/bench/brokencrypto/BrokenCryptoABICase15.java",
+       "line": 16,
+       "labelled_primitive": "IDEA",
+       "labelled_code": "KeyGenerator keyGen = KeyGenerator.getInstance(crypto);",
+       "labelled_break_model": "grover",
+       "labelled_reason": "P1: KeyGenerator.getInstance is given 'crypto', which holds algorithm 'IDEA'",
+       "indramesh_names": [
+        "None"
+       ],
+       "indramesh_rule_ids": [
+        "None"
+       ],
+       "indramesh_match": [
+        null
+       ]
+      },
+      {
+       "file": "src/main/java/org/cryptoapi/bench/brokencrypto/BrokenCryptoABICase15.java",
+       "line": 18,
+       "labelled_primitive": "IDEA",
+       "labelled_code": "Cipher cipher = Cipher.getInstance(crypto);",
+       "labelled_break_model": "grover",
+       "labelled_reason": "P1: Cipher.getInstance is given 'crypto', which holds algorithm 'IDEA'",
+       "indramesh_names": [
+        "None"
+       ],
+       "indramesh_rule_ids": [
+        "None"
+       ],
+       "indramesh_match": [
+        null
+       ]
+      },
+      {
+       "file": "src/main/java/org/cryptoapi/bench/brokencrypto/BrokenCryptoABICase15.java",
+       "line": 19,
+       "labelled_primitive": null,
+       "labelled_code": "cipher.init(Cipher.ENCRYPT_MODE, key);",
+       "labelled_break_model": "not-affected",
+       "labelled_reason": "operates on a primitive chosen elsewhere; names no primitive (counted positive only in sensitivity variant L2)",
+       "indramesh_names": [
+        "None"
+       ],
+       "indramesh_rule_ids": [
+        "None"
+       ],
+       "indramesh_match": [
+        null
+       ]
+      },
+      {
+       "file": "src/main/java/org/cryptoapi/bench/brokencrypto/BrokenCryptoABICase2.java",
+       "line": 12,
+       "labelled_primitive": "Blowfish",
+       "labelled_code": "KeyGenerator keyGen = KeyGenerator.getInstance(crypto);",
+       "labelled_break_model": "grover",
+       "labelled_reason": "P1: KeyGenerator.getInstance is given 'crypto', which holds algorithm 'Blowfish'",
+       "indramesh_names": [
+        "None"
+       ],
+       "indramesh_rule_ids": [
+        "None"
+       ],
+       "indramesh_match": [
+        null
+       ]
+      },
+      {
+       "file": "src/main/java/org/cryptoapi/bench/brokencrypto/BrokenCryptoABICase2.java",
+       "line": 14,
+       "labelled_primitive": "Blowfish",
+       "labelled_code": "Cipher cipher = Cipher.getInstance(crypto);",
+       "labelled_break_model": "grover",
+       "labelled_reason": "P1: Cipher.getInstance is given 'crypto', which holds algorithm 'Blowfish'",
+       "indramesh_names": [
+        "None"
+       ],
+       "indramesh_rule_ids": [
+        "None"
+       ],
+       "indramesh_match": [
+        null
+       ]
+      },
+      {
+       "file": "src/main/java/org/cryptoapi/bench/brokencrypto/BrokenCryptoABICase2.java",
+       "line": 15,
+       "labelled_primitive": null,
+       "labelled_code": "cipher.init(Cipher.ENCRYPT_MODE, key);",
+       "labelled_break_model": "not-affected",
+       "labelled_reason": "operates on a primitive chosen elsewhere; names no primitive (counted positive only in sensitivity variant L2)",
+       "indramesh_names": [
+        "None"
+       ],
+       "indramesh_rule_ids": [
+        "None"
+       ],
+       "indramesh_match": [
+        null
+       ]
+      },
+      {
+       "file": "src/main/java/org/cryptoapi/bench/brokencrypto/BrokenCryptoABICase3.java",
+       "line": 12,
+       "labelled_primitive": "RC4",
+       "labelled_code": "KeyGenerator keyGen = KeyGenerator.getInstance(crypto);",
+       "labelled_break_model": "grover",
+       "labelled_reason": "P1: KeyGenerator.getInstance is given 'crypto', which holds algorithm 'RC4'",
+       "indramesh_names": [
+        "None"
+       ],
+       "indramesh_rule_ids": [
+        "None"
+       ],
+       "indramesh_match": [
+        null
+       ]
+      },
+      {
+       "file": "src/main/java/org/cryptoapi/bench/brokencrypto/BrokenCryptoABICase3.java",
+       "line": 14,
+       "labelled_primitive": "RC4",
+       "labelled_code": "Cipher cipher = Cipher.getInstance(crypto);",
+       "labelled_break_model": "grover",
+       "labelled_reason": "P1: Cipher.getInstance is given 'crypto', which holds algorithm 'RC4'",
+       "indramesh_names": [
+        "None"
+       ],
+       "indramesh_rule_ids": [
+        "None"
+       ],
+       "indramesh_match": [
+        null
+       ]
+      },
+      {
+       "file": "src/main/java/org/cryptoapi/bench/brokencrypto/BrokenCryptoABICase3.java",
+       "line": 15,
+       "labelled_primitive": null,
+       "labelled_code": "cipher.init(Cipher.ENCRYPT_MODE, key);",
+       "labelled_break_model": "not-affected",
+       "labelled_reason": "operates on a primitive chosen elsewhere; names no primitive (counted positive only in sensitivity variant L2)",
+       "indramesh_names": [
+        "None"
+       ],
+       "indramesh_rule_ids": [
+        "None"
+       ],
+       "indramesh_match": [
+        null
+       ]
+      },
+      {
+       "file": "src/main/java/org/cryptoapi/bench/brokencrypto/BrokenCryptoABICase4.java",
+       "line": 12,
+       "labelled_primitive": "RC2",
+       "labelled_code": "KeyGenerator keyGen = KeyGenerator.getInstance(crypto);",
+       "labelled_break_model": "grover",
+       "labelled_reason": "P1: KeyGenerator.getInstance is given 'crypto', which holds algorithm 'RC2'",
+       "indramesh_names": [
+        "None"
+       ],
+       "indramesh_rule_ids": [
+        "None"
+       ],
+       "indramesh_match": [
+        null
+       ]
+      },
+      {
+       "file": "src/main/java/org/cryptoapi/bench/brokencrypto/BrokenCryptoABICase4.java",
+       "line": 14,
+       "labelled_primitive": "RC2",
+       "labelled_code": "Cipher cipher = Cipher.getInstance(crypto);",
+       "labelled_break_model": "grover",
+       "labelled_reason": "P1: Cipher.getInstance is given 'crypto', which holds algorithm 'RC2'",
+       "indramesh_names": [
+        "None"
+       ],
+       "indramesh_rule_ids": [
+        "None"
+       ],
+       "indramesh_match": [
+        null
+       ]
+      },
+      {
+       "file": "src/main/java/org/cryptoapi/bench/brokencrypto/BrokenCryptoABICase4.java",
+       "line": 15,
+       "labelled_primitive": null,
+       "labelled_code": "cipher.init(Cipher.ENCRYPT_MODE, key);",
+       "labelled_break_model": "not-affected",
+       "labelled_reason": "operates on a primitive chosen elsewhere; names no primitive (counted positive only in sensitivity variant L2)",
+       "indramesh_names": [
+        "None"
+       ],
+       "indramesh_rule_ids": [
+        "None"
+       ],
+       "indramesh_match": [
+        null
+       ]
+      },
+      {
+       "file": "src/main/java/org/cryptoapi/bench/brokencrypto/BrokenCryptoABICase5.java",
+       "line": 23,
+       "labelled_primitive": null,
+       "labelled_code": "cipher.init(Cipher.ENCRYPT_MODE, key);",
+       "labelled_break_model": "not-affected",
+       "labelled_reason": "operates on a primitive chosen elsewhere; names no primitive (counted positive only in sensitivity variant L2)",
+       "indramesh_names": [
+        "None"
+       ],
+       "indramesh_rule_ids": [
+        "None"
+       ],
+       "indramesh_match": [
+        null
+       ]
+      },
+      {
+       "file": "src/main/java/org/cryptoapi/bench/brokencrypto/BrokenCryptoABICase6.java",
+       "line": 18,
+       "labelled_primitive": null,
+       "labelled_code": "cipher.init(Cipher.ENCRYPT_MODE, key);",
+       "labelled_break_model": "not-affected",
+       "labelled_reason": "operates on a primitive chosen elsewhere; names no primitive (counted positive only in sensitivity variant L2)",
+       "indramesh_names": [
+        "None"
+       ],
+       "indramesh_rule_ids": [
+        "None"
+       ],
+       "indramesh_match": [
+        null
+       ]
+      },
+      {
+       "file": "src/main/java/org/cryptoapi/bench/brokencrypto/BrokenCryptoABICase7.java",
+       "line": 18,
+       "labelled_primitive": null,
+       "labelled_code": "cipher.init(Cipher.ENCRYPT_MODE, key);",
+       "labelled_break_model": "not-affected",
+       "labelled_reason": "operates on a primitive chosen elsewhere; names no primitive (counted positive only in sensitivity variant L2)",
+       "indramesh_names": [
+        "None"
+       ],
+       "indramesh_rule_ids": [
+        "None"
+       ],
+       "indramesh_match": [
+        null
+       ]
+      },
+      {
+       "file": "src/main/java/org/cryptoapi/bench/brokencrypto/BrokenCryptoABICase8.java",
+       "line": 18,
+       "labelled_primitive": null,
+       "labelled_code": "cipher.init(Cipher.ENCRYPT_MODE, key);",
+       "labelled_break_model": "not-affected",
+       "labelled_reason": "operates on a primitive chosen elsewhere; names no primitive (counted positive only in sensitivity variant L2)",
+       "indramesh_names": [
+        "None"
+       ],
+       "indramesh_rule_ids": [
+        "None"
+       ],
+       "indramesh_match": [
+        null
+       ]
+      },
+      {
+       "file": "src/main/java/org/cryptoapi/bench/brokencrypto/BrokenCryptoABICase9.java",
+       "line": 12,
+       "labelled_primitive": "IDEA",
+       "labelled_code": "KeyGenerator keyGen = KeyGenerator.getInstance(crypto);",
+       "labelled_break_model": "grover",
+       "labelled_reason": "P1: KeyGenerator.getInstance is given 'crypto', which holds algorithm 'IDEA'",
+       "indramesh_names": [
+        "None"
+       ],
+       "indramesh_rule_ids": [
+        "None"
+       ],
+       "indramesh_match": [
+        null
+       ]
+      },
+      {
+       "file": "src/main/java/org/cryptoapi/bench/brokencrypto/BrokenCryptoABICase9.java",
+       "line": 14,
+       "labelled_primitive": "IDEA",
+       "labelled_code": "Cipher cipher = Cipher.getInstance(crypto);",
+       "labelled_break_model": "grover",
+       "labelled_reason": "P1: Cipher.getInstance is given 'crypto', which holds algorithm 'IDEA'",
+       "indramesh_names": [
+        "None"
+       ],
+       "indramesh_rule_ids": [
+        "None"
+       ],
+       "indramesh_match": [
+        null
+       ]
+      },
+      {
+       "file": "src/main/java/org/cryptoapi/bench/brokencrypto/BrokenCryptoABICase9.java",
+       "line": 15,
+       "labelled_primitive": null,
+       "labelled_code": "cipher.init(Cipher.ENCRYPT_MODE, key);",
+       "labelled_break_model": "not-affected",
+       "labelled_reason": "operates on a primitive chosen elsewhere; names no primitive (counted positive only in sensitivity variant L2)",
+       "indramesh_names": [
+        "None"
+       ],
+       "indramesh_rule_ids": [
+        "None"
+       ],
+       "indramesh_match": [
+        null
+       ]
+      },
+      {
+       "file": "src/main/java/org/cryptoapi/bench/brokencrypto/BrokenCryptoABMC1.java",
+       "line": 15,
+       "labelled_primitive": null,
+       "labelled_code": "cipher.init(Cipher.ENCRYPT_MODE, key);",
+       "labelled_break_model": "not-affected",
+       "labelled_reason": "operates on a primitive chosen elsewhere; names no primitive (counted positive only in sensitivity variant L2)",
+       "indramesh_names": [
+        "None"
+       ],
+       "indramesh_rule_ids": [
+        "None"
+       ],
+       "indramesh_match": [
+        null
+       ]
+      },
+      {
+       "file": "src/main/java/org/cryptoapi/bench/brokencrypto/BrokenCryptoABMC2.java",
+       "line": 15,
+       "labelled_primitive": null,
+       "labelled_code": "cipher.init(Cipher.ENCRYPT_MODE, key);",
+       "labelled_break_model": "not-affected",
+       "labelled_reason": "operates on a primitive chosen elsewhere; names no primitive (counted positive only in sensitivity variant L2)",
+       "indramesh_names": [
+        "None"
+       ],
+       "indramesh_rule_ids": [
+        "None"
+       ],
+       "indramesh_match": [
+        null
+       ]
+      },
+      {
+       "file": "src/main/java/org/cryptoapi/bench/brokencrypto/BrokenCryptoABMC3.java",
+       "line": 15,
+       "labelled_primitive": null,
+       "labelled_code": "cipher.init(Cipher.ENCRYPT_MODE, key);",
+       "labelled_break_model": "not-affected",
+       "labelled_reason": "operates on a primitive chosen elsewhere; names no primitive (counted positive only in sensitivity variant L2)",
+       "indramesh_names": [
+        "None"
+       ],
+       "indramesh_rule_ids": [
+        "None"
+       ],
+       "indramesh_match": [
+        null
+       ]
+      },
+      {
+       "file": "src/main/java/org/cryptoapi/bench/brokencrypto/BrokenCryptoABMC4.java",
+       "line": 15,
+       "labelled_primitive": null,
+       "labelled_code": "cipher.init(Cipher.ENCRYPT_MODE, key);",
+       "labelled_break_model": "not-affected",
+       "labelled_reason": "operates on a primitive chosen elsewhere; names no primitive (counted positive only in sensitivity variant L2)",
+       "indramesh_names": [
+        "None"
+       ],
+       "indramesh_rule_ids": [
+        "None"
+       ],
+       "indramesh_match": [
+        null
+       ]
+      },
+      {
+       "file": "src/main/java/org/cryptoapi/bench/brokencrypto/BrokenCryptoABMC5.java",
+       "line": 15,
+       "labelled_primitive": null,
+       "labelled_code": "cipher.init(Cipher.ENCRYPT_MODE, key);",
+       "labelled_break_model": "not-affected",
+       "labelled_reason": "operates on a primitive chosen elsewhere; names no primitive (counted positive only in sensitivity variant L2)",
+       "indramesh_names": [
+        "None"
+       ],
+       "indramesh_rule_ids": [
+        "None"
+       ],
+       "indramesh_match": [
+        null
+       ]
+      },
+      {
+       "file": "src/main/java/org/cryptoapi/bench/brokencrypto/BrokenCryptoABPSCase1.java",
+       "line": 18,
+       "labelled_primitive": null,
+       "labelled_code": "cipher.init(Cipher.ENCRYPT_MODE, key);",
+       "labelled_break_model": "not-affected",
+       "labelled_reason": "operates on a primitive chosen elsewhere; names no primitive (counted positive only in sensitivity variant L2)",
+       "indramesh_names": [
+        "None"
+       ],
+       "indramesh_rule_ids": [
+        "None"
+       ],
+       "indramesh_match": [
+        null
+       ]
+      },
+      {
+       "file": "src/main/java/org/cryptoapi/bench/brokencrypto/BrokenCryptoABPSCase2.java",
+       "line": 17,
+       "labelled_primitive": null,
+       "labelled_code": "cipher.init(Cipher.ENCRYPT_MODE, key);",
+       "labelled_break_model": "not-affected",
+       "labelled_reason": "operates on a primitive chosen elsewhere; names no primitive (counted positive only in sensitivity variant L2)",
+       "indramesh_names": [
+        "None"
+       ],
+       "indramesh_rule_ids": [
+        "None"
+       ],
+       "indramesh_match": [
+        null
+       ]
+      },
+      {
+       "file": "src/main/java/org/cryptoapi/bench/brokencrypto/BrokenCryptoABPSCase3.java",
+       "line": 18,
+       "labelled_primitive": null,
+       "labelled_code": "cipher.init(Cipher.ENCRYPT_MODE, key);",
+       "labelled_break_model": "not-affected",
+       "labelled_reason": "operates on a primitive chosen elsewhere; names no primitive (counted positive only in sensitivity variant L2)",
+       "indramesh_names": [
+        "None"
+       ],
+       "indramesh_rule_ids": [
+        "None"
+       ],
+       "indramesh_match": [
+        null
+       ]
+      },
+      {
+       "file": "src/main/java/org/cryptoapi/bench/brokencrypto/BrokenCryptoABPSCase4.java",
+       "line": 18,
+       "labelled_primitive": null,
+       "labelled_code": "cipher.init(Cipher.ENCRYPT_MODE, key);",
+       "labelled_break_model": "not-affected",
+       "labelled_reason": "operates on a primitive chosen elsewhere; names no primitive (counted positive only in sensitivity variant L2)",
+       "indramesh_names": [
+        "None"
+       ],
+       "indramesh_rule_ids": [
+        "None"
+       ],
+       "indramesh_match": [
+        null
+       ]
+      },
+      {
+       "file": "src/main/java/org/cryptoapi/bench/brokencrypto/BrokenCryptoABPSCase5.java",
+       "line": 17,
+       "labelled_primitive": null,
+       "labelled_code": "cipher.init(Cipher.ENCRYPT_MODE, key);",
+       "labelled_break_model": "not-affected",
+       "labelled_reason": "operates on a primitive chosen elsewhere; names no primitive (counted positive only in sensitivity variant L2)",
+       "indramesh_names": [
+        "None"
+       ],
+       "indramesh_rule_ids": [
+        "None"
+       ],
+       "indramesh_match": [
+        null
+       ]
+      },
+      {
+       "file": "src/main/java/org/cryptoapi/bench/brokencrypto/BrokenCryptoABSCase1.java",
+       "line": 31,
+       "labelled_primitive": null,
+       "labelled_code": "cipher.init(Cipher.ENCRYPT_MODE, key);",
+       "labelled_break_model": "not-affected",
+       "labelled_reason": "operates on a primitive chosen elsewhere; names no primitive (counted positive only in sensitivity variant L2)",
+       "indramesh_names": [
+        "None"
+       ],
+       "indramesh_rule_ids": [
+        "None"
+       ],
+       "indramesh_match": [
+        null
+       ]
+      },
+      {
+       "file": "src/main/java/org/cryptoapi/bench/brokencrypto/BrokenCryptoABSCase1.java",
+       "line": 34,
+       "labelled_primitive": null,
+       "labelled_code": "return cipher.doFinal(txtBytes);",
+       "labelled_break_model": "not-affected",
+       "labelled_reason": "operates on a primitive chosen elsewhere; names no primitive (counted positive only in sensitivity variant L2)",
+       "indramesh_names": [
+        "None"
+       ],
+       "indramesh_rule_ids": [
+        "None"
+       ],
+       "indramesh_match": [
+        null
+       ]
+      },
+      {
+       "file": "src/main/java/org/cryptoapi/bench/brokencrypto/BrokenCryptoABSCase2.java",
+       "line": 31,
+       "labelled_primitive": null,
+       "labelled_code": "cipher.init(Cipher.ENCRYPT_MODE, key);",
+       "labelled_break_model": "not-affected",
+       "labelled_reason": "operates on a primitive chosen elsewhere; names no primitive (counted positive only in sensitivity variant L2)",
+       "indramesh_names": [
+        "None"
+       ],
+       "indramesh_rule_ids": [
+        "None"
+       ],
+       "indramesh_match": [
+        null
+       ]
+      },
+      {
+       "file": "src/main/java/org/cryptoapi/bench/brokencrypto/BrokenCryptoABSCase2.java",
+       "line": 34,
+       "labelled_primitive": null,
+       "labelled_code": "return cipher.doFinal(txtBytes);",
+       "labelled_break_model": "not-affected",
+       "labelled_reason": "operates on a primitive chosen elsewhere; names no primitive (counted positive only in sensitivity variant L2)",
+       "indramesh_names": [
+        "None"
+       ],
+       "indramesh_rule_ids": [
+        "None"
+       ],
+       "indramesh_match": [
+        null
+       ]
+      },
+      {
+       "file": "src/main/java/org/cryptoapi/bench/brokencrypto/BrokenCryptoABSCase3.java",
+       "line": 31,
+       "labelled_primitive": null,
+       "labelled_code": "cipher.init(Cipher.ENCRYPT_MODE, key);",
+       "labelled_break_model": "not-affected",
+       "labelled_reason": "operates on a primitive chosen elsewhere; names no primitive (counted positive only in sensitivity variant L2)",
+       "indramesh_names": [
+        "None"
+       ],
+       "indramesh_rule_ids": [
+        "None"
+       ],
+       "indramesh_match": [
+        null
+       ]
+      },
+      {
+       "file": "src/main/java/org/cryptoapi/bench/brokencrypto/BrokenCryptoABSCase3.java",
+       "line": 34,
+       "labelled_primitive": null,
+       "labelled_code": "return cipher.doFinal(txtBytes);",
+       "labelled_break_model": "not-affected",
+       "labelled_reason": "operates on a primitive chosen elsewhere; names no primitive (counted positive only in sensitivity variant L2)",
+       "indramesh_names": [
+        "None"
+       ],
+       "indramesh_rule_ids": [
+        "None"
+       ],
+       "indramesh_match": [
+        null
+       ]
+      },
+      {
+       "file": "src/main/java/org/cryptoapi/bench/brokencrypto/BrokenCryptoABSCase4.java",
+       "line": 32,
+       "labelled_primitive": null,
+       "labelled_code": "cipher.init(Cipher.ENCRYPT_MODE, key);",
+       "labelled_break_model": "not-affected",
+       "labelled_reason": "operates on a primitive chosen elsewhere; names no primitive (counted positive only in sensitivity variant L2)",
+       "indramesh_names": [
+        "None"
+       ],
+       "indramesh_rule_ids": [
+        "None"
+       ],
+       "indramesh_match": [
+        null
+       ]
+      },
+      {
+       "file": "src/main/java/org/cryptoapi/bench/brokencrypto/BrokenCryptoABSCase4.java",
+       "line": 35,
+       "labelled_primitive": null,
+       "labelled_code": "return cipher.doFinal(txtBytes);",
+       "labelled_break_model": "not-affected",
+       "labelled_reason": "operates on a primitive chosen elsewhere; names no primitive (counted positive only in sensitivity variant L2)",
+       "indramesh_names": [
+        "None"
+       ],
+       "indramesh_rule_ids": [
+        "None"
+       ],
+       "indramesh_match": [
+        null
+       ]
+      },
+      {
+       "file": "src/main/java/org/cryptoapi/bench/brokencrypto/BrokenCryptoABSCase5.java",
+       "line": 32,
+       "labelled_primitive": null,
+       "labelled_code": "cipher.init(Cipher.ENCRYPT_MODE, key);",
+       "labelled_break_model": "not-affected",
+       "labelled_reason": "operates on a primitive chosen elsewhere; names no primitive (counted positive only in sensitivity variant L2)",
+       "indramesh_names": [
+        "None"
+       ],
+       "indramesh_rule_ids": [
+        "None"
+       ],
+       "indramesh_match": [
+        null
+       ]
+      },
+      {
+       "file": "src/main/java/org/cryptoapi/bench/brokencrypto/BrokenCryptoABSCase5.java",
+       "line": 35,
+       "labelled_primitive": null,
+       "labelled_code": "return cipher.doFinal(txtBytes);",
+       "labelled_break_model": "not-affected",
+       "labelled_reason": "operates on a primitive chosen elsewhere; names no primitive (counted positive only in sensitivity variant L2)",
+       "indramesh_names": [
+        "None"
+       ],
+       "indramesh_rule_ids": [
+        "None"
+       ],
+       "indramesh_match": [
+        null
+       ]
+      },
+      {
+       "file": "src/main/java/org/cryptoapi/bench/brokencrypto/BrokenCryptoBBCase1.java",
+       "line": 16,
+       "labelled_primitive": null,
+       "labelled_code": "cipher.init(Cipher.ENCRYPT_MODE, key);",
+       "labelled_break_model": "not-affected",
+       "labelled_reason": "operates on a primitive chosen elsewhere; names no primitive (counted positive only in sensitivity variant L2)",
+       "indramesh_names": [
+        "None"
+       ],
+       "indramesh_rule_ids": [
+        "None"
+       ],
+       "indramesh_match": [
+        null
+       ]
+      },
+      {
+       "file": "src/main/java/org/cryptoapi/bench/brokencrypto/BrokenCryptoBBCase2.java",
+       "line": 15,
+       "labelled_primitive": null,
+       "labelled_code": "cipher.init(Cipher.ENCRYPT_MODE, key);",
+       "labelled_break_model": "not-affected",
+       "labelled_reason": "operates on a primitive chosen elsewhere; names no primitive (counted positive only in sensitivity variant L2)",
+       "indramesh_names": [
+        "None"
+       ],
+       "indramesh_rule_ids": [
+        "None"
+       ],
+       "indramesh_match": [
+        null
+       ]
+      },
+      {
+       "file": "src/main/java/org/cryptoapi/bench/brokencrypto/BrokenCryptoBBCase3.java",
+       "line": 15,
+       "labelled_primitive": null,
+       "labelled_code": "cipher.init(Cipher.ENCRYPT_MODE, key);",
+       "labelled_break_model": "not-affected",
+       "labelled_reason": "operates on a primitive chosen elsewhere; names no primitive (counted positive only in sensitivity variant L2)",
+       "indramesh_names": [
+        "None"
+       ],
+       "indramesh_rule_ids": [
+        "None"
+       ],
+       "indramesh_match": [
+        null
+       ]
+      },
+      {
+       "file": "src/main/java/org/cryptoapi/bench/brokencrypto/BrokenCryptoBBCase4.java",
+       "line": 15,
+       "labelled_primitive": null,
+       "labelled_code": "cipher.init(Cipher.ENCRYPT_MODE, key);",
+       "labelled_break_model": "not-affected",
+       "labelled_reason": "operates on a primitive chosen elsewhere; names no primitive (counted positive only in sensitivity variant L2)",
+       "indramesh_names": [
+        "None"
+       ],
+       "indramesh_rule_ids": [
+        "None"
+       ],
+       "indramesh_match": [
+        null
+       ]
+      },
+      {
+       "file": "src/main/java/org/cryptoapi/bench/brokencrypto/BrokenCryptoBBCase5.java",
+       "line": 15,
+       "labelled_primitive": null,
+       "labelled_code": "cipher.init(Cipher.ENCRYPT_MODE, key);",
+       "labelled_break_model": "not-affected",
+       "labelled_reason": "operates on a primitive chosen elsewhere; names no primitive (counted positive only in sensitivity variant L2)",
+       "indramesh_names": [
+        "None"
+       ],
+       "indramesh_rule_ids": [
+        "None"
+       ],
+       "indramesh_match": [
+        null
+       ]
+      },
+      {
+       "file": "src/main/java/org/cryptoapi/bench/brokencrypto/BrokenCryptoCorrected.java",
+       "line": 15,
+       "labelled_primitive": null,
+       "labelled_code": "cipher.init(Cipher.ENCRYPT_MODE, key);",
+       "labelled_break_model": "not-affected",
+       "labelled_reason": "operates on a primitive chosen elsewhere; names no primitive (counted positive only in sensitivity variant L2)",
+       "indramesh_names": [
+        "None"
+       ],
+       "indramesh_rule_ids": [
+        "None"
+       ],
+       "indramesh_match": [
+        null
+       ]
+      },
+      {
+       "file": "src/main/java/org/cryptoapi/bench/brokenhash/BrokenHashABICase1.java",
+       "line": 13,
+       "labelled_primitive": "SHA-1",
+       "labelled_code": "MessageDigest md = MessageDigest.getInstance(crypto);",
+       "labelled_break_model": "grover",
+       "labelled_reason": "P1: MessageDigest.getInstance is given 'crypto', which holds algorithm 'SHA1'",
+       "indramesh_names": [
+        "None"
+       ],
+       "indramesh_rule_ids": [
+        "None"
+       ],
+       "indramesh_match": [
+        null
+       ]
+      },
+      {
+       "file": "src/main/java/org/cryptoapi/bench/brokenhash/BrokenHashABICase1.java",
+       "line": 14,
+       "labelled_primitive": null,
+       "labelled_code": "md.update(str.getBytes());",
+       "labelled_break_model": "not-affected",
+       "labelled_reason": "operates on a primitive chosen elsewhere; names no primitive (counted positive only in sensitivity variant L2)",
+       "indramesh_names": [
+        "None"
+       ],
+       "indramesh_rule_ids": [
+        "None"
+       ],
+       "indramesh_match": [
+        null
+       ]
+      },
+      {
+       "file": "src/main/java/org/cryptoapi/bench/brokenhash/BrokenHashABICase10.java",
+       "line": 18,
+       "labelled_primitive": "MD5",
+       "labelled_code": "MessageDigest md = MessageDigest.getInstance(crypto);",
+       "labelled_break_model": "grover",
+       "labelled_reason": "P1: MessageDigest.getInstance is given 'crypto', which holds algorithm 'MD5'",
+       "indramesh_names": [
+        "None"
+       ],
+       "indramesh_rule_ids": [
+        "None"
+       ],
+       "indramesh_match": [
+        null
+       ]
+      },
+      {
+       "file": "src/main/java/org/cryptoapi/bench/brokenhash/BrokenHashABICase10.java",
+       "line": 19,
+       "labelled_primitive": null,
+       "labelled_code": "md.update(str.getBytes());",
+       "labelled_break_model": "not-affected",
+       "labelled_reason": "operates on a primitive chosen elsewhere; names no primitive (counted positive only in sensitivity variant L2)",
+       "indramesh_names": [
+        "None"
+       ],
+       "indramesh_rule_ids": [
+        "None"
+       ],
+       "indramesh_match": [
+        null
+       ]
+      },
+      {
+       "file": "src/main/java/org/cryptoapi/bench/brokenhash/BrokenHashABICase11.java",
+       "line": 18,
+       "labelled_primitive": "MD4",
+       "labelled_code": "MessageDigest md = MessageDigest.getInstance(crypto);",
+       "labelled_break_model": "grover",
+       "labelled_reason": "P1: MessageDigest.getInstance is given 'crypto', which holds algorithm 'MD4'",
+       "indramesh_names": [
+        "None"
+       ],
+       "indramesh_rule_ids": [
+        "None"
+       ],
+       "indramesh_match": [
+        null
+       ]
+      },
+      {
+       "file": "src/main/java/org/cryptoapi/bench/brokenhash/BrokenHashABICase11.java",
+       "line": 19,
+       "labelled_primitive": null,
+       "labelled_code": "md.update(str.getBytes());",
+       "labelled_break_model": "not-affected",
+       "labelled_reason": "operates on a primitive chosen elsewhere; names no primitive (counted positive only in sensitivity variant L2)",
+       "indramesh_names": [
+        "None"
+       ],
+       "indramesh_rule_ids": [
+        "None"
+       ],
+       "indramesh_match": [
+        null
+       ]
+      },
+      {
+       "file": "src/main/java/org/cryptoapi/bench/brokenhash/BrokenHashABICase12.java",
+       "line": 18,
+       "labelled_primitive": "MD2",
+       "labelled_code": "MessageDigest md = MessageDigest.getInstance(crypto);",
+       "labelled_break_model": "grover",
+       "labelled_reason": "P1: MessageDigest.getInstance is given 'crypto', which holds algorithm 'MD2'",
+       "indramesh_names": [
+        "None"
+       ],
+       "indramesh_rule_ids": [
+        "None"
+       ],
+       "indramesh_match": [
+        null
+       ]
+      },
+      {
+       "file": "src/main/java/org/cryptoapi/bench/brokenhash/BrokenHashABICase12.java",
+       "line": 19,
+       "labelled_primitive": null,
+       "labelled_code": "md.update(str.getBytes());",
+       "labelled_break_model": "not-affected",
+       "labelled_reason": "operates on a primitive chosen elsewhere; names no primitive (counted positive only in sensitivity variant L2)",
+       "indramesh_names": [
+        "None"
+       ],
+       "indramesh_rule_ids": [
+        "None"
+       ],
+       "indramesh_match": [
+        null
+       ]
+      },
+      {
+       "file": "src/main/java/org/cryptoapi/bench/brokenhash/BrokenHashABICase2.java",
+       "line": 13,
+       "labelled_primitive": "MD5",
+       "labelled_code": "MessageDigest md = MessageDigest.getInstance(crypto);",
+       "labelled_break_model": "grover",
+       "labelled_reason": "P1: MessageDigest.getInstance is given 'crypto', which holds algorithm 'MD5'",
+       "indramesh_names": [
+        "None"
+       ],
+       "indramesh_rule_ids": [
+        "None"
+       ],
+       "indramesh_match": [
+        null
+       ]
+      },
+      {
+       "file": "src/main/java/org/cryptoapi/bench/brokenhash/BrokenHashABICase2.java",
+       "line": 14,
+       "labelled_primitive": null,
+       "labelled_code": "md.update(str.getBytes());",
+       "labelled_break_model": "not-affected",
+       "labelled_reason": "operates on a primitive chosen elsewhere; names no primitive (counted positive only in sensitivity variant L2)",
+       "indramesh_names": [
+        "None"
+       ],
+       "indramesh_rule_ids": [
+        "None"
+       ],
+       "indramesh_match": [
+        null
+       ]
+      },
+      {
+       "file": "src/main/java/org/cryptoapi/bench/brokenhash/BrokenHashABICase3.java",
+       "line": 13,
+       "labelled_primitive": "MD4",
+       "labelled_code": "MessageDigest md = MessageDigest.getInstance(crypto);",
+       "labelled_break_model": "grover",
+       "labelled_reason": "P1: MessageDigest.getInstance is given 'crypto', which holds algorithm 'MD4'",
+       "indramesh_names": [
+        "None"
+       ],
+       "indramesh_rule_ids": [
+        "None"
+       ],
+       "indramesh_match": [
+        null
+       ]
+      },
+      {
+       "file": "src/main/java/org/cryptoapi/bench/brokenhash/BrokenHashABICase3.java",
+       "line": 14,
+       "labelled_primitive": null,
+       "labelled_code": "md.update(str.getBytes());",
+       "labelled_break_model": "not-affected",
+       "labelled_reason": "operates on a primitive chosen elsewhere; names no primitive (counted positive only in sensitivity variant L2)",
+       "indramesh_names": [
+        "None"
+       ],
+       "indramesh_rule_ids": [
+        "None"
+       ],
+       "indramesh_match": [
+        null
+       ]
+      },
+      {
+       "file": "src/main/java/org/cryptoapi/bench/brokenhash/BrokenHashABICase4.java",
+       "line": 13,
+       "labelled_primitive": "MD2",
+       "labelled_code": "MessageDigest md = MessageDigest.getInstance(crypto);",
+       "labelled_break_model": "grover",
+       "labelled_reason": "P1: MessageDigest.getInstance is given 'crypto', which holds algorithm 'MD2'",
+       "indramesh_names": [
+        "None"
+       ],
+       "indramesh_rule_ids": [
+        "None"
+       ],
+       "indramesh_match": [
+        null
+       ]
+      },
+      {
+       "file": "src/main/java/org/cryptoapi/bench/brokenhash/BrokenHashABICase4.java",
+       "line": 14,
+       "labelled_primitive": null,
+       "labelled_code": "md.update(str.getBytes());",
+       "labelled_break_model": "not-affected",
+       "labelled_reason": "operates on a primitive chosen elsewhere; names no primitive (counted positive only in sensitivity variant L2)",
+       "indramesh_names": [
+        "None"
+       ],
+       "indramesh_rule_ids": [
+        "None"
+       ],
+       "indramesh_match": [
+        null
+       ]
+      },
+      {
+       "file": "src/main/java/org/cryptoapi/bench/brokenhash/BrokenHashABICase5.java",
+       "line": 26,
+       "labelled_primitive": null,
+       "labelled_code": "md.update(str.getBytes());",
+       "labelled_break_model": "not-affected",
+       "labelled_reason": "operates on a primitive chosen elsewhere; names no primitive (counted positive only in sensitivity variant L2)",
+       "indramesh_names": [
+        "None"
+       ],
+       "indramesh_rule_ids": [
+        "None"
+       ],
+       "indramesh_match": [
+        null
+       ]
+      },
+      {
+       "file": "src/main/java/org/cryptoapi/bench/brokenhash/BrokenHashABICase6.java",
+       "line": 26,
+       "labelled_primitive": null,
+       "labelled_code": "md.update(str.getBytes());",
+       "labelled_break_model": "not-affected",
+       "labelled_reason": "operates on a primitive chosen elsewhere; names no primitive (counted positive only in sensitivity variant L2)",
+       "indramesh_names": [
+        "None"
+       ],
+       "indramesh_rule_ids": [
+        "None"
+       ],
+       "indramesh_match": [
+        null
+       ]
+      },
+      {
+       "file": "src/main/java/org/cryptoapi/bench/brokenhash/BrokenHashABICase7.java",
+       "line": 26,
+       "labelled_primitive": null,
+       "labelled_code": "md.update(str.getBytes());",
+       "labelled_break_model": "not-affected",
+       "labelled_reason": "operates on a primitive chosen elsewhere; names no primitive (counted positive only in sensitivity variant L2)",
+       "indramesh_names": [
+        "None"
+       ],
+       "indramesh_rule_ids": [
+        "None"
+       ],
+       "indramesh_match": [
+        null
+       ]
+      },
+      {
+       "file": "src/main/java/org/cryptoapi/bench/brokenhash/BrokenHashABICase8.java",
+       "line": 26,
+       "labelled_primitive": null,
+       "labelled_code": "md.update(str.getBytes());",
+       "labelled_break_model": "not-affected",
+       "labelled_reason": "operates on a primitive chosen elsewhere; names no primitive (counted positive only in sensitivity variant L2)",
+       "indramesh_names": [
+        "None"
+       ],
+       "indramesh_rule_ids": [
+        "None"
+       ],
+       "indramesh_match": [
+        null
+       ]
+      },
+      {
+       "file": "src/main/java/org/cryptoapi/bench/brokenhash/BrokenHashABICase9.java",
+       "line": 18,
+       "labelled_primitive": "SHA-1",
+       "labelled_code": "MessageDigest md = MessageDigest.getInstance(crypto);",
+       "labelled_break_model": "grover",
+       "labelled_reason": "P1: MessageDigest.getInstance is given 'crypto', which holds algorithm 'SHA1'",
+       "indramesh_names": [
+        "None"
+       ],
+       "indramesh_rule_ids": [
+        "None"
+       ],
+       "indramesh_match": [
+        null
+       ]
+      },
+      {
+       "file": "src/main/java/org/cryptoapi/bench/brokenhash/BrokenHashABICase9.java",
+       "line": 19,
+       "labelled_primitive": null,
+       "labelled_code": "md.update(str.getBytes());",
+       "labelled_break_model": "not-affected",
+       "labelled_reason": "operates on a primitive chosen elsewhere; names no primitive (counted positive only in sensitivity variant L2)",
+       "indramesh_names": [
+        "None"
+       ],
+       "indramesh_rule_ids": [
+        "None"
+       ],
+       "indramesh_match": [
+        null
+       ]
+      },
+      {
+       "file": "src/main/java/org/cryptoapi/bench/brokenhash/BrokenHashABMC1.java",
+       "line": 9,
+       "labelled_primitive": null,
+       "labelled_code": "md.update(str.getBytes());",
+       "labelled_break_model": "not-affected",
+       "labelled_reason": "operates on a primitive chosen elsewhere; names no primitive (counted positive only in sensitivity variant L2)",
+       "indramesh_names": [
+        "None"
+       ],
+       "indramesh_rule_ids": [
+        "None"
+       ],
+       "indramesh_match": [
+        null
+       ]
+      },
+      {
+       "file": "src/main/java/org/cryptoapi/bench/brokenhash/BrokenHashABMC2.java",
+       "line": 9,
+       "labelled_primitive": null,
+       "labelled_code": "md.update(str.getBytes());",
+       "labelled_break_model": "not-affected",
+       "labelled_reason": "operates on a primitive chosen elsewhere; names no primitive (counted positive only in sensitivity variant L2)",
+       "indramesh_names": [
+        "None"
+       ],
+       "indramesh_rule_ids": [
+        "None"
+       ],
+       "indramesh_match": [
+        null
+       ]
+      },
+      {
+       "file": "src/main/java/org/cryptoapi/bench/brokenhash/BrokenHashABMC3.java",
+       "line": 9,
+       "labelled_primitive": null,
+       "labelled_code": "md.update(str.getBytes());",
+       "labelled_break_model": "not-affected",
+       "labelled_reason": "operates on a primitive chosen elsewhere; names no primitive (counted positive only in sensitivity variant L2)",
+       "indramesh_names": [
+        "None"
+       ],
+       "indramesh_rule_ids": [
+        "None"
+       ],
+       "indramesh_match": [
+        null
+       ]
+      },
+      {
+       "file": "src/main/java/org/cryptoapi/bench/brokenhash/BrokenHashABMC4.java",
+       "line": 9,
+       "labelled_primitive": null,
+       "labelled_code": "md.update(str.getBytes());",
+       "labelled_break_model": "not-affected",
+       "labelled_reason": "operates on a primitive chosen elsewhere; names no primitive (counted positive only in sensitivity variant L2)",
+       "indramesh_names": [
+        "None"
+       ],
+       "indramesh_rule_ids": [
+        "None"
+       ],
+       "indramesh_match": [
+        null
+       ]
+      },
+      {
+       "file": "src/main/java/org/cryptoapi/bench/brokenhash/BrokenHashABPSCase1.java",
+       "line": 12,
+       "labelled_primitive": null,
+       "labelled_code": "md.update(name.getBytes());",
+       "labelled_break_model": "not-affected",
+       "labelled_reason": "operates on a primitive chosen elsewhere; names no primitive (counted positive only in sensitivity variant L2)",
+       "indramesh_names": [
+        "None"
+       ],
+       "indramesh_rule_ids": [
+        "None"
+       ],
+       "indramesh_match": [
+        null
+       ]
+      },
+      {
+       "file": "src/main/java/org/cryptoapi/bench/brokenhash/BrokenHashABPSCase2.java",
+       "line": 12,
+       "labelled_primitive": null,
+       "labelled_code": "md.update(name.getBytes());",
+       "labelled_break_model": "not-affected",
+       "labelled_reason": "operates on a primitive chosen elsewhere; names no primitive (counted positive only in sensitivity variant L2)",
+       "indramesh_names": [
+        "None"
+       ],
+       "indramesh_rule_ids": [
+        "None"
+       ],
+       "indramesh_match": [
+        null
+       ]
+      },
+      {
+       "file": "src/main/java/org/cryptoapi/bench/brokenhash/BrokenHashABPSCase3.java",
+       "line": 12,
+       "labelled_primitive": null,
+       "labelled_code": "md.update(name.getBytes());",
+       "labelled_break_model": "not-affected",
+       "labelled_reason": "operates on a primitive chosen elsewhere; names no primitive (counted positive only in sensitivity variant L2)",
+       "indramesh_names": [
+        "None"
+       ],
+       "indramesh_rule_ids": [
+        "None"
+       ],
+       "indramesh_match": [
+        null
+       ]
+      },
+      {
+       "file": "src/main/java/org/cryptoapi/bench/brokenhash/BrokenHashABPSCase4.java",
+       "line": 12,
+       "labelled_primitive": null,
+       "labelled_code": "md.update(name.getBytes());",
+       "labelled_break_model": "not-affected",
+       "labelled_reason": "operates on a primitive chosen elsewhere; names no primitive (counted positive only in sensitivity variant L2)",
+       "indramesh_names": [
+        "None"
+       ],
+       "indramesh_rule_ids": [
+        "None"
+       ],
+       "indramesh_match": [
+        null
+       ]
+      },
+      {
+       "file": "src/main/java/org/cryptoapi/bench/brokenhash/BrokenHashABSCase1.java",
+       "line": 12,
+       "labelled_primitive": "SHA-1",
+       "labelled_code": "crypto = new CryptoHash1(\"SHA1\");",
+       "labelled_break_model": "grover",
+       "labelled_reason": "P3: taint source -- binds 'crypto'='SHA1', which selects the cryptographic algorithm downstream",
+       "indramesh_names": [
+        "None"
+       ],
+       "indramesh_rule_ids": [
+        "None"
+       ],
+       "indramesh_match": [
+        null
+       ]
+      },
+      {
+       "file": "src/main/java/org/cryptoapi/bench/brokenhash/BrokenHashABSCase1.java",
+       "line": 29,
+       "labelled_primitive": "SHA-1",
+       "labelled_code": "MessageDigest md = MessageDigest.getInstance(crypto);",
+       "labelled_break_model": "grover",
+       "labelled_reason": "P1: MessageDigest.getInstance is given 'crypto', which holds algorithm 'SHA1'",
+       "indramesh_names": [
+        "None"
+       ],
+       "indramesh_rule_ids": [
+        "None"
+       ],
+       "indramesh_match": [
+        null
+       ]
+      },
+      {
+       "file": "src/main/java/org/cryptoapi/bench/brokenhash/BrokenHashABSCase1.java",
+       "line": 30,
+       "labelled_primitive": null,
+       "labelled_code": "md.update(str.getBytes());",
+       "labelled_break_model": "not-affected",
+       "labelled_reason": "operates on a primitive chosen elsewhere; names no primitive (counted positive only in sensitivity variant L2)",
+       "indramesh_names": [
+        "None"
+       ],
+       "indramesh_rule_ids": [
+        "None"
+       ],
+       "indramesh_match": [
+        null
+       ]
+      },
+      {
+       "file": "src/main/java/org/cryptoapi/bench/brokenhash/BrokenHashABSCase2.java",
+       "line": 14,
+       "labelled_primitive": "MD5",
+       "labelled_code": "crypto = new CryptoHash2(\"MD5\");",
+       "labelled_break_model": "grover",
+       "labelled_reason": "P3: taint source -- binds 'crypto'='MD5', which selects the cryptographic algorithm downstream",
+       "indramesh_names": [
+        "None"
+       ],
+       "indramesh_rule_ids": [
+        "None"
+       ],
+       "indramesh_match": [
+        null
+       ]
+      },
+      {
+       "file": "src/main/java/org/cryptoapi/bench/brokenhash/BrokenHashABSCase2.java",
+       "line": 31,
+       "labelled_primitive": "MD5",
+       "labelled_code": "MessageDigest md = MessageDigest.getInstance(crypto);",
+       "labelled_break_model": "grover",
+       "labelled_reason": "P1: MessageDigest.getInstance is given 'crypto', which holds algorithm 'MD5'",
+       "indramesh_names": [
+        "None"
+       ],
+       "indramesh_rule_ids": [
+        "None"
+       ],
+       "indramesh_match": [
+        null
+       ]
+      },
+      {
+       "file": "src/main/java/org/cryptoapi/bench/brokenhash/BrokenHashABSCase2.java",
+       "line": 32,
+       "labelled_primitive": null,
+       "labelled_code": "md.update(str.getBytes());",
+       "labelled_break_model": "not-affected",
+       "labelled_reason": "operates on a primitive chosen elsewhere; names no primitive (counted positive only in sensitivity variant L2)",
+       "indramesh_names": [
+        "None"
+       ],
+       "indramesh_rule_ids": [
+        "None"
+       ],
+       "indramesh_match": [
+        null
+       ]
+      },
+      {
+       "file": "src/main/java/org/cryptoapi/bench/brokenhash/BrokenHashABSCase3.java",
+       "line": 14,
+       "labelled_primitive": "MD4",
+       "labelled_code": "crypto = new CryptoHash3(\"MD4\");",
+       "labelled_break_model": "grover",
+       "labelled_reason": "P3: taint source -- binds 'crypto'='MD4', which selects the cryptographic algorithm downstream",
+       "indramesh_names": [
+        "None"
+       ],
+       "indramesh_rule_ids": [
+        "None"
+       ],
+       "indramesh_match": [
+        null
+       ]
+      },
+      {
+       "file": "src/main/java/org/cryptoapi/bench/brokenhash/BrokenHashABSCase3.java",
+       "line": 31,
+       "labelled_primitive": "MD4",
+       "labelled_code": "MessageDigest md = MessageDigest.getInstance(crypto);",
+       "labelled_break_model": "grover",
+       "labelled_reason": "P1: MessageDigest.getInstance is given 'crypto', which holds algorithm 'MD4'",
+       "indramesh_names": [
+        "None"
+       ],
+       "indramesh_rule_ids": [
+        "None"
+       ],
+       "indramesh_match": [
+        null
+       ]
+      },
+      {
+       "file": "src/main/java/org/cryptoapi/bench/brokenhash/BrokenHashABSCase3.java",
+       "line": 32,
+       "labelled_primitive": null,
+       "labelled_code": "md.update(str.getBytes());",
+       "labelled_break_model": "not-affected",
+       "labelled_reason": "operates on a primitive chosen elsewhere; names no primitive (counted positive only in sensitivity variant L2)",
+       "indramesh_names": [
+        "None"
+       ],
+       "indramesh_rule_ids": [
+        "None"
+       ],
+       "indramesh_match": [
+        null
+       ]
+      },
+      {
+       "file": "src/main/java/org/cryptoapi/bench/brokenhash/BrokenHashABSCase4.java",
+       "line": 14,
+       "labelled_primitive": "MD2",
+       "labelled_code": "crypto = new CryptoHash4(\"MD2\");",
+       "labelled_break_model": "grover",
+       "labelled_reason": "P3: taint source -- binds 'crypto'='MD2', which selects the cryptographic algorithm downstream",
+       "indramesh_names": [
+        "None"
+       ],
+       "indramesh_rule_ids": [
+        "None"
+       ],
+       "indramesh_match": [
+        null
+       ]
+      },
+      {
+       "file": "src/main/java/org/cryptoapi/bench/brokenhash/BrokenHashABSCase4.java",
+       "line": 31,
+       "labelled_primitive": "MD2",
+       "labelled_code": "MessageDigest md = MessageDigest.getInstance(crypto);",
+       "labelled_break_model": "grover",
+       "labelled_reason": "P1: MessageDigest.getInstance is given 'crypto', which holds algorithm 'MD2'",
+       "indramesh_names": [
+        "None"
+       ],
+       "indramesh_rule_ids": [
+        "None"
+       ],
+       "indramesh_match": [
+        null
+       ]
+      },
+      {
+       "file": "src/main/java/org/cryptoapi/bench/brokenhash/BrokenHashABSCase4.java",
+       "line": 32,
+       "labelled_primitive": null,
+       "labelled_code": "md.update(str.getBytes());",
+       "labelled_break_model": "not-affected",
+       "labelled_reason": "operates on a primitive chosen elsewhere; names no primitive (counted positive only in sensitivity variant L2)",
+       "indramesh_names": [
+        "None"
+       ],
+       "indramesh_rule_ids": [
+        "None"
+       ],
+       "indramesh_match": [
+        null
+       ]
+      },
+      {
+       "file": "src/main/java/org/cryptoapi/bench/brokenhash/BrokenHashBBCase1.java",
+       "line": 10,
+       "labelled_primitive": null,
+       "labelled_code": "md.update(name.getBytes());",
+       "labelled_break_model": "not-affected",
+       "labelled_reason": "operates on a primitive chosen elsewhere; names no primitive (counted positive only in sensitivity variant L2)",
+       "indramesh_names": [
+        "None"
+       ],
+       "indramesh_rule_ids": [
+        "None"
+       ],
+       "indramesh_match": [
+        null
+       ]
+      },
+      {
+       "file": "src/main/java/org/cryptoapi/bench/brokenhash/BrokenHashBBCase2.java",
+       "line": 10,
+       "labelled_primitive": null,
+       "labelled_code": "md.update(name.getBytes());",
+       "labelled_break_model": "not-affected",
+       "labelled_reason": "operates on a primitive chosen elsewhere; names no primitive (counted positive only in sensitivity variant L2)",
+       "indramesh_names": [
+        "None"
+       ],
+       "indramesh_rule_ids": [
+        "None"
+       ],
+       "indramesh_match": [
+        null
+       ]
+      },
+      {
+       "file": "src/main/java/org/cryptoapi/bench/brokenhash/BrokenHashBBCase3.java",
+       "line": 10,
+       "labelled_primitive": null,
+       "labelled_code": "md.update(name.getBytes());",
+       "labelled_break_model": "not-affected",
+       "labelled_reason": "operates on a primitive chosen elsewhere; names no primitive (counted positive only in sensitivity variant L2)",
+       "indramesh_names": [
+        "None"
+       ],
+       "indramesh_rule_ids": [
+        "None"
+       ],
+       "indramesh_match": [
+        null
+       ]
+      },
+      {
+       "file": "src/main/java/org/cryptoapi/bench/brokenhash/BrokenHashBBCase4.java",
+       "line": 10,
+       "labelled_primitive": null,
+       "labelled_code": "md.update(name.getBytes());",
+       "labelled_break_model": "not-affected",
+       "labelled_reason": "operates on a primitive chosen elsewhere; names no primitive (counted positive only in sensitivity variant L2)",
+       "indramesh_names": [
+        "None"
+       ],
+       "indramesh_rule_ids": [
+        "None"
+       ],
+       "indramesh_match": [
+        null
+       ]
+      },
+      {
+       "file": "src/main/java/org/cryptoapi/bench/brokenhash/BrokenHashCorrected.java",
+       "line": 11,
+       "labelled_primitive": null,
+       "labelled_code": "md.update(name.getBytes());",
+       "labelled_break_model": "not-affected",
+       "labelled_reason": "operates on a primitive chosen elsewhere; names no primitive (counted positive only in sensitivity variant L2)",
+       "indramesh_names": [
+        "None"
+       ],
+       "indramesh_rule_ids": [
+        "None"
+       ],
+       "indramesh_match": [
+        null
+       ]
+      },
+      {
+       "file": "src/main/java/org/cryptoapi/bench/brokenmac/BrokenMacBBCase1.java",
+       "line": 12,
+       "labelled_primitive": null,
+       "labelled_code": "keyGen.init(secRandom);",
+       "labelled_break_model": "not-affected",
+       "labelled_reason": "operates on a primitive chosen elsewhere; names no primitive (counted positive only in sensitivity variant L2)",
+       "indramesh_names": [
+        "None"
+       ],
+       "indramesh_rule_ids": [
+        "None"
+       ],
+       "indramesh_match": [
+        null
+       ]
+      },
+      {
+       "file": "src/main/java/org/cryptoapi/bench/brokenmac/BrokenMacBBCase1.java",
+       "line": 17,
+       "labelled_primitive": null,
+       "labelled_code": "mac.init(key);",
+       "labelled_break_model": "not-affected",
+       "labelled_reason": "operates on a primitive chosen elsewhere; names no primitive (counted positive only in sensitivity variant L2)",
+       "indramesh_names": [
+        "None"
+       ],
+       "indramesh_rule_ids": [
+        "None"
+       ],
+       "indramesh_match": [
+        null
+       ]
+      },
+      {
+       "file": "src/main/java/org/cryptoapi/bench/brokenmac/BrokenMacBBCase2.java",
+       "line": 12,
+       "labelled_primitive": null,
+       "labelled_code": "keyGen.init(secRandom);",
+       "labelled_break_model": "not-affected",
+       "labelled_reason": "operates on a primitive chosen elsewhere; names no primitive (counted positive only in sensitivity variant L2)",
+       "indramesh_names": [
+        "None"
+       ],
+       "indramesh_rule_ids": [
+        "None"
+       ],
+       "indramesh_match": [
+        null
+       ]
+      },
+      {
+       "file": "src/main/java/org/cryptoapi/bench/brokenmac/BrokenMacBBCase2.java",
+       "line": 17,
+       "labelled_primitive": null,
+       "labelled_code": "mac.init(key);",
+       "labelled_break_model": "not-affected",
+       "labelled_reason": "operates on a primitive chosen elsewhere; names no primitive (counted positive only in sensitivity variant L2)",
+       "indramesh_names": [
+        "None"
+       ],
+       "indramesh_rule_ids": [
+        "None"
+       ],
+       "indramesh_match": [
+        null
+       ]
+      },
+      {
+       "file": "src/main/java/org/cryptoapi/bench/brokenmac/BrokenMacCorrected.java",
+       "line": 12,
+       "labelled_primitive": null,
+       "labelled_code": "keyGen.init(secRandom);",
+       "labelled_break_model": "not-affected",
+       "labelled_reason": "operates on a primitive chosen elsewhere; names no primitive (counted positive only in sensitivity variant L2)",
+       "indramesh_names": [
+        "None"
+       ],
+       "indramesh_rule_ids": [
+        "None"
+       ],
+       "indramesh_match": [
+        null
+       ]
+      },
+      {
+       "file": "src/main/java/org/cryptoapi/bench/brokenmac/BrokenMacCorrected.java",
+       "line": 17,
+       "labelled_primitive": null,
+       "labelled_code": "mac.init(key);",
+       "labelled_break_model": "not-affected",
+       "labelled_reason": "operates on a primitive chosen elsewhere; names no primitive (counted positive only in sensitivity variant L2)",
+       "indramesh_names": [
+        "None"
+       ],
+       "indramesh_rule_ids": [
+        "None"
+       ],
+       "indramesh_match": [
+        null
+       ]
+      },
+      {
+       "file": "src/main/java/org/cryptoapi/bench/credentialinstring/CredentialInStringABSCase1.java",
+       "line": 40,
+       "labelled_primitive": "AES",
+       "labelled_code": "String algo = \"AES\";",
+       "labelled_break_model": "grover",
+       "labelled_reason": "P3: taint source -- binds 'algo'='AES', which selects the cryptographic algorithm downstream",
+       "indramesh_names": [
+        "None"
+       ],
+       "indramesh_rule_ids": [
+        "None"
+       ],
+       "indramesh_match": [
+        null
+       ]
+      },
+      {
+       "file": "src/main/java/org/cryptoapi/bench/credentialinstring/CredentialInStringABSCase1.java",
+       "line": 43,
+       "labelled_primitive": "AES",
+       "labelled_code": "cipher = Cipher.getInstance(algoSpec);",
+       "labelled_break_model": "grover",
+       "labelled_reason": "P1: Cipher.getInstance is given 'algoSpec', which holds algorithm 'AES/CBC/PKCS5Padding'",
+       "indramesh_names": [
+        "None"
+       ],
+       "indramesh_rule_ids": [
+        "None"
+       ],
+       "indramesh_match": [
+        null
+       ]
+      },
+      {
+       "file": "src/main/java/org/cryptoapi/bench/credentialinstring/CredentialInStringABSCase1.java",
+       "line": 55,
+       "labelled_primitive": "AES",
+       "labelled_code": "SecretKeySpec keySpec = new SecretKeySpec(keyBytes,algo);",
+       "labelled_break_model": "grover",
+       "labelled_reason": "P2: SecretKeySpec algorithm argument 'algo' holds 'AES'",
+       "indramesh_names": [
+        "None"
+       ],
+       "indramesh_rule_ids": [
+        "None"
+       ],
+       "indramesh_match": [
+        null
+       ]
+      },
+      {
+       "file": "src/main/java/org/cryptoapi/bench/credentialinstring/CredentialInStringABSCase1.java",
+       "line": 56,
+       "labelled_primitive": null,
+       "labelled_code": "cipher.init(Cipher.ENCRYPT_MODE,keySpec);",
+       "labelled_break_model": "not-affected",
+       "labelled_reason": "operates on a primitive chosen elsewhere; names no primitive (counted positive only in sensitivity variant L2)",
+       "indramesh_names": [
+        "None"
+       ],
+       "indramesh_rule_ids": [
+        "None"
+       ],
+       "indramesh_match": [
+        null
+       ]
+      },
+      {
+       "file": "src/main/java/org/cryptoapi/bench/credentialinstring/CredentialInStringABSCase1.java",
+       "line": 57,
+       "labelled_primitive": null,
+       "labelled_code": "return cipher.doFinal(txtBytes);",
+       "labelled_break_model": "not-affected",
+       "labelled_reason": "operates on a primitive chosen elsewhere; names no primitive (counted positive only in sensitivity variant L2)",
+       "indramesh_names": [
+        "None"
+       ],
+       "indramesh_rule_ids": [
+        "None"
+       ],
+       "indramesh_match": [
+        null
+       ]
+      },
+      {
+       "file": "src/main/java/org/cryptoapi/bench/credentialinstring/CredentialInStringBBCase1.java",
+       "line": 23,
+       "labelled_primitive": null,
+       "labelled_code": "cipher.init(Cipher.ENCRYPT_MODE, keySpec);",
+       "labelled_break_model": "not-affected",
+       "labelled_reason": "operates on a primitive chosen elsewhere; names no primitive (counted positive only in sensitivity variant L2)",
+       "indramesh_names": [
+        "None"
+       ],
+       "indramesh_rule_ids": [
+        "None"
+       ],
+       "indramesh_match": [
+        null
+       ]
+      },
+      {
+       "file": "src/main/java/org/cryptoapi/bench/credentialinstring/CredentialInStringCorrected.java",
+       "line": 22,
+       "labelled_primitive": null,
+       "labelled_code": "cipher.init(Cipher.ENCRYPT_MODE, keySpec);",
+       "labelled_break_model": "not-affected",
+       "labelled_reason": "operates on a primitive chosen elsewhere; names no primitive (counted positive only in sensitivity variant L2)",
+       "indramesh_names": [
+        "None"
+       ],
+       "indramesh_rule_ids": [
+        "None"
+       ],
+       "indramesh_match": [
+        null
+       ]
+      },
+      {
+       "file": "src/main/java/org/cryptoapi/bench/ecbcrypto/EcbInSymmCryptoABICase1.java",
+       "line": 14,
+       "labelled_primitive": "AES",
+       "labelled_code": "Cipher cipher = Cipher.getInstance(crypto);",
+       "labelled_break_model": "grover",
+       "labelled_reason": "P1: Cipher.getInstance is given 'crypto', which holds algorithm 'AES/ECB/PKCS5Padding'",
+       "indramesh_names": [
+        "None"
+       ],
+       "indramesh_rule_ids": [
+        "None"
+       ],
+       "indramesh_match": [
+        null
+       ]
+      },
+      {
+       "file": "src/main/java/org/cryptoapi/bench/ecbcrypto/EcbInSymmCryptoABICase1.java",
+       "line": 15,
+       "labelled_primitive": null,
+       "labelled_code": "cipher.init(Cipher.ENCRYPT_MODE, key);",
+       "labelled_break_model": "not-affected",
+       "labelled_reason": "operates on a primitive chosen elsewhere; names no primitive (counted positive only in sensitivity variant L2)",
+       "indramesh_names": [
+        "None"
+       ],
+       "indramesh_rule_ids": [
+        "None"
+       ],
+       "indramesh_match": [
+        null
+       ]
+      },
+      {
+       "file": "src/main/java/org/cryptoapi/bench/ecbcrypto/EcbInSymmCryptoABICase2.java",
+       "line": 18,
+       "labelled_primitive": null,
+       "labelled_code": "cipher.init(Cipher.ENCRYPT_MODE, key);",
+       "labelled_break_model": "not-affected",
+       "labelled_reason": "operates on a primitive chosen elsewhere; names no primitive (counted positive only in sensitivity variant L2)",
+       "indramesh_names": [
+        "None"
+       ],
+       "indramesh_rule_ids": [
+        "None"
+       ],
+       "indramesh_match": [
+        null
+       ]
+      },
+      {
+       "file": "src/main/java/org/cryptoapi/bench/ecbcrypto/EcbInSymmCryptoABICase3.java",
+       "line": 18,
+       "labelled_primitive": "AES",
+       "labelled_code": "Cipher cipher = Cipher.getInstance(crypto);",
+       "labelled_break_model": "grover",
+       "labelled_reason": "P1: Cipher.getInstance is given 'crypto', which holds algorithm 'AES/ECB/PKCS5Padding'",
+       "indramesh_names": [
+        "None"
+       ],
+       "indramesh_rule_ids": [
+        "None"
+       ],
+       "indramesh_match": [
+        null
+       ]
+      },
+      {
+       "file": "src/main/java/org/cryptoapi/bench/ecbcrypto/EcbInSymmCryptoABICase3.java",
+       "line": 19,
+       "labelled_primitive": null,
+       "labelled_code": "cipher.init(Cipher.ENCRYPT_MODE, key);",
+       "labelled_break_model": "not-affected",
+       "labelled_reason": "operates on a primitive chosen elsewhere; names no primitive (counted positive only in sensitivity variant L2)",
+       "indramesh_names": [
+        "None"
+       ],
+       "indramesh_rule_ids": [
+        "None"
+       ],
+       "indramesh_match": [
+        null
+       ]
+      },
+      {
+       "file": "src/main/java/org/cryptoapi/bench/ecbcrypto/EcbInSymmCryptoABMC1.java",
+       "line": 16,
+       "labelled_primitive": null,
+       "labelled_code": "cipher.init(Cipher.ENCRYPT_MODE, key);",
+       "labelled_break_model": "not-affected",
+       "labelled_reason": "operates on a primitive chosen elsewhere; names no primitive (counted positive only in sensitivity variant L2)",
+       "indramesh_names": [
+        "None"
+       ],
+       "indramesh_rule_ids": [
+        "None"
+       ],
+       "indramesh_match": [
+        null
+       ]
+      },
+      {
+       "file": "src/main/java/org/cryptoapi/bench/ecbcrypto/EcbInSymmCryptoABPSCase1.java",
+       "line": 16,
+       "labelled_primitive": null,
+       "labelled_code": "cipher.init(Cipher.ENCRYPT_MODE, key);",
+       "labelled_break_model": "not-affected",
+       "labelled_reason": "operates on a primitive chosen elsewhere; names no primitive (counted positive only in sensitivity variant L2)",
+       "indramesh_names": [
+        "None"
+       ],
+       "indramesh_rule_ids": [
+        "None"
+       ],
+       "indramesh_match": [
+        null
+       ]
+      },
+      {
+       "file": "src/main/java/org/cryptoapi/bench/ecbcrypto/EcbInSymmCryptoABSCase1.java",
+       "line": 35,
+       "labelled_primitive": null,
+       "labelled_code": "cipher.init(Cipher.ENCRYPT_MODE, key);",
+       "labelled_break_model": "not-affected",
+       "labelled_reason": "operates on a primitive chosen elsewhere; names no primitive (counted positive only in sensitivity variant L2)",
+       "indramesh_names": [
+        "None"
+       ],
+       "indramesh_rule_ids": [
+        "None"
+       ],
+       "indramesh_match": [
+        null
+       ]
+      },
+      {
+       "file": "src/main/java/org/cryptoapi/bench/ecbcrypto/EcbInSymmCryptoBBCase1.java",
+       "line": 15,
+       "labelled_primitive": null,
+       "labelled_code": "cipher.init(Cipher.ENCRYPT_MODE, key);",
+       "labelled_break_model": "not-affected",
+       "labelled_reason": "operates on a primitive chosen elsewhere; names no primitive (counted positive only in sensitivity variant L2)",
+       "indramesh_names": [
+        "None"
+       ],
+       "indramesh_rule_ids": [
+        "None"
+       ],
+       "indramesh_match": [
+        null
+       ]
+      },
+      {
+       "file": "src/main/java/org/cryptoapi/bench/ecbcrypto/EcbInSymmCryptoCorrected.java",
+       "line": 15,
+       "labelled_primitive": null,
+       "labelled_code": "cipher.init(Cipher.ENCRYPT_MODE, key);",
+       "labelled_break_model": "not-affected",
+       "labelled_reason": "operates on a primitive chosen elsewhere; names no primitive (counted positive only in sensitivity variant L2)",
+       "indramesh_names": [
+        "None"
+       ],
+       "indramesh_rule_ids": [
+        "None"
+       ],
+       "indramesh_match": [
+        null
+       ]
+      },
+      {
+       "file": "src/main/java/org/cryptoapi/bench/insecureasymmetriccrypto/InsecureAsymmetricCipherABICase1.java",
+       "line": 17,
+       "labelled_primitive": null,
+       "labelled_code": "cipher.init(Cipher.ENCRYPT_MODE, kp.getPublic());",
+       "labelled_break_model": "not-affected",
+       "labelled_reason": "operates on a primitive chosen elsewhere; names no primitive (counted positive only in sensitivity variant L2)",
+       "indramesh_names": [
+        "None"
+       ],
+       "indramesh_rule_ids": [
+        "None"
+       ],
+       "indramesh_match": [
+        null
+       ]
+      },
+      {
+       "file": "src/main/java/org/cryptoapi/bench/insecureasymmetriccrypto/InsecureAsymmetricCipherABICase1.java",
+       "line": 25,
+       "labelled_primitive": null,
+       "labelled_code": "dec.init(Cipher.DECRYPT_MODE, kp.getPrivate());",
+       "labelled_break_model": "not-affected",
+       "labelled_reason": "operates on a primitive chosen elsewhere; names no primitive (counted positive only in sensitivity variant L2)",
+       "indramesh_names": [
+        "None"
+       ],
+       "indramesh_rule_ids": [
+        "None"
+       ],
+       "indramesh_match": [
+        null
+       ]
+      },
+      {
+       "file": "src/main/java/org/cryptoapi/bench/insecureasymmetriccrypto/InsecureAsymmetricCipherABICase2.java",
+       "line": 17,
+       "labelled_primitive": null,
+       "labelled_code": "cipher.init(Cipher.ENCRYPT_MODE, kp.getPublic());",
+       "labelled_break_model": "not-affected",
+       "labelled_reason": "operates on a primitive chosen elsewhere; names no primitive (counted positive only in sensitivity variant L2)",
+       "indramesh_names": [
+        "None"
+       ],
+       "indramesh_rule_ids": [
+        "None"
+       ],
+       "indramesh_match": [
+        null
+       ]
+      },
+      {
+       "file": "src/main/java/org/cryptoapi/bench/insecureasymmetriccrypto/InsecureAsymmetricCipherABICase2.java",
+       "line": 25,
+       "labelled_primitive": null,
+       "labelled_code": "dec.init(Cipher.DECRYPT_MODE, kp.getPrivate());",
+       "labelled_break_model": "not-affected",
+       "labelled_reason": "operates on a primitive chosen elsewhere; names no primitive (counted positive only in sensitivity variant L2)",
+       "indramesh_names": [
+        "None"
+       ],
+       "indramesh_rule_ids": [
+        "None"
+       ],
+       "indramesh_match": [
+        null
+       ]
+      },
+      {
+       "file": "src/main/java/org/cryptoapi/bench/insecureasymmetriccrypto/InsecureAsymmetricCipherABICase3.java",
+       "line": 24,
+       "labelled_primitive": null,
+       "labelled_code": "cipher.init(Cipher.ENCRYPT_MODE, kp.getPublic());",
+       "labelled_break_model": "not-affected",
+       "labelled_reason": "operates on a primitive chosen elsewhere; names no primitive (counted positive only in sensitivity variant L2)",
+       "indramesh_names": [
+        "None"
+       ],
+       "indramesh_rule_ids": [
+        "None"
+       ],
+       "indramesh_match": [
+        null
+       ]
+      },
+      {
+       "file": "src/main/java/org/cryptoapi/bench/insecureasymmetriccrypto/InsecureAsymmetricCipherABICase3.java",
+       "line": 32,
+       "labelled_primitive": null,
+       "labelled_code": "dec.init(Cipher.DECRYPT_MODE, kp.getPrivate());",
+       "labelled_break_model": "not-affected",
+       "labelled_reason": "operates on a primitive chosen elsewhere; names no primitive (counted positive only in sensitivity variant L2)",
+       "indramesh_names": [
+        "None"
+       ],
+       "indramesh_rule_ids": [
+        "None"
+       ],
+       "indramesh_match": [
+        null
+       ]
+      },
+      {
+       "file": "src/main/java/org/cryptoapi/bench/insecureasymmetriccrypto/InsecureAsymmetricCipherABMC1.java",
+       "line": 19,
+       "labelled_primitive": null,
+       "labelled_code": "cipher.init(Cipher.ENCRYPT_MODE, kp.getPublic());",
+       "labelled_break_model": "not-affected",
+       "labelled_reason": "operates on a primitive chosen elsewhere; names no primitive (counted positive only in sensitivity variant L2)",
+       "indramesh_names": [
+        "None"
+       ],
+       "indramesh_rule_ids": [
+        "None"
+       ],
+       "indramesh_match": [
+        null
+       ]
+      },
+      {
+       "file": "src/main/java/org/cryptoapi/bench/insecureasymmetriccrypto/InsecureAsymmetricCipherABMC1.java",
+       "line": 26,
+       "labelled_primitive": null,
+       "labelled_code": "dec.init(Cipher.DECRYPT_MODE, kp.getPrivate());",
+       "labelled_break_model": "not-affected",
+       "labelled_reason": "operates on a primitive chosen elsewhere; names no primitive (counted positive only in sensitivity variant L2)",
+       "indramesh_names": [
+        "None"
+       ],
+       "indramesh_rule_ids": [
+        "None"
+       ],
+       "indramesh_match": [
+        null
+       ]
+      },
+      {
+       "file": "src/main/java/org/cryptoapi/bench/insecureasymmetriccrypto/InsecureAsymmetricCipherABPSCase1.java",
+       "line": 21,
+       "labelled_primitive": null,
+       "labelled_code": "cipher.init(Cipher.ENCRYPT_MODE, kp.getPublic());",
+       "labelled_break_model": "not-affected",
+       "labelled_reason": "operates on a primitive chosen elsewhere; names no primitive (counted positive only in sensitivity variant L2)",
+       "indramesh_names": [
+        "None"
+       ],
+       "indramesh_rule_ids": [
+        "None"
+       ],
+       "indramesh_match": [
+        null
+       ]
+      },
+      {
+       "file": "src/main/java/org/cryptoapi/bench/insecureasymmetriccrypto/InsecureAsymmetricCipherBBCase1.java",
+       "line": 16,
+       "labelled_primitive": null,
+       "labelled_code": "cipher.init(Cipher.ENCRYPT_MODE, kp.getPublic());",
+       "labelled_break_model": "not-affected",
+       "labelled_reason": "operates on a primitive chosen elsewhere; names no primitive (counted positive only in sensitivity variant L2)",
+       "indramesh_names": [
+        "None"
+       ],
+       "indramesh_rule_ids": [
+        "None"
+       ],
+       "indramesh_match": [
+        null
+       ]
+      },
+      {
+       "file": "src/main/java/org/cryptoapi/bench/insecureasymmetriccrypto/InsecureAsymmetricCipherBBCase1.java",
+       "line": 24,
+       "labelled_primitive": null,
+       "labelled_code": "dec.init(Cipher.DECRYPT_MODE, kp.getPrivate());",
+       "labelled_break_model": "not-affected",
+       "labelled_reason": "operates on a primitive chosen elsewhere; names no primitive (counted positive only in sensitivity variant L2)",
+       "indramesh_names": [
+        "None"
+       ],
+       "indramesh_rule_ids": [
+        "None"
+       ],
+       "indramesh_match": [
+        null
+       ]
+      },
+      {
+       "file": "src/main/java/org/cryptoapi/bench/predictablecryptographickey/PredictableCryptographicKeyABSCase1.java",
+       "line": 40,
+       "labelled_primitive": "AES",
+       "labelled_code": "String algo = \"AES\";",
+       "labelled_break_model": "grover",
+       "labelled_reason": "P3: taint source -- binds 'algo'='AES', which selects the cryptographic algorithm downstream",
+       "indramesh_names": [
+        "None"
+       ],
+       "indramesh_rule_ids": [
+        "None"
+       ],
+       "indramesh_match": [
+        null
+       ]
+      },
+      {
+       "file": "src/main/java/org/cryptoapi/bench/predictablecryptographickey/PredictableCryptographicKeyABSCase1.java",
+       "line": 43,
+       "labelled_primitive": "AES",
+       "labelled_code": "cipher = Cipher.getInstance(algoSpec);",
+       "labelled_break_model": "grover",
+       "labelled_reason": "P1: Cipher.getInstance is given 'algoSpec', which holds algorithm 'AES/CBC/PKCS5Padding'",
+       "indramesh_names": [
+        "None"
+       ],
+       "indramesh_rule_ids": [
+        "None"
+       ],
+       "indramesh_match": [
+        null
+       ]
+      },
+      {
+       "file": "src/main/java/org/cryptoapi/bench/predictablecryptographickey/PredictableCryptographicKeyABSCase1.java",
+       "line": 55,
+       "labelled_primitive": "AES",
+       "labelled_code": "SecretKeySpec keySpec = new SecretKeySpec(keyBytes,algo);",
+       "labelled_break_model": "grover",
+       "labelled_reason": "P2: SecretKeySpec algorithm argument 'algo' holds 'AES'",
+       "indramesh_names": [
+        "None"
+       ],
+       "indramesh_rule_ids": [
+        "None"
+       ],
+       "indramesh_match": [
+        null
+       ]
+      },
+      {
+       "file": "src/main/java/org/cryptoapi/bench/predictablecryptographickey/PredictableCryptographicKeyABSCase1.java",
+       "line": 56,
+       "labelled_primitive": null,
+       "labelled_code": "cipher.init(Cipher.ENCRYPT_MODE,keySpec);",
+       "labelled_break_model": "not-affected",
+       "labelled_reason": "operates on a primitive chosen elsewhere; names no primitive (counted positive only in sensitivity variant L2)",
+       "indramesh_names": [
+        "None"
+       ],
+       "indramesh_rule_ids": [
+        "None"
+       ],
+       "indramesh_match": [
+        null
+       ]
+      },
+      {
+       "file": "src/main/java/org/cryptoapi/bench/predictablecryptographickey/PredictableCryptographicKeyABSCase1.java",
+       "line": 57,
+       "labelled_primitive": null,
+       "labelled_code": "return cipher.doFinal(txtBytes);",
+       "labelled_break_model": "not-affected",
+       "labelled_reason": "operates on a primitive chosen elsewhere; names no primitive (counted positive only in sensitivity variant L2)",
+       "indramesh_names": [
+        "None"
+       ],
+       "indramesh_rule_ids": [
+        "None"
+       ],
+       "indramesh_match": [
+        null
+       ]
+      },
+      {
+       "file": "src/main/java/org/cryptoapi/bench/predictablecryptographickey/PredictableCryptographicKeyCorrected.java",
+       "line": 22,
+       "labelled_primitive": null,
+       "labelled_code": "cipher.init(Cipher.ENCRYPT_MODE, keySpec);",
+       "labelled_break_model": "not-affected",
+       "labelled_reason": "operates on a primitive chosen elsewhere; names no primitive (counted positive only in sensitivity variant L2)",
+       "indramesh_names": [
+        "None"
+       ],
+       "indramesh_rule_ids": [
+        "None"
+       ],
+       "indramesh_match": [
+        null
+       ]
+      },
+      {
+       "file": "src/main/java/org/cryptoapi/bench/staticinitializationvector/StaticInitializationVectorABHCase1.java",
+       "line": 23,
+       "labelled_primitive": null,
+       "labelled_code": "cipher.init(Cipher.ENCRYPT_MODE,key,ivSpec);",
+       "labelled_break_model": "not-affected",
+       "labelled_reason": "operates on a primitive chosen elsewhere; names no primitive (counted positive only in sensitivity variant L2)",
+       "indramesh_names": [
+        "None"
+       ],
+       "indramesh_rule_ids": [
+        "None"
+       ],
+       "indramesh_match": [
+        null
+       ]
+      },
+      {
+       "file": "src/main/java/org/cryptoapi/bench/staticinitializationvector/StaticInitializationVectorABHCase2.java",
+       "line": 33,
+       "labelled_primitive": null,
+       "labelled_code": "cipher.init(Cipher.ENCRYPT_MODE,key,ivSpec);",
+       "labelled_break_model": "not-affected",
+       "labelled_reason": "operates on a primitive chosen elsewhere; names no primitive (counted positive only in sensitivity variant L2)",
+       "indramesh_names": [
+        "None"
+       ],
+       "indramesh_rule_ids": [
+        "None"
+       ],
+       "indramesh_match": [
+        null
+       ]
+      },
+      {
+       "file": "src/main/java/org/cryptoapi/bench/staticinitializationvector/StaticInitializationVectorABICase1.java",
+       "line": 17,
+       "labelled_primitive": null,
+       "labelled_code": "cipher.init(Cipher.ENCRYPT_MODE,key,ivSpec);",
+       "labelled_break_model": "not-affected",
+       "labelled_reason": "operates on a primitive chosen elsewhere; names no primitive (counted positive only in sensitivity variant L2)",
+       "indramesh_names": [
+        "None"
+       ],
+       "indramesh_rule_ids": [
+        "None"
+       ],
+       "indramesh_match": [
+        null
+       ]
+      },
+      {
+       "file": "src/main/java/org/cryptoapi/bench/staticinitializationvector/StaticInitializationVectorABICase2.java",
+       "line": 22,
+       "labelled_primitive": null,
+       "labelled_code": "cipher.init(Cipher.ENCRYPT_MODE,key,ivSpec);",
+       "labelled_break_model": "not-affected",
+       "labelled_reason": "operates on a primitive chosen elsewhere; names no primitive (counted positive only in sensitivity variant L2)",
+       "indramesh_names": [
+        "None"
+       ],
+       "indramesh_rule_ids": [
+        "None"
+       ],
+       "indramesh_match": [
+        null
+       ]
+      },
+      {
+       "file": "src/main/java/org/cryptoapi/bench/staticinitializationvector/StaticInitializationVectorABICase3.java",
+       "line": 17,
+       "labelled_primitive": null,
+       "labelled_code": "cipher.init(Cipher.ENCRYPT_MODE,key,ivSpec);",
+       "labelled_break_model": "not-affected",
+       "labelled_reason": "operates on a primitive chosen elsewhere; names no primitive (counted positive only in sensitivity variant L2)",
+       "indramesh_names": [
+        "None"
+       ],
+       "indramesh_rule_ids": [
+        "None"
+       ],
+       "indramesh_match": [
+        null
+       ]
+      },
+      {
+       "file": "src/main/java/org/cryptoapi/bench/staticinitializationvector/StaticInitializationVectorABMC1.java",
+       "line": 19,
+       "labelled_primitive": null,
+       "labelled_code": "cipher.init(Cipher.ENCRYPT_MODE,key,ivSpec);",
+       "labelled_break_model": "not-affected",
+       "labelled_reason": "operates on a primitive chosen elsewhere; names no primitive (counted positive only in sensitivity variant L2)",
+       "indramesh_names": [
+        "None"
+       ],
+       "indramesh_rule_ids": [
+        "None"
+       ],
+       "indramesh_match": [
+        null
+       ]
+      },
+      {
+       "file": "src/main/java/org/cryptoapi/bench/staticinitializationvector/StaticInitializationVectorABPSCase1.java",
+       "line": 26,
+       "labelled_primitive": null,
+       "labelled_code": "cipher.init(Cipher.ENCRYPT_MODE,key,ivSpec);",
+       "labelled_break_model": "not-affected",
+       "labelled_reason": "operates on a primitive chosen elsewhere; names no primitive (counted positive only in sensitivity variant L2)",
+       "indramesh_names": [
+        "None"
+       ],
+       "indramesh_rule_ids": [
+        "None"
+       ],
+       "indramesh_match": [
+        null
+       ]
+      },
+      {
+       "file": "src/main/java/org/cryptoapi/bench/staticinitializationvector/StaticInitializationVectorABSCase1.java",
+       "line": 36,
+       "labelled_primitive": null,
+       "labelled_code": "cipher.init(Cipher.ENCRYPT_MODE,key,ivSpec);",
+       "labelled_break_model": "not-affected",
+       "labelled_reason": "operates on a primitive chosen elsewhere; names no primitive (counted positive only in sensitivity variant L2)",
+       "indramesh_names": [
+        "None"
+       ],
+       "indramesh_rule_ids": [
+        "None"
+       ],
+       "indramesh_match": [
+        null
+       ]
+      },
+      {
+       "file": "src/main/java/org/cryptoapi/bench/staticinitializationvector/StaticInitializationVectorBBCase1.java",
+       "line": 20,
+       "labelled_primitive": null,
+       "labelled_code": "cipher.init(Cipher.ENCRYPT_MODE,key,ivSpec);",
+       "labelled_break_model": "not-affected",
+       "labelled_reason": "operates on a primitive chosen elsewhere; names no primitive (counted positive only in sensitivity variant L2)",
+       "indramesh_names": [
+        "None"
+       ],
+       "indramesh_rule_ids": [
+        "None"
+       ],
+       "indramesh_match": [
+        null
+       ]
+      },
+      {
+       "file": "src/main/java/org/cryptoapi/bench/staticinitializationvector/StaticInitializationVectorCorrected.java",
+       "line": 17,
+       "labelled_primitive": "AES",
+       "labelled_code": "KeyGenerator keyGen = KeyGenerator.getInstance(\"AES\");",
+       "labelled_break_model": "grover",
+       "labelled_reason": "P1: KeyGenerator.getInstance selects algorithm 'AES'",
+       "indramesh_names": [
+        "None"
+       ],
+       "indramesh_rule_ids": [
+        "None"
+       ],
+       "indramesh_match": [
+        null
+       ]
+      },
+      {
+       "file": "src/main/java/org/cryptoapi/bench/staticinitializationvector/StaticInitializationVectorCorrected.java",
+       "line": 19,
+       "labelled_primitive": "AES",
+       "labelled_code": "Cipher cipher = Cipher.getInstance(\"AES/CBC/PKCS5Padding\");",
+       "labelled_break_model": "grover",
+       "labelled_reason": "P1: Cipher.getInstance selects algorithm 'AES/CBC/PKCS5Padding'",
+       "indramesh_names": [
+        "None"
+       ],
+       "indramesh_rule_ids": [
+        "None"
+       ],
+       "indramesh_match": [
+        null
+       ]
+      },
+      {
+       "file": "src/main/java/org/cryptoapi/bench/staticinitializationvector/StaticInitializationVectorCorrected.java",
+       "line": 27,
+       "labelled_primitive": null,
+       "labelled_code": "cipher.init(Cipher.ENCRYPT_MODE,key,ivSpec);",
+       "labelled_break_model": "not-affected",
+       "labelled_reason": "operates on a primitive chosen elsewhere; names no primitive (counted positive only in sensitivity variant L2)",
+       "indramesh_names": [
+        "None"
+       ],
+       "indramesh_rule_ids": [
+        "None"
+       ],
+       "indramesh_match": [
+        null
+       ]
+      },
+      {
+       "file": "src/main/java/org/cryptoapi/bench/staticinitializationvector/StaticInitializationVectorCorrected.java",
+       "line": 50,
+       "labelled_primitive": null,
+       "labelled_code": "cipher.init(Cipher.ENCRYPT_MODE,key,ivSpec);",
+       "labelled_break_model": "not-affected",
+       "labelled_reason": "operates on a primitive chosen elsewhere; names no primitive (counted positive only in sensitivity variant L2)",
+       "indramesh_names": [
+        "None"
+       ],
+       "indramesh_rule_ids": [
+        "None"
+       ],
+       "indramesh_match": [
+        null
+       ]
+      }
+     ],
+     "file_level": {
+      "counts": {
+       "TP": 106,
+       "FP": 1,
+       "FN": 13,
+       "labelled_positive_files": 119
+      },
+      "precision": 0.9907,
+      "precision_fraction": "106/107",
+      "recall": 0.8908,
+      "recall_fraction": "106/119",
+      "false_positive_files": [
+       "src/main/java/org/cryptoapi/bench/untrustedprng/UntrustedPRNGCase1.java"
+      ],
+      "false_negative_files": [
+       "src/main/java/org/cryptoapi/bench/brokencrypto/BrokenCryptoABMC1.java",
+       "src/main/java/org/cryptoapi/bench/brokencrypto/BrokenCryptoABMC2.java",
+       "src/main/java/org/cryptoapi/bench/brokencrypto/BrokenCryptoABMC3.java",
+       "src/main/java/org/cryptoapi/bench/brokencrypto/BrokenCryptoABMC4.java",
+       "src/main/java/org/cryptoapi/bench/brokencrypto/BrokenCryptoABMC5.java",
+       "src/main/java/org/cryptoapi/bench/brokenhash/BrokenHashABMC1.java",
+       "src/main/java/org/cryptoapi/bench/brokenhash/BrokenHashABMC2.java",
+       "src/main/java/org/cryptoapi/bench/brokenhash/BrokenHashABMC3.java",
+       "src/main/java/org/cryptoapi/bench/brokenhash/BrokenHashABMC4.java",
+       "src/main/java/org/cryptoapi/bench/brokenhash/BrokenHashABSCase1.java",
+       "src/main/java/org/cryptoapi/bench/brokenhash/BrokenHashABSCase2.java",
+       "src/main/java/org/cryptoapi/bench/brokenhash/BrokenHashABSCase3.java",
+       "src/main/java/org/cryptoapi/bench/brokenhash/BrokenHashABSCase4.java"
+      ]
+     },
+     "by_primitive": {
+      "AES (grover)": {
+       "labelled": 82,
+       "detected": 72,
+       "recall": 0.878
+      },
+      "Blowfish (grover)": {
+       "labelled": 12,
+       "detected": 8,
+       "recall": 0.6667
+      },
+      "DES (grover)": {
+       "labelled": 15,
+       "detected": 12,
+       "recall": 0.8
+      },
+      "HMAC (grover)": {
+       "labelled": 3,
+       "detected": 3,
+       "recall": 1.0
+      },
+      "IDEA (grover)": {
+       "labelled": 12,
+       "detected": 8,
+       "recall": 0.6667
+      },
+      "MD2 (grover)": {
+       "labelled": 10,
+       "detected": 6,
+       "recall": 0.6
+      },
+      "MD4 (grover)": {
+       "labelled": 10,
+       "detected": 6,
+       "recall": 0.6
+      },
+      "MD5 (grover)": {
+       "labelled": 10,
+       "detected": 6,
+       "recall": 0.6
+      },
+      "None (not-affected)": {
+       "labelled": 113,
+       "detected": 0,
+       "recall": 0.0
+      },
+      "RC2 (grover)": {
+       "labelled": 12,
+       "detected": 8,
+       "recall": 0.6667
+      },
+      "RC4 (grover)": {
+       "labelled": 12,
+       "detected": 8,
+       "recall": 0.6667
+      },
+      "RSA (shor)": {
+       "labelled": 17,
+       "detected": 17,
+       "recall": 1.0
+      },
+      "SHA-1 (grover)": {
+       "labelled": 10,
+       "detected": 6,
+       "recall": 0.6
+      },
+      "SHA-256 (grover)": {
+       "labelled": 5,
+       "detected": 5,
+       "recall": 1.0
+      }
+     }
+    }
+   }
+  },
+  {
+   "corpus": "xcrypto_ssh_algorithms",
+   "corpus_kind": "external",
+   "corpus_url": "https://github.com/golang/crypto.git",
+   "corpus_pinned_commit": "7a4a4d6beae2222add4437a0910bd48414e19211",
+   "citation": "golang.org/x/crypto -- Go's official cryptography library. https://github.com/golang/crypto",
+   "corpus_notes": "Real production library, not a constructed benchmark. N NARROW scope: three hand-read files from the ssh/ package (the cipher, MAC and ML-KEM algorithm tables). Chosen because they enumerate the algorithm surface, and because they are the only files in the package that have been read in full. The other 28 non-test files in ssh/ are NOT annotated and NOT scanned. This corpus contains REAL post-quantum code: ssh/mlkem.go implements a hybrid ML-KEM-768 + X25519 SSH key exchange (draft-kampanakis-curdle-ssh-pq-ke-05).",
+   "scan_root_relative": "explicit file list: ssh/cipher.go, ssh/mac.go, ssh/mlkem.go",
+   "ground_truth": {
+    "label_file": "benchmark/labels/xcrypto_ssh_algorithms_pq.json",
+    "label_kind": "hand-annotated line-level ground truth (author of this harness)",
+    "labels_verified_against_corpus": 71,
+    "annotation": {
+     "annotated_by": "IndraMesh benchmark harness author, by direct reading of every line in scope",
+     "unit": "one (file, 1-based line) location",
+     "files_in_scope": 3,
+     "candidate_lines_swept": 94,
+     "positive_labels_L1": 47,
+     "positive_labels_L2_only": 2,
+     "negative_labels_audited": 23,
+     "method": "A location is POSITIVE in L1 iff it names, or binds a name to, a quantum-vulnerable cryptographic primitive in a position that determines the algorithm: P1 factory call or mode registration, P1b naming a primitive identifier in executable code, P2 a key-spec/hash binding, P3 an import that determines the algorithm downstream, P4 an SSH/OpenSSL algorithm identifier. A line that merely OPERATES on a primitive chosen elsewhere is NEGATIVE in L1 and POSITIVE in L2; the harness reports both.",
+     "deliberate_exclusions": "ML-KEM is labelled NEGATIVE, and this is the most consequential judgement in the set. crypto/mlkem is FIPS 203 -- post-quantum, the REMEDY. The criterion asks for quantum-VULNERABLE primitives, so labelling ML-KEM a vulnerability would invert the meaning of the scan. Poly1305 is negative for the narrower reason that it is in neither declared break model in pqtaxonomy.py.",
+     "scope_caveat": "THREE files, not the package. The other 28 non-test files under ssh/ were swept but NOT annotated and are NOT scanned. Recall here is relative to these three files only and says nothing about the rest of x/crypto. This is a small corpus: denominators are printed beside every ratio, and the figure should be read as a smoke test of the Go pack, not as a characterisation of Go detection.",
+     "label_corrections": "Corrected after the first measurement, in the direction AGAINST the tool: one missed RC4 positive added (which lowers measured precision), two chacha20 read-path positives added (which removes two false positives), and two L1/L2 rows corrected so the L2 variant is not silently identical to L1. The original token sweep was case-sensitive and missed lowercase qualified calls such as `rc4.NewCipher`; the first annotation pass also labelled only one of two structurally identical call sites. A detector that scores well against incomplete labels is not evidence of anything, which is the reason these were found and fixed rather than tuned around."
+    }
+   },
+   "coverage": {
+    "scanners_run": [],
+    "files_seen": 0,
+    "files_scanned": 3,
+    "files_skipped": 0,
+    "ml_reason": "disabled",
+    "ml_window_chars": 4000,
+    "errors": [],
+    "never_in_scope": [
+     "network-negotiated crypto (requires a capture sensor)",
+     "cloud KMS / managed keys (requires provider APIs)",
+     "HSM / TPM internal keys (requires attestation)",
+     "SaaS / third-party boundary crypto (requires attestation)",
+     "silicon-embedded keys (requires attestation)"
+    ],
+    "findings_total": 52,
+    "assurance_histogram": {
+     "observed": 0,
+     "used": 52,
+     "runtime-resolved": 0,
+     "declared": 0,
+     "capability": 0
+    },
+    "proven_use": 52,
+    "unresolved_purpose": 1
+   },
+   "scan_errors": [],
+   "findings_by_rule": {
+    "AES | IM-GO-SSHTBL-AES": 6,
+    "HMAC | IM-GO-SSHTBL-MAC": 6,
+    "ChaCha20 | IM-GO-DECL-001": 5,
+    "ChaCha20 | IM-GO-CIPHER-003": 4,
+    "RC4 | IM-GO-SSHTBL-RC4": 3,
+    "AES | IM-GO-DECL-002": 2,
+    "Poly1305 | IM-GO-DECL-006": 2,
+    "SHA256 | IM-GO-IMPORT-003": 2,
+    "SHA256 | IM-GO-HASHBIND-001": 2,
+    "X25519 | IM-GO-DECL-005": 2,
+    "ECDH | IM-SRC-ECDH-001": 2,
+    "DES | IM-GO-CIPHER-001": 1,
+    "RC4 | IM-GO-CIPHER-002": 1,
+    "3DES | IM-GO-SSHTBL-3DES": 1,
+    "DES | IM-GO-IMPORT-005": 1,
+    "RC4 | IM-GO-IMPORT-006": 1,
+    "AES | IM-GO-IMPORT-007": 1,
+    "ChaCha20 | IM-GO-IMPORT-008": 1,
+    "3DES | IM-GO-DECL-003": 1,
+    "RC4 | IM-GO-DECL-004": 1,
+    "ChaCha20 | IM-SRC-CHACHA-001": 1,
+    "SHA1 | IM-GO-HASH-002": 1,
+    "SHA1 | IM-GO-IMPORT-002": 1,
+    "SHA512 | IM-GO-IMPORT-010": 1,
+    "HMAC | IM-GO-IMPORT-004": 1,
+    "ML-KEM-768 | IM-GO-PQKEM-001": 1,
+    "X25519 | IM-GO-IMPORT-009": 1
+   },
+   "variants": {
+    "L1": {
+     "counts": {
+      "TP": 47,
+      "FP": 4,
+      "FN": 0,
+      "labelled_positives": 47,
+      "findings_total": 52
+     },
+     "precision": 0.9216,
+     "precision_fraction": "47/51",
+     "recall": 1.0,
+     "recall_fraction": "47/47",
+     "f1": 0.9592,
+     "f1_note": "F1 is computed from the ROUNDED precision/recall, so it may differ in the 4th decimal from an F1 computed from the raw counts.",
+     "false_positives": [
+      {
+       "file": "ssh/cipher.go",
+       "line": 710,
+       "labelled_primitive": "Poly1305",
+       "labelled_code": "if !poly1305.Verify(&mac, c.buf[:contentEnd], &polyKey) {",
+       "labelled_break_model": "none",
+       "labelled_reason": "poly1305.Verify operates on a MAC chosen at construction [variant L2]",
+       "indramesh_names": [
+        "Poly1305"
+       ],
+       "indramesh_rule_ids": [
+        "IM-GO-DECL-006"
+       ],
+       "indramesh_match": [
+        "poly1305.Verify("
+       ]
+      },
+      {
+       "file": "ssh/cipher.go",
+       "line": 737,
+       "labelled_primitive": null,
+       "labelled_code": null,
+       "labelled_break_model": null,
+       "labelled_reason": null,
+       "indramesh_names": [
+        "ChaCha20"
+       ],
+       "indramesh_rule_ids": [
+        "IM-GO-DECL-001"
+       ],
+       "indramesh_match": [
+        "func (c *chacha20Poly1305Cipher)"
+       ]
+      },
+      {
+       "file": "ssh/cipher.go",
+       "line": 781,
+       "labelled_primitive": "Poly1305",
+       "labelled_code": "poly1305.Sum(&mac, c.buf[:packetEnd], &polyKey)",
+       "labelled_break_model": "none",
+       "labelled_reason": "poly1305.Sum operates on a MAC chosen at construction [variant L2]",
+       "indramesh_names": [
+        "Poly1305"
+       ],
+       "indramesh_rule_ids": [
+        "IM-GO-DECL-006"
+       ],
+       "indramesh_match": [
+        "poly1305.Sum("
+       ]
+      },
+      {
+       "file": "ssh/mlkem.go",
+       "line": 34,
+       "labelled_primitive": null,
+       "labelled_code": null,
+       "labelled_break_model": null,
+       "labelled_reason": null,
+       "indramesh_names": [
+        "ML-KEM-768"
+       ],
+       "indramesh_rule_ids": [
+        "IM-GO-PQKEM-001"
+       ],
+       "indramesh_match": [
+        "mlkem.NewDecapsulationKey768("
+       ]
+      }
+     ],
+     "false_negatives": [],
+     "file_level": {
+      "counts": {
+       "TP": 3,
+       "FP": 0,
+       "FN": 0,
+       "labelled_positive_files": 3
+      },
+      "precision": 1.0,
+      "precision_fraction": "3/3",
+      "recall": 1.0,
+      "recall_fraction": "3/3",
+      "false_positive_files": [],
+      "false_negative_files": []
+     },
+     "by_primitive": {
+      "3DES (grover)": {
+       "labelled": 4,
+       "detected": 4,
+       "recall": 1.0
+      },
+      "AES (grover)": {
+       "labelled": 9,
+       "detected": 9,
+       "recall": 1.0
+      },
+      "ChaCha20 (grover)": {
+       "labelled": 10,
+       "detected": 10,
+       "recall": 1.0
+      },
+      "HMAC (grover)": {
+       "labelled": 7,
+       "detected": 7,
+       "recall": 1.0
+      },
+      "RC4 (grover)": {
+       "labelled": 6,
+       "detected": 6,
+       "recall": 1.0
+      },
+      "SHA1 (grover)": {
+       "labelled": 1,
+       "detected": 1,
+       "recall": 1.0
+      },
+      "SHA256 (grover)": {
+       "labelled": 4,
+       "detected": 4,
+       "recall": 1.0
+      },
+      "SHA512 (grover)": {
+       "labelled": 1,
+       "detected": 1,
+       "recall": 1.0
+      },
+      "X25519 (shor)": {
+       "labelled": 5,
+       "detected": 5,
+       "recall": 1.0
+      }
+     }
+    },
+    "L2": {
+     "counts": {
+      "TP": 49,
+      "FP": 2,
+      "FN": 0,
+      "labelled_positives": 49,
+      "findings_total": 52
+     },
+     "precision": 0.9608,
+     "precision_fraction": "49/51",
+     "recall": 1.0,
+     "recall_fraction": "49/49",
+     "f1": 0.98,
+     "f1_note": "F1 is computed from the ROUNDED precision/recall, so it may differ in the 4th decimal from an F1 computed from the raw counts.",
+     "false_positives": [
+      {
+       "file": "ssh/cipher.go",
+       "line": 737,
+       "labelled_primitive": null,
+       "labelled_code": null,
+       "labelled_break_model": null,
+       "labelled_reason": null,
+       "indramesh_names": [
+        "ChaCha20"
+       ],
+       "indramesh_rule_ids": [
+        "IM-GO-DECL-001"
+       ],
+       "indramesh_match": [
+        "func (c *chacha20Poly1305Cipher)"
+       ]
+      },
+      {
+       "file": "ssh/mlkem.go",
+       "line": 34,
+       "labelled_primitive": null,
+       "labelled_code": null,
+       "labelled_break_model": null,
+       "labelled_reason": null,
+       "indramesh_names": [
+        "ML-KEM-768"
+       ],
+       "indramesh_rule_ids": [
+        "IM-GO-PQKEM-001"
+       ],
+       "indramesh_match": [
+        "mlkem.NewDecapsulationKey768("
+       ]
+      }
+     ],
+     "false_negatives": [],
+     "file_level": {
+      "counts": {
+       "TP": 3,
+       "FP": 0,
+       "FN": 0,
+       "labelled_positive_files": 3
+      },
+      "precision": 1.0,
+      "precision_fraction": "3/3",
+      "recall": 1.0,
+      "recall_fraction": "3/3",
+      "false_positive_files": [],
+      "false_negative_files": []
+     },
+     "by_primitive": {
+      "3DES (grover)": {
+       "labelled": 4,
+       "detected": 4,
+       "recall": 1.0
+      },
+      "AES (grover)": {
+       "labelled": 9,
+       "detected": 9,
+       "recall": 1.0
+      },
+      "ChaCha20 (grover)": {
+       "labelled": 10,
+       "detected": 10,
+       "recall": 1.0
+      },
+      "HMAC (grover)": {
+       "labelled": 7,
+       "detected": 7,
+       "recall": 1.0
+      },
+      "Poly1305 (none)": {
+       "labelled": 2,
+       "detected": 2,
+       "recall": 1.0
+      },
+      "RC4 (grover)": {
+       "labelled": 6,
+       "detected": 6,
+       "recall": 1.0
+      },
+      "SHA1 (grover)": {
+       "labelled": 1,
+       "detected": 1,
+       "recall": 1.0
+      },
+      "SHA256 (grover)": {
+       "labelled": 4,
+       "detected": 4,
+       "recall": 1.0
+      },
+      "SHA512 (grover)": {
+       "labelled": 1,
+       "detected": 1,
+       "recall": 1.0
+      },
+      "X25519 (shor)": {
+       "labelled": 5,
+       "detected": 5,
+       "recall": 1.0
+      }
+     }
+    }
+   }
+  },
+  {
    "corpus": "paramiko",
    "corpus_kind": "external",
    "corpus_url": "https://github.com/paramiko/paramiko.git",
@@ -47,6 +4183,7 @@
     "assurance_histogram": {
      "observed": 0,
      "used": 208,
+     "runtime-resolved": 0,
      "declared": 0,
      "capability": 0
     },

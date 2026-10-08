@@ -25,8 +25,9 @@ import os
 
 from engine.mosca import POLICY_DEADLINES
 from engine.purpose import (ASSURANCE_CAPABILITY, ASSURANCE_DECLARED, ASSURANCE_OBSERVED,
-                            ASSURANCE_RANK, ASSURANCE_USED, PURPOSE_UNRESOLVED,
-                            needs_pqc_target, resolve_assurance, resolve_purpose)
+                            ASSURANCE_RANK, ASSURANCE_RUNTIME_RESOLVED, ASSURANCE_USED,
+                            PURPOSE_UNRESOLVED, needs_pqc_target, resolve_assurance,
+                            resolve_purpose)
 
 REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DEFAULT_SCHEMA_PATH = os.path.join(REPO_ROOT, "schemas", "bom-1.7.schema.json")
@@ -44,7 +45,8 @@ TIER_COLOURS = {
     "UNRATED": "#3D4756",
 }
 
-ASSURANCE_ORDER = [ASSURANCE_OBSERVED, ASSURANCE_USED, ASSURANCE_DECLARED, ASSURANCE_CAPABILITY]
+ASSURANCE_ORDER = [ASSURANCE_OBSERVED, ASSURANCE_USED, ASSURANCE_RUNTIME_RESOLVED,
+                   ASSURANCE_DECLARED, ASSURANCE_CAPABILITY]
 
 # A fifth, non-taxonomy state: the record carries no assurance at all. It is deliberately NOT
 # part of ASSURANCE_ORDER's ladder -- it is not a weaker rung, it is the absence of a claim, and
@@ -53,6 +55,9 @@ ASSURANCE_UNRATED = "unrated"
 ASSURANCE_COLOURS = {
     ASSURANCE_OBSERVED: "#14532D",
     ASSURANCE_USED: "#1F5C3A",
+    # Steel indigo: a call happened (so not the grey of capability) but the identity is somebody
+    # else's answer (so not the green of used). Distinct from the amber of `declared`.
+    ASSURANCE_RUNTIME_RESOLVED: "#37455F",
     ASSURANCE_DECLARED: "#7A5C00",
     ASSURANCE_CAPABILITY: "#3D4756",
 }

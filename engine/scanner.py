@@ -26,6 +26,25 @@ CONTAINER_EXTENSIONS = (".tar", ".tar.gz", ".tgz")
 CONFIG_FILENAMES = ("openssl.cnf", "openssl.conf", "java.security", "nginx.conf", "httpd.conf",
                     "ssh_config", "sshd_config", "web.xml")
 
+# ---- JCA provider indirection: declaration window ----------------------------------------------
+# RTRES-003 fires on `Cipher.getInstance(crypto)` where `crypto` is a variable. When the same
+# file declares that variable with a string literal, the IM-SRC-JAVA-CONST-* rules already
+# carry the algorithm as evidence, and a second finding would double-report one crypto use.
+# The search covers the whole file: a constant can be declared above or below its use.
+_LITERAL_DECL_RX = re.compile(
+    r"""\b(?:String|var|final\s+String)\s+%s\s*=\s*["']"""
+)
+
+
+def _declared_with_literal(content, var):
+    """True when `var` is declared with a string literal anywhere in this file."""
+    try:
+        rx = re.compile(_LITERAL_DECL_RX.pattern % re.escape(var))
+    except re.error:
+        return False
+    return rx.search(content) is not None
+
+
 # ---------------------------------------------------------------------------------------------
 # Detection rules. Data, not code, so the set is auditable and extensible.
 #   key_group -> 1-based regex group holding a key size, or None
@@ -955,6 +974,69 @@ RULES = [
     dict(id="IM-SRC-MD5-001", name="MD5", primitive="hash", artefact_class="source",
          uses="at-rest", key_group=None, evidence="discovered",
          regex=r"\bmd5\(|MessageDigest\.getInstance\(\s*[\"']MD5[\"']|EVP_md5|MD5_Init"),
+    # ---- JCA provider indirection: runtime-resolved ---------------------------------------------
+    # Verified 2026-10 against: OpenJDK `java.security` + JDK-8076369 (`jdk.tls.client.protocols`
+    # "without touching code"), the provider-preference-order documentation
+    # (`security.provider.<n>`), Microsoft's SCHANNEL registry reference, OpenSSL's SSL_CONF_cmd
+    # docs, and golang/go#62459 (Go TLS defaults move with the toolchain).
+    #
+    # A JCA/JCE factory call is a REQUEST, not a decision. `SSLContext.getInstance("TLS")` names
+    # a protocol family; which versions and suites the peer actually gets is the JDK's answer,
+    # from `java.security` plus launch flags. A bare `Cipher.getInstance("AES")` is the same
+    # shape one level down: no mode, no padding, so the provider supplies its defaults. And
+    # `Cipher.getInstance(crypto)` is indirection further out: the string lives elsewhere.
+    #
+    # None of these is invisible, and none may be reported as `used` for a named algorithm.
+    # Each fires its own rule with evidence="runtime-resolved" and names the resolver, which the
+    # CBOM exports as a namespaced property. Every regex below was checked against the rules
+    # above: each matches ONLY call sites the existing table leaves silent, so `_finalise`
+    # can never collapse them and no existing finding gains a twin. RTRES-001 is further
+    # scoped to the unversioned family aliases on purpose: a pinned `getInstance("TLSv1.3")`
+    # is already carried by IM-CFG-TLS-001, and matching it here too would report one call
+    # site twice.
+    dict(id="IM-JAVA-RTRES-001", name="TLS", primitive="protocol", artefact_class="source",
+         type="protocol", uses="tls", key_group=None, evidence="runtime-resolved",
+         resolver=("java.security: jdk.tls.disabledAlgorithms (a deny list -- a named entry "
+                   "cannot be used, it does not select what runs), jdk.tls.client.protocols, "
+                   "and the security.provider.<n> preference order. Which versions and cipher "
+                   "suites the peer actually gets is decided there, not at this line."),
+         regex=r"SSLContext\s*\.\s*getInstance\s*\(\s*[\"'](?:TLS|SSL|DTLS|SSLv3|TLSv1|DTLSv1)"
+                r"[\"']\s*(?:,[^)]*)?\)"),
+    # Bare-family Cipher and digest literals. `Cipher.getInstance("RSA")` and every DES/Blowfish/
+    # RC4 bare form are already matched by IM-SRC-JAVA-CIPHER-001, so listing them here would
+    # double-report the same line; AES and ChaCha20 bare are the family names that rule leaves
+    # silent. Same for a bare `MessageDigest.getInstance("SHA")` (the SHA-1 alias): every
+    # versioned SHA literal has its own rule, the bare alias has none.
+    dict(id="IM-JAVA-RTRES-002", name="AES", primitive="ae", artefact_class="source",
+         uses="tls", key_group=None, evidence="runtime-resolved",
+         resolver=("java.security: security.provider.<n> preference order. No mode or padding "
+                   "is named at this line, so the provider supplies its defaults -- the "
+                   "finding names the family, not the construction that runs."),
+         regex=r"Cipher\s*\.\s*getInstance\s*\(\s*[\"'](?:AES|ChaCha20)[\"']\s*\)"
+                r"|MessageDigest\s*\.\s*getInstance\s*\(\s*[\"']SHA[\"']\s*\)"),
+    # Provider indirection: `Cipher.getInstance(crypto, "SunJCE")`. Two things are decided
+    # outside this line -- the algorithm, which is a variable, and the provider, which names an
+    # implementation chosen from java.security's preference order.
+    #
+    # SCOPED TO THE EXPLICIT-PROVIDER (two-argument) FORM ON PURPOSE. The one-argument form
+    # `Cipher.getInstance(crypto)` was implemented first and measured: it fired on 27 lines of
+    # CryptoAPI-Bench and moved precision 0.994 -> 0.858 for +0.019 recall. The corpus's frozen
+    # ground truth marks exactly those lines NEGATIVE, with the annotators' own reason --
+    # "no quantum-vulnerable primitive is named or determined on this line" and "operates on a
+    # primitive chosen elsewhere; names no primitive (counted positive only in sensitivity
+    # variant L2)". That is a considered judgement about what a primitive-finding benchmark
+    # should score, and overriding it for an inventory nicety is a bad trade for the headline
+    # number. Declining it here, in the rule, rather than quietly adjusting the scorer.
+    #
+    # When the declaration IS visible in this file the CONST rules already carry the algorithm,
+    # so nothing is silenced; `_match_rules` suppresses this rule in that case.
+    dict(id="IM-JAVA-RTRES-003", name="UNKNOWN", primitive="unknown", artefact_class="source",
+         uses="at-rest", key_group=None, evidence="runtime-resolved",
+         regex=r"\b(Cipher|SSLContext|MessageDigest|Signature|KeyPairGenerator|KeyGenerator|"
+                r"Mac|KeyAgreement|SecretKeyFactory|KeyFactory|KeyManagerFactory|"
+                r"TrustManagerFactory|SecureRandom|AlgorithmParameters|"
+                r"AlgorithmParameterGenerator|CertPathBuilder|CertPathValidator|KeyStore)"
+                r"\s*\.\s*getInstance\s*\(\s*([A-Za-z_][\w.]*)\s*,[^)]+\)"),
     # ---- Protocol / configuration -----------------------------------------------------------
     dict(id="IM-CFG-TLS-001", name="TLS", primitive="protocol", artefact_class="config",
          uses="tls", key_group=None, evidence="configured",
@@ -1314,6 +1396,32 @@ class IndraMeshScanner:
                     "uses": uses,
                     "match": match.group(0)[:160],
                 }
+                # Runtime-resolved findings: a finding whose identity is decided elsewhere
+                # names the resolver file ON the finding, so the CBOM and the GUI can show it
+                # next to the assurance instead of burying it in prose. Only runtime-resolved
+                # rules carry one; every other finding leaves the key off entirely.
+                if rule.get("resolver"):
+                    finding["resolver"] = rule["resolver"]
+                # RTRES-003 is provider indirection through a variable: the resolver is not a
+                # shared config file, it is the declaration of THAT variable. Name it, with the
+                # file and the captured variable, so the operator knows exactly what to go read.
+                # Default unresolved: we know a factory was called, we do not know with what.
+                if rule["id"] == "IM-JAVA-RTRES-003":
+                    try:
+                        var = match.group(2)
+                    except (IndexError, AttributeError):
+                        var = None
+                    if var:
+                        finding["resolver"] = (
+                            "the declaration of '%s' in this codebase (a parameter, a field, or "
+                            "a constant in another file). No literal names an algorithm at this "
+                            "call site." % var)
+                        # Deduplicate against the declaration rules: a `String crypto = "AES/..."`
+                        # in THIS file already carries the algorithm as its own finding with the
+                        # CONST rules. Emitting a factory finding too would report one crypto use
+                        # twice -- and the constant's evidence is the stronger of the two.
+                    if var and _declared_with_literal(content, var):
+                        continue
                 if key_length:
                     finding["key_length"] = key_length
                 findings.append(finding)

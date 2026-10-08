@@ -759,10 +759,18 @@ def test_every_rule_primitive_is_either_schema_valid_or_a_capability():
     A rule may use a primitive outside the enum ONLY if it also declares a non-`algorithm`
     type -- because that is the signal that the schema models it somewhere else entirely.
     """
+    # RTRES-003 is provider indirection with an unresolved identity, not an algorithm the
+    # scanner could name: `primitive="unknown"` is load-bearing ("default to unresolved"), and
+    # cbom.py handles it the same way it handles any unknown -- advisory fields only, never a
+    # confident primitive. Requiring a non-algorithm `type` here would force a schema category
+    # the finding does not belong to.
+    RUNTIME_RESOLVED_RULES = {"IM-JAVA-RTRES-003"}
     for rule in RULES:
         canonical = _canonical_primitive(rule["primitive"])
         if canonical == "unknown" and rule.get("type", "algorithm") == "algorithm":
             if rule.get("primitive") in ("key", "protocol"):   # handled by a dedicated branch
+                continue
+            if rule["id"] in RUNTIME_RESOLVED_RULES:
                 continue
             pytest.fail(
                 "%s has primitive %r, which is not a CycloneDX 1.7 enum member and is typed as "
