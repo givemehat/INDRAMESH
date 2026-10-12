@@ -6,7 +6,7 @@ runs anywhere the test suite runs.
 import json
 
 from engine.scanner import IndraMeshScanner
-from engine.mosca import calculate_risk, DATA_CLASS_LIFETIME
+from engine.mosca import calculate_risk
 from engine.recommender import get_pqc_recommendation
 from engine.cbom import generate_cbom, SPEC_VERSION
 

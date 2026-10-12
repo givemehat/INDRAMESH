@@ -16,7 +16,9 @@ _REPO_ROOT = os.path.dirname(os.path.abspath(__file__))
 if _REPO_ROOT not in sys.path:
     sys.path.insert(0, _REPO_ROOT)
 
-from server import app as fastapi_app
+# Importing the ASGI app is what makes `uvicorn.run("server:app")` resolve. The name is
+# deliberately unused here; do not let a lint autofix delete it.
+from server import app as fastapi_app  # noqa: F401
 
 # Graceful bridge if invoked via `streamlit run app.py`
 try:

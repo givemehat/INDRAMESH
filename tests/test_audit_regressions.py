@@ -299,7 +299,6 @@ def test_assurance_helpers_survive_a_record_with_no_assurance():
 def test_auditor_rows_survive_a_malformed_z_band_key():
     # The Z band is keyed "Z=<n>"; a key without "=" used to raise IndexError, taking down the
     # Auditor view from a dict literal engine/mosca.py owns.
-    row = {"Z values": None, "tier": "LOW", "name": "x"}
     band = {"Z=5": "LOW", "bad-key": "LOW", "Z=abc": "LOW"}
     assert "Z=5" in _z_band_label(band)
     assert "bad-key" not in _z_band_label(band)

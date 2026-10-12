@@ -1,0 +1,34 @@
+# Ruff configuration.
+#
+# The rule set here is deliberately NARROW: it gates only on correctness classes (pyflakes
+# `F` plus the `E9` syntax/runtime errors) rather than style. A security tool that 800+ tests
+# vouch for should not fail a build because someone preferred one import order over another,
+# and a broad gate that is routinely bypassed is not a gate.
+#
+# Excluded paths are vendored or generated on purpose:
+#   * benchmark/corpora  -- third-party source cloned at a pinned SHA (paramiko, x/crypto, php)
+#   * tests/fixtures     -- decoy files whose CONTENT is the assertion; editing them is a test change
+#   * models, lib        -- trained weights and pyvis CDN assets
+line-length = 120
+target-version = "py311"
+
+extend-exclude = [
+    "benchmark/corpora",
+    "tests/fixtures",
+    # The scan TARGET: deliberately broken sample code whose undefined names and weak crypto
+    # are the fixture, not defects.
+    "dummy_target",
+    "models",
+    "lib",
+    "_ref",
+    ".hypothesis",
+]
+
+[lint]
+select = ["F", "E9"]
+
+[lint.per-file-ignores]
+# `from server import app` is a side-effect import: uvicorn resolves the string "server:app"
+# at run time. Removing it as unused breaks the launcher, so the exemption lives here rather
+# than in the source, where it would sit next to every other import.
+"app.py" = ["F401"]

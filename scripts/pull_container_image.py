@@ -12,10 +12,9 @@ Usage:
 import argparse
 import json
 import os
-import sys
 import tarfile
 import tempfile
-from typing import Dict, List, Optional, Tuple
+from typing import Tuple
 import requests
 
 REGISTRY_AUTH_URL = "https://auth.docker.io/token"

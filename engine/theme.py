@@ -252,7 +252,7 @@ def proof_bar(proven, total, *, label="proven use", caption=None):
     if total == 0:
         return ('<div class="ec-proof" role="img" aria-label="No findings to qualify"></div>'
                 '<div class="ec-proof-legend"><span>no findings</span>'
-                f'<span>check the coverage manifest</span></div>')
+                '<span>check the coverage manifest</span></div>')
     pct = min(100.0, 100.0 * proven / total)
     remainder = total - proven
     return (

@@ -22,9 +22,9 @@ import sys
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-from fastapi import FastAPI, HTTPException, Query, Response, WebSocket
+from fastapi import FastAPI, HTTPException, Response, WebSocket
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
+from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
@@ -40,28 +40,21 @@ from engine.certificates import scan_certificates
 from engine.dependencies import DependencyScanner
 from engine.graph import generate_crypto_graph
 from engine.gui_helpers import (
-    SEVERITY_ORDER,
     TIER_COLOURS,
     assurance_counts,
     auditor_rows,
     certificate_rows,
     certificate_summary,
     coverage_verdict,
-    deadline_countdown,
-    deadline_verdict,
     dependency_rows,
     dependency_summary,
     enrich_findings,
-    evidence_needed,
     hndl_records,
     late_records,
     location,
-    policy_deadline_row,
     proven_use,
     queue_rows,
     recommendations_payload,
-    sensor_status_rows,
-    short_path,
     tier_counts,
     unrated_records,
     unresolved_split,
@@ -529,7 +522,7 @@ def generate_executive_report_html() -> str:
     crit_count = t_counts.get("CRITICAL", 0)
     high_count = t_counts.get("HIGH", 0)
     med_count = t_counts.get("MEDIUM", 0)
-    low_count = t_counts.get("LOW", 0)
+    t_counts.get("LOW", 0)
 
     q_rows = queue_rows(records, deadline_year=active_policy.get("year"))
 

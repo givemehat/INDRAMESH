@@ -5,7 +5,6 @@ applied inconsistently. This scores each repo for relevance to the four brief re
 writes shortlist.csv, so the manual analysis below is spent on real competitors.
 """
 import csv
-import json
 import os
 import re
 

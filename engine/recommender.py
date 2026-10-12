@@ -93,8 +93,7 @@ PERF_NOTES = {
 }
 
 
-from engine.purpose import (PURPOSE_SIGNATURE, PURPOSE_KEY_ESTABLISHMENT, PURPOSE_CONFIDENTIALITY,
-                            PURPOSE_UNRESOLVED, PURPOSE_TO_PRIMITIVE, resolve_purpose,
+from engine.purpose import (PURPOSE_UNRESOLVED, resolve_purpose,
                             resolve_assurance)
 # `_coerce_int` rather than a bare `int()`: `key_length` comes from regex capture groups and
 # third-party inputs, so it can be any string. `int('unknown')` raised ValueError and aborted the

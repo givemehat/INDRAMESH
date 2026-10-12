@@ -137,13 +137,3 @@ if __name__ == "__main__":
                     help="validate the committed example without fetching or writing")
     sys.exit(run(ap.parse_args().check))
 
-
-
-def validate_document(document):
-    """Validate against the vendored schema. Returns a list of human-readable errors."""
-    with open(SCHEMA, encoding="utf-8") as fh:
-        schema = json.load(fh)
-    errors = sorted(jsonschema.Draft7Validator(schema).iter_errors(document),
-                    key=lambda e: list(e.absolute_path))
-    return [f"{'/'.join(str(p) for p in e.absolute_path) or '<root>'}: {e.message}"
-            for e in errors]

@@ -52,7 +52,7 @@ def generate_crypto_graph(findings):
                  f"Rule: {f.get('rule_id', '-')}\n"
                  f"Evidence: {f.get('evidence_class', '-')}")
         if is_library:
-            title = f"LIBRARY (implements, not uses)\n" + title
+            title = "LIBRARY (implements, not uses)\n" + title
 
         if file_node not in added:
             net.add_node(file_node, label=file_node, color="#ffffff", shape="box")

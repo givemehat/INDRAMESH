@@ -7,13 +7,11 @@ and file browsing.
 """
 import os
 import sys
-import json
 import traceback
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from fastapi.testclient import TestClient
-import app
 import server
 
 client = TestClient(server.app)

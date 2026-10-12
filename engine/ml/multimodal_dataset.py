@@ -77,7 +77,7 @@ class CryptoMultiModalDataset(Dataset):
             features[10] = local_vars_count / 10.0
             features[11] = try_catches_count / 5.0
             
-        except Exception as e:
+        except Exception:
             # Fallback if AST parsing fails
             pass
             

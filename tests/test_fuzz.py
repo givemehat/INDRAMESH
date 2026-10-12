@@ -326,7 +326,7 @@ def test_unreadable_input_is_recorded_in_errors_and_not_raised():
     with tempfile.TemporaryDirectory() as root:
         undecodable = _write(root, "bad.py", b"\xff\xfe\x00\x00rsa.newkeys(2048)\n")
         missing = os.path.join(root, "does-not-exist.py")
-        junk_tar = _write(root, "junk.tar", b"this is definitely not a tar archive" * 40)
+        _write(root, "junk.tar", b"this is definitely not a tar archive" * 40)
 
         walker = _scanner()
         findings = walker.scan_directory(root)

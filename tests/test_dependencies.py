@@ -19,10 +19,8 @@ import os
 import pytest
 
 import engine.dependencies as deps_module
-from engine.dependencies import (DependencyScanner, ManifestParseError, manifest_kind,
-                                 normalise_package, parse_cargo_toml, parse_composer_json,
-                                 parse_dotnet, parse_gemfile, parse_go_mod, parse_package_json,
-                                 parse_pom_xml, parse_pyproject, parse_requirements_txt)
+from engine.dependencies import (DependencyScanner, manifest_kind,
+                                 normalise_package, parse_dotnet, parse_gemfile, parse_requirements_txt)
 from engine.purpose import ASSURANCE_CAPABILITY, resolve_assurance, resolve_purpose
 from engine.recommender import get_pqc_recommendation
 

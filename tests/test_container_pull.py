@@ -1,6 +1,5 @@
 """Unit tests for scripts/pull_container_image.py."""
 import io
-import json
 import os
 import tarfile
 from unittest import mock

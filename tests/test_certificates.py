@@ -23,7 +23,6 @@ PKCS#1 v1.5 signature is checked against the public exponent before the fixture 
 `cryptography` is asserted to load it. An unverified blob in a test is a test that can pass for
 the wrong reason.
 """
-import base64
 import datetime
 import hashlib
 import json
@@ -233,7 +232,7 @@ def sha1_certificate(key, common_name="indramesh sha1 fixture", serial=0x0BADF00
     # KeyUsage with digitalSignature set: the first bit of the first content octet, 7 unused.
     key_usage = _seq(_oid("2.5.29.15"), _der(0x01, b"\xff"),
                      _octet_string(_bit_string(b"\x80", 7)))
-    now = _now()
+    _now()
     tbs = _seq(
         _context(0, _integer(2)),                     # version v3
         _integer(serial),

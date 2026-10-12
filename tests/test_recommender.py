@@ -7,7 +7,6 @@ Regressions encoded here (all fixed 2026-09-25):
   * AES-256 must not be told to "upgrade" to AES-256
   * every recommendation must carry a rule trace and standard basis
 """
-import pytest
 
 from engine.recommender import get_pqc_recommendation, _normalise_primitive, ML_KEM_SIZES
 

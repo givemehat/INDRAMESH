@@ -8,15 +8,14 @@ a fresh clone crashed on `import`; (3) wrapped every file read in `except Except
 an unreadable file was indistinguishable from a clean scan; (4) had no container support at
 all, although the brief explicitly requires container images. Each of those is now fixed.
 """
-import gzip
 import io
 import os
 import re
 import tarfile
 
 from engine.fspolicy import check_root, is_credential_store, resolve_within
-from engine.purpose import (PURPOSE_UNRESOLVED, assurance_histogram, proven_use_count,
-                            resolve_purpose, unresolved_purpose_count)
+from engine.purpose import (assurance_histogram, proven_use_count,
+                            unresolved_purpose_count)
 
 SOURCE_EXTENSIONS = (".py", ".java", ".c", ".cpp", ".cc", ".h", ".hpp", ".cs", ".go", ".rs", ".js",
                      ".ts", ".php", ".php5", ".phtml", ".rb", ".rake")

@@ -30,7 +30,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from engine import netprobe
 from engine.netpolicy import NetPolicy, VettedEndpoint
-from engine.netprobe import (GROUP_OBSERVED, GROUP_UNOBSERVED, SENSOR_SSH, SENSOR_TLS,
+from engine.netprobe import (GROUP_OBSERVED, GROUP_UNOBSERVED, SENSOR_TLS,
                              STATUS_DISABLED, STATUS_ERROR, STATUS_HANDSHAKE_FAILED,
                              STATUS_NOT_TLS, STATUS_OBSERVED, STATUS_REFUSED,
                              STATUS_UNREACHABLE, _is_pqc_kex, _report_handshake,

@@ -9,14 +9,13 @@ Regressions encoded here (all fixed 2026-09-25):
   * container images were not scanned at all
   * the AES key size was never extracted, so AES-256 was misreported
 """
-import io
 import os
 import re
 import tarfile
 
 import pytest
 
-from engine.scanner import IndraMeshScanner, RULES, BINARY_MARKERS
+from engine.scanner import IndraMeshScanner, RULES
 
 
 @pytest.fixture
@@ -386,7 +385,7 @@ def test_ecc_is_detected(tmp_path, scanner):
     # A BARE `ec.generate_private_key(ec.SECP256R1())` no longer produces an ECDH finding: it is
     # a generic key-pair generator, and typing it as ECDH made the same line also report as
     # ECDSA -- so one statement produced two mutually exclusive primitives and two targets.
-    p = _write(str(tmp_path / "kex.py"),
+    _write(str(tmp_path / "kex.py"),
                "from cryptography.hazmat.primitives.asymmetric import ec\n"
                "priv = ec.generate_private_key(ec.SECP256R1())\n"
                "shared = priv.exchange(peer_public_key)\n")
@@ -403,7 +402,7 @@ def test_a_bare_key_pair_generator_is_not_reported_as_two_primitives(tmp_path, s
     measured recall -- but to stop the downstream rename that guessed "signature" out of nearby
     prose. Both facts are still reported; the contradictory one is gone.
     """
-    p = _write(str(tmp_path / "kex.py"),
+    _write(str(tmp_path / "kex.py"),
                "priv = ec.generate_private_key(ec.SECP256R1())\n")
     findings = scanner.scan_directory(str(tmp_path))
     assert findings, "the curve and its key agreement must still be detected"
@@ -416,7 +415,7 @@ def test_a_bare_key_pair_generator_is_not_reported_as_two_primitives(tmp_path, s
 
 
 def test_sha256_is_detected(tmp_path, scanner):
-    p = _write(str(tmp_path / "h.py"), "d = hashes.Hash(hashes.SHA256())\n")
+    _write(str(tmp_path / "h.py"), "d = hashes.Hash(hashes.SHA256())\n")
     findings = scanner.scan_directory(str(tmp_path))
     assert any(f["name"] == "SHA256" for f in findings)
 
@@ -424,7 +423,7 @@ def test_sha256_is_detected(tmp_path, scanner):
 # ------------------------------------------------------------------ metadata correctness
 
 def test_rsa_key_size_extracted(tmp_path, scanner):
-    p = _write(str(tmp_path / "v.py"),
+    _write(str(tmp_path / "v.py"),
                "key = rsa.generate_private_key(public_exponent=65537, key_size=4096)\n")
     findings = scanner.scan_directory(str(tmp_path))
     rsa = [f for f in findings if f["name"] == "RSA"]
@@ -432,7 +431,7 @@ def test_rsa_key_size_extracted(tmp_path, scanner):
 
 
 def test_aes_key_size_extracted(tmp_path, scanner):
-    p = _write(str(tmp_path / "a.c"), "EVP_aes_256_gcm();\n")
+    _write(str(tmp_path / "a.c"), "EVP_aes_256_gcm();\n")
     findings = scanner.scan_directory(str(tmp_path))
     aes = [f for f in findings if f["name"] == "AES"]
     assert aes and aes[0]["key_length"] == 256, "AES-256 must not be reported as AES-128"
@@ -445,7 +444,7 @@ def test_curve_resolves_to_key_size_and_primitive(tmp_path, scanner):
     point: `ec.SECP256R1()` says the algorithm, `.exchange(peer_public_key)` says the operation.
     Neither line supports the other's conclusion on its own, so neither is stretched to do it.
     """
-    p = _write(str(tmp_path / "kex.py"),
+    _write(str(tmp_path / "kex.py"),
                "priv = ec.generate_private_key(ec.SECP256R1())\n"
                "shared = priv.exchange(peer_public_key)\n")
     findings = scanner.scan_directory(str(tmp_path))
@@ -467,7 +466,7 @@ def test_a_curve_object_alone_is_not_called_a_signature(tmp_path, scanner):
     coin-flip presented as a finding, and it is why one line could be reported as both ECDH and
     ECDSA. With no use context the operation is simply not stated.
     """
-    p = _write(str(tmp_path / "kex.py"), "curve = ec.SECP256R1()\n")
+    _write(str(tmp_path / "kex.py"), "curve = ec.SECP256R1()\n")
     findings = scanner.scan_directory(str(tmp_path))
     assert findings, "the curve itself must still be detected"
     for f in findings:
@@ -573,7 +572,7 @@ def test_a_python_sign_call_is_not_a_ruby_signature_finding(tmp_path, scanner):
 
 
 def test_provenance_is_recorded(tmp_path, scanner):
-    p = _write(str(tmp_path / "v.py"),
+    _write(str(tmp_path / "v.py"),
                "\n\nkey = rsa.newkeys(2048)\n")
     findings = scanner.scan_directory(str(tmp_path))
     hit = [f for f in findings if f["name"] == "RSA"][0]
@@ -621,7 +620,7 @@ def test_coverage_manifest_lists_what_was_never_in_scope(tmp_path, scanner):
 
 def test_scanner_works_without_torch(tmp_path, scanner):
     """Regression: `import torch` at module scope made scanning impossible without PyTorch."""
-    p = _write(str(tmp_path / "v.py"), "key = rsa.newkeys(2048)\n")
+    _write(str(tmp_path / "v.py"), "key = rsa.newkeys(2048)\n")
     assert scanner.scan_directory(str(tmp_path)), "regex-only mode must still work"
     assert scanner.ml is None or not scanner.ml.available
 
@@ -681,7 +680,7 @@ def test_corrupt_container_is_reported_not_crashed(tmp_path, scanner):
 # ------------------------------------------------------------------ dedup
 
 def test_duplicate_findings_are_collapsed(tmp_path, scanner):
-    p = _write(str(tmp_path / "v.py"), "a = rsa.newkeys(2048)\nb = rsa.newkeys(2048)\n")
+    _write(str(tmp_path / "v.py"), "a = rsa.newkeys(2048)\nb = rsa.newkeys(2048)\n")
     findings = scanner.scan_directory(str(tmp_path))
     rsa = [f for f in findings if f["name"] == "RSA"]
     assert len({f["line"] for f in rsa}) == len(rsa), "same line should not appear twice"
@@ -784,7 +783,7 @@ def test_real_sshd_config_negotiation_policy_is_visible(tmp_path, scanner):
 
 def test_sslcontext_tls_family_emits_a_runtime_resolved_finding(tmp_path, scanner):
     """The archetype from the review: `getInstance("TLS")` names no algorithm."""
-    p = _write(str(tmp_path / "TlsClient.java"),
+    _write(str(tmp_path / "TlsClient.java"),
                "import javax.net.ssl.SSLContext;\n"
                "public class TlsClient {\n"
                "  void connect() throws Exception {\n"

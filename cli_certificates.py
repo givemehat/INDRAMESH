@@ -26,7 +26,7 @@ import os
 import sys
 
 from engine.cbom import generate_cbom
-from engine.certificates import SCANNER_NAME, scan_certificates
+from engine.certificates import scan_certificates
 from engine.mosca import calculate_risk
 from engine.recommender import get_pqc_recommendation
 from engine.scanner import IndraMeshScanner

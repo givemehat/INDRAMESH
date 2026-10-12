@@ -45,7 +45,7 @@ from engine.netpolicy import (DEFAULT_ALLOWED_PORTS, DEFAULT_MAX_ENDPOINTS, LAB_
                               ENV_MAX_ENDPOINTS, VERDICT_DENIED, VERDICT_METADATA,
                               VERDICT_NOT_ALLOWLISTED, VERDICT_PORT_NOT_ALLOWLISTED,
                               VERDICT_PRIVATE, VERDICT_PUBLIC, VERDICT_SPLIT_HORIZON,
-                              VERDICT_UNRESOLVED, NetPolicy, Refusal, VettedEndpoint,
+                              NetPolicy, Refusal, VettedEndpoint,
                               classify_address, host_allowed, parse_literal, split_endpoint)
 
 # A genuinely public address, used as the "good" answer. TEST-NET-2 would read better, but it is
@@ -618,7 +618,6 @@ def test_every_refusal_carries_a_machine_readable_verdict_and_a_reason():
     p = policy(allowed_hosts=["example.com", "127.0.0.1", "169.254.169.254", "evil.test"],
                resolver=fake_resolver({"example.com": [PUBLIC_IP], "evil.test": [PUBLIC_IP]}))
     _vetted, refusals, _errors = p.vet_endpoints(specs)
-    seen = set()
     for refusal in refusals:
         assert refusal.verdict, "a refusal must have a verdict category"
 
