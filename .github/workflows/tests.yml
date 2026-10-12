@@ -65,3 +65,40 @@ jobs:
       with:
         name: coverage-report
         path: coverage.xml
+
+  # The single job above is the gate: mutation testing, coverage, schema validation. It runs on
+  # one interpreter only, so a 3.13- or 3.14-only break (a removed stdlib alias, a deprecation
+  # that became an error, a wheel that stopped building) would not be seen until someone
+  # upgraded locally. README claims four interpreters; a claim nobody exercises is a guess.
+  # This job is deliberately thin -- suite only, no mutation harness -- so it stays cheap.
+  compatibility:
+    name: "py ${{ matrix.python-version }}"
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.11", "3.12", "3.13", "3.14"]
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v4
+
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+
+    - name: Run test suite
+      run: |
+        export PYTHONPATH=.
+        pytest tests/ -q --tb=short
+
+    - name: CLI smoke test
+      # The documented CI-gate entry point, on every claimed interpreter.
+      run: |
+        export PYTHONPATH=.
+        python cli.py ./dummy_target --format cbom --out ./out-${{ matrix.python-version }} --no-ml --fail-on CRITICAL || [ $? -eq 1 ]

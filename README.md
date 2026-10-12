@@ -28,9 +28,9 @@
 
 <!-- Security & Quality Badges -->
 [![Air Gapped](https://img.shields.io/badge/Air--Gapped-Zero_CDN_%C2%B7_Zero_Telemetry-10B981?style=for-the-badge&logo=checkmarx&logoColor=white)](#)
-[![Tests Passing](https://img.shields.io/badge/Pytest-893_Passing_%C2%B7_0_Regressions-10B981?style=for-the-badge&logo=pytest&logoColor=white)](#)
-[![Rules](https://img.shields.io/badge/Detection-131_Rules_%C2%B7_9_Languages-38BDF8?style=for-the-badge&logo=codewars&logoColor=040812)](#)
-[![Python](https://img.shields.io/badge/Python-3.10_%7C_3.11_%7C_3.12_%7C_3.13_%7C_3.14-3776AB?style=for-the-badge&logo=python&logoColor=white)](#)
+[![Tests Passing](https://img.shields.io/badge/Pytest-924_Passing_%C2%B7_0_Regressions-10B981?style=for-the-badge&logo=pytest&logoColor=white)](#)
+[![Rules](https://img.shields.io/badge/Detection-145_Rules_%C2%B7_9_Languages-38BDF8?style=for-the-badge&logo=codewars&logoColor=040812)](#)
+[![Python](https://img.shields.io/badge/Python-3.11_%7C_3.12_%7C_3.13_%7C_3.14-3776AB?style=for-the-badge&logo=python&logoColor=white)](#)
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue?style=for-the-badge&logo=apache&logoColor=white)](#)
 
 <br/>
@@ -165,7 +165,7 @@ Planned ramp-up aligned with PSU and CERT-In empanelment cycles under India's Na
 
 | # | Brief Requirement | Implementation |
 |---|---|---|
-| 1 | **Discovery & cataloguing** of algorithms, keys, protocols, libraries | `engine/scanner.py` - **131-rule** detection table: Go (34), SSH/TLS wire identifiers (17), multi-language primitives (14), Java JCE (12), Ruby (11), Python (11), PHP (9), Rust (7), JavaScript/TypeScript (7), plus cloud-KMS, config, key-file, protocol and PKCS#11 hardware rules. Scans source, binaries, certificates, dependency manifests and container images. |
+| 1 | **Discovery & cataloguing** of algorithms, keys, protocols, libraries | `engine/scanner.py` - **145-rule** detection table: Go (34), SSH/TLS wire & `sshd_config` identifiers (26), Java JCE (16), Ruby (12), PHP (10), Rust (7), JavaScript/TypeScript (7), Python/PyCA & multi-language primitives (24), plus cloud-KMS, config, key-file, protocol and PKCS#11 hardware rules. Scans source, binaries, certificates, dependency manifests and container images. |
 | 2 | **Quantum risk assessment**, flagging risks to sensitive data | `engine/mosca.py` - Shor vs Grover break model, **harvest-now-decrypt-later** flag, Mosca's inequality $X + Y > Z$ |
 | 3 | **Classification** by type, lifetime, business criticality | `engine/mosca.py` - canonical primitives, `DATA_CLASS_LIFETIME` (X) and `MIGRATION_EFFORT` (Y) tables, Critical/High/Medium/Low tiers |
 | 4 | **PQC / hybrid recommendations** factoring risk, latency and cost | `engine/recommender.py` - FIPS 203/204/205 targets, explicit *Hybrid AND/OR* semantics, size/CPU/cost breakdown, rule trace |
@@ -226,7 +226,7 @@ IndraMesh makes **no network calls** of its own. No CDN, no telemetry, no remote
     +--------------------------------+-------------------------------+
     |  sensors                                                             |
     |  scanner.py    certificates.py   dependencies.py   netprobe.py    |
-    |  131 rules, 9 languages        X.509 + KeyUsage  manifests       SSH/TLS probe
+    |  145 rules, 9 languages        X.509 + KeyUsage  manifests       SSH/TLS probe
     +--------------------------------+-------------------------------+
                                      |
                                findings[]  (one schema)
@@ -338,6 +338,10 @@ schemas/               vendored CycloneDX 1.7 JSON Schema
 python -m pytest tests/ -v
 python validate_gui.py
 ```
+
+Python **3.11+** is required: `engine/dependencies.py` reads `pyproject.toml` manifests with the
+standard-library `tomllib`, which first shipped in 3.11. The CI matrix exercises 3.11, 3.12, 3.13
+and 3.14.
 
 ## License
 

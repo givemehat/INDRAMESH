@@ -501,8 +501,8 @@ shows all of it, plus what it could not see.
 ║  INTERFACE LAYER                                                              ║
 ║  ┌────────────────┐  ┌────────────────┐  ┌──────────────┐  ┌─────────────┐  ║
 ║  │  app.py        │  │  cli.py        │  │ cli_advanced │  │ cli_certs   │  ║
-║  │  Streamlit     │  │  headless      │  │ verify-migr. │  │ X.509       │  ║
-║  │  6 views       │  │  + CBOM        │  │ advanced     │  │             │  ║
+║  │  FastAPI       │  │  headless      │  │ verify-migr. │  │ X.509       │  ║
+║  │  console       │  │  + CBOM        │  │ advanced     │  │             │  ║
 ║  └───────┬────────┘  └───────┬────────┘  └──────┬───────┘  └──────┬──────┘  ║
 ║          │  engine/theme.py (design system)   │                  │         ║
 ╚══════════╪═══════════════════╪══════════════════╪══════════════════╪═════════╝
@@ -956,12 +956,12 @@ Ordered by value per unit of effort — not by how easy they look.
 
 ```
 engine/            the 14 engines (§12)
-app.py             Streamlit console, 6 views
+app.py             FastAPI console launcher (uvicorn; loopback by default)
 cli.py             headless + CBOM
 cli_advanced.py    verify-migration
 cli_certificates.py X.509
 schemas/           vendored CycloneDX 1.7 JSON Schema (offline validation)
-tests/             21 files, 838 tests
+tests/             28 files, 924 tests
 docs/GUIDE.md      <- this document
 docs/COMPARISON.md measured comparison with the sibling project
 research/competitive/ANALYSIS.md   17 repos analysed, take/adapt/reject each
@@ -973,8 +973,8 @@ mutation_test.py   19 mutants, 100% killed
 ### 24.1 Run it yourself
 
 ```powershell
-# the console
-streamlit run app.py
+# the console (FastAPI + vanilla-JS; binds 127.0.0.1 unless you ask for more)
+python app.py
 
 # a headless scan with a schema-validated CBOM
 python cli.py <your-repo> --format cbom --out out
