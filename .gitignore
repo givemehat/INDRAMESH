@@ -31,6 +31,10 @@ env/
 indramesh_report.json
 indramesh_recommendations.json
 *.log
+# pytest/pytest-run stderr captures (`run.err`, `baseline.err`, ...). Only the `_`-prefixed
+# scratch ones were ignored before, so a run captured outside the scratch convention showed
+# up as untracked noise after every test run.
+*.err
 
 # ---- Scratch ----
 _e2e/
