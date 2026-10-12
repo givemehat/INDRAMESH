@@ -205,13 +205,17 @@ def test_every_rule_is_actually_executed(tmp_path, scanner):
         # where the whole supported-algorithm table is built from these identifiers. The primitive
         # is asserted too, because getting ECDH and ECDSA the wrong way round would point an
         # auditor at the wrong replacement algorithm.
-        "IM-SRC-SSHNAME-001": '"ecdsa-sha2-nistp256-cert-v01@openssh.com": ECDSAKey,',
-        "IM-SRC-SSHNAME-002": '"rsa-sha2-256-cert-v01@openssh.com": RSAKey,',
-        "IM-SRC-SSHNAME-003": '"ssh-ed25519-cert-v01@openssh.com": Ed25519Key,',
+        "IM-SRC-SSHNAME-001": ['"ecdsa-sha2-nistp256-cert-v01@openssh.com": ECDSAKey,',
+                              "HostKeyAlgorithms ecdsa-sha2-nistp256-cert-v01@openssh.com"],
+        "IM-SRC-SSHNAME-002": ['"rsa-sha2-256-cert-v01@openssh.com": RSAKey,',
+                              "HostKeyAlgorithms rsa-sha2-512-cert-v01@openssh.com"],
+        "IM-SRC-SSHNAME-003": ['"ssh-ed25519-cert-v01@openssh.com": Ed25519Key,',
+                              "HostKeyAlgorithms ssh-ed25519-cert-v01@openssh.com"],
         "IM-SRC-SSHNAME-004": '"hmac-sha2-256-etm@openssh.com": {"class": sha256, "size": 32},',
         "IM-SRC-SSHNAME-005": 'KEX = "curve25519-sha256@libssh.org"',
         "IM-SRC-SSHNAME-006": '"ecdh-sha2-nistp256-cert-v01@openssh.com": ECDHKey,',
-        "IM-SRC-SSHNAME-007": 'KEX = "mlkem768x25519-sha256@openssh.com"',
+        "IM-SRC-SSHNAME-007": ['KEX = "mlkem768x25519-sha256@openssh.com"',
+                              "KexAlgorithms mlkem768x25519-sha256@openssh.com"],
         # --- Added 2026-09-29 with the rules that recovered 16 labelled paramiko misses.
         #
         # Each sample below is the VERBATIM source line from the pinned corpus that motivated
@@ -247,9 +251,12 @@ def test_every_rule_is_actually_executed(tmp_path, scanner):
         # nothing at all. Found while checking a reviewer's point that the algorithm is often
         # negotiated rather than named at a call site: the config that declares WHAT gets
         # negotiated was the thing we could not see.
-        "IM-SRC-SSHNAME-002": "HostKeyAlgorithms rsa-sha2-512-cert-v01@openssh.com",
-        "IM-SRC-SSHNAME-003": "HostKeyAlgorithms ssh-ed25519-cert-v01@openssh.com",
-        "IM-SRC-SSHNAME-007": "KexAlgorithms mlkem768x25519-sha256@openssh.com",
+        #
+        # The bare forms are carried as the SECOND element of the lists on IM-SRC-SSHNAME-001,
+        # -002, -003 and -007 above, NOT as re-declared keys here: a second `"IM-SRC-SSHNAME-
+        # 002": ...` line in this dict silently overwrites the first (Python keeps the last),
+        # which is exactly how the quoted forms stopped being tested while this test kept
+        # passing. `test_rule_samples_dict_has_no_duplicate_keys` guards against that.
         # --- JCA provider indirection & runtime-resolved rules
         # RTRES-003's sample is ONLY the variable call: adding a `String t = "..."` line to
         # the snippet would exercise the dedup path and the rule would rightly stay silent.
@@ -267,13 +274,51 @@ def test_every_rule_is_actually_executed(tmp_path, scanner):
     # the whole file content, and the dedicated tests below cover both branches end to end.
     config_rules = {r["id"] for r in RULES if r["artefact_class"] == "config"}
     unreachable = []
-    for rule_id, snippet in samples.items():
+    for rule_id, value in samples.items():
+        # A rule may carry SEVERAL positive samples (e.g. the quoted call-site form and the bare
+        # sshd_config form of one OpenSSH identifier). Every one of them must fire the rule.
+        snippets = list(value) if isinstance(value, (list, tuple)) else [value]
         suffix = ".conf" if rule_id in config_rules else ".java" if rule_id.startswith("IM-JAVA-RTRES-") else ".txt.py"
-        p = _write(str(tmp_path / f"{rule_id}{suffix}"), snippet)
-        fired = {f["rule_id"] for f in scanner._match_rules(p, snippet)}
-        if rule_id not in fired:
-            unreachable.append(rule_id)
+        for i, snippet in enumerate(snippets):
+            p = _write(str(tmp_path / f"{rule_id}_{i}{suffix}"), snippet)
+            fired = {f["rule_id"] for f in scanner._match_rules(p, snippet)}
+            if rule_id not in fired:
+                unreachable.append(f"{rule_id}[{i}]: {snippet!r}")
     assert not unreachable, f"rules defined but never fire: {unreachable}"
+
+
+def test_rule_samples_dict_has_no_duplicate_keys():
+    """The rule table above is a dict literal, so a repeated key is a silent overwrite.
+
+    This happened: `IM-SRC-SSHNAME-002/-003/-007` were each declared twice -- once with the
+    quoted call-site sample and again with the bare sshd_config sample. Python keeps the LAST
+    value, so the quoted forms were never written to disk, never matched, and the reachability
+    assertion above still passed (the rule fired for the surviving sample). The test suite
+    reported full rule coverage while half of the evidence for those rules had evaporated.
+
+    A dict cannot report a duplicate at runtime -- the object is already de-duplicated by the
+    time it exists -- so the source is parsed instead.
+    """
+    import ast
+    import inspect
+    import sys
+
+    source = inspect.getsource(sys.modules[__name__])
+    tree = ast.parse(source)
+    duplicates = []
+    for node in ast.walk(tree):
+        if not isinstance(node, ast.Dict):
+            continue
+        seen = {}
+        for key in node.keys:
+            if isinstance(key, ast.Constant) and isinstance(key.value, str):
+                if key.value in seen:
+                    duplicates.append((key.value, seen[key.value], key.lineno))
+                seen[key.value] = key.lineno
+    assert not duplicates, (
+        "duplicate keys in a dict literal silently drop the earlier value: "
+        + ", ".join(f"{k!r} at lines {a} and {b}" for k, a, b in duplicates)
+    )
 
 
 # ===========================================================================================
