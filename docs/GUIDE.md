@@ -25,10 +25,10 @@
 2. [Hashing: the one-way fingerprint](#2-hashing-the-one-way-fingerprint)
 3. [Digital signatures: proving who sent it](#3-digital-signatures-proving-who-sent-it)
 4. [Certificates: the ID card](#4-certificates-the-id-card)
-5. [What "key exchange" means and why it is the hard part](#5-what-key-exchange-means-and-why-it-is-the-hard-part)
+5. [Key exchange: the hard part, and why it is hard for *us* too](#5-key-exchange-the-hard-part-and-why-it-is-hard-for-us-too)
 
 **Part 2 — Why quantum computers change this**
-6. [The two quantum attacks: Shor and Grover](#6-the-two-quantum-attacks-shor-and-grover)
+6. [Shor and Grover: the only two attacks that matter](#6-shor-and-grover-the-only-two-attacks-that-matter)
 7. [NIST security levels: the ruler we measure with](#7-nist-security-levels-the-ruler-we-measure-with)
 8. [What a post-quantum algorithm actually is](#8-what-a-post-quantum-algorithm-actually-is)
 9. [Mosca's inequality: the clock that matters](#9-moscas-inequality-the-clock-that-matters)
@@ -36,25 +36,25 @@
 **Part 3 — The project**
 10. [What IndraMesh does, in one paragraph](#10-what-indramesh-does-in-one-paragraph)
 11. [System architecture](#11-system-architecture)
-12. [The eleven engines](#12-the-eleven-engines)
+12. [The fourteen engines](#12-the-fourteen-engines)
 13. [The three ideas that make IndraMesh different](#13-the-three-ideas-that-make-indramesh-different)
-14. [How a single finding travels through the system](#14-how-a-single-finding-travels-through-the-system)
+14. [Testing: 952 tests, and why count is not proof](#14-testing-952-tests-and-why-count-is-not-proof)
 
 **Part 4 — Proving it works**
-15. [Testing: 838 tests and why count is not proof](#15-testing-838-tests-and-why-count-is-not-proof)
-16. [Mutation testing: breaking our own tests on purpose](#16-mutation-testing-breaking-our-own-tests-on-purpose)
-17. [Property, differential and fuzz testing](#17-property-differential-and-fuzz-testing)
-18. [Benchmarks: measuring accuracy on real code](#18-benchmarks-measuring-accuracy-on-real-code)
-19. [The defects we found this way](#19-the-defects-we-found-this-way)
+15. [Mutation testing: breaking our own tests on purpose](#15-mutation-testing-breaking-our-own-tests-on-purpose)
+16. [Benchmarks: measuring accuracy on real code](#16-benchmarks-measuring-accuracy-on-real-code)
+17. [The defects we found this way](#17-the-defects-we-found-this-way)
+18. [Who we are compared against](#18-who-we-are-compared-against)
+19. [Where we are genuinely ahead](#19-where-we-are-genuinely-ahead)
 
 **Part 5 — Competition**
-20. [Where we beat cryptodrishti](#20-where-we-beat-cryptodrishti)
-21. [Where we are behind cryptodrishti](#21-where-we-are-behind-cryptodrishti)
-22. [What to improve first](#22-what-to-improve-first)
-23. [Talking points for the SIH pitch](#23-talking-points-for-the-sih-pitch)
+20. [Where we are behind](#20-where-we-are-behind)
+21. [What to improve first](#21-what-to-improve-first)
+22. [Talking points for the SIH pitch](#22-talking-points-for-the-sih-pitch)
+23. [Glossary](#23-glossary)
 
 **Part 6 — Diagram appendix**
-24. [Diagrams](#24-diagrams)
+24. [Where everything lives](#24-where-everything-lives)
 
 ---
 
@@ -643,10 +643,10 @@ Explained in §11.4. Most tools have one confidence number. We have two orthogon
 
 # Part 4 — Proving it works
 
-## 14. Testing: 838 tests, and why count is not proof
+## 14. Testing: 952 tests, and why count is not proof
 
 ```
-838 passed, 8 skipped, 0 failing
+952 passed, 8 skipped, 0 failing
 ```
 
 **A test count is not evidence of correctness.** Eight hundred trivial always-passing assertions
@@ -961,7 +961,7 @@ cli.py             headless + CBOM
 cli_advanced.py    verify-migration
 cli_certificates.py X.509
 schemas/           vendored CycloneDX 1.7 JSON Schema (offline validation)
-tests/             28 files, 957 tests
+tests/             28 files, 952 tests
 docs/GUIDE.md      <- this document
 docs/COMPARISON.md measured comparison with the sibling project
 research/competitive/ANALYSIS.md   17 repos analysed, take/adapt/reject each
