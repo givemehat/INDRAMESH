@@ -116,6 +116,30 @@ def test_empty_input_produces_a_valid_empty_run():
     assert run["results"] == [] and run["tool"]["driver"]["rules"] == []
 
 
+def test_coverage_manifest_travels_with_the_run():
+    """A Security-tab alert that cannot say 'nothing was read' is half an alert."""
+    coverage = {"files_seen": 10, "files_scanned": 10, "files_skipped": 0,
+                "errors": [], "never_in_scope": ["HSM / TPM internal keys"]}
+    run = json.loads(generate_sarif([_finding()], coverage=coverage))["runs"][0]
+    cov = run["properties"]["indramesh/coverage"]
+    assert cov["state"] == "covered"
+    assert cov["files_seen"] == 10 and cov["files_scanned"] == 10
+    assert cov["never_in_scope"] == ["HSM / TPM internal keys"]
+
+
+def test_unreadable_files_mark_the_coverage_incomplete():
+    coverage = {"files_seen": 10, "files_scanned": 9, "files_skipped": 1,
+                "errors": [{"file": "a.py", "reason": "binary"}], "never_in_scope": []}
+    run = json.loads(generate_sarif([_finding()], coverage=coverage))["runs"][0]
+    assert run["properties"]["indramesh/coverage"]["state"] == "incomplete"
+    assert run["properties"]["indramesh/coverage"]["unreadable"] == 1
+
+
+def test_missing_coverage_is_said_out_loud_rather_than_omitted():
+    run = _doc([_finding()])["runs"][0]
+    assert run["properties"]["indramesh/coverage"]["state"] == "not-supplied"
+
+
 def test_cli_writes_a_parseable_sarif_file(tmp_path):
     """End to end: the documented flag produces the documented artefact."""
     out = tmp_path / "out"

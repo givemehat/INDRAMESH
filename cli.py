@@ -84,7 +84,7 @@ def run_headless_scan(target_dir, output_format="text", z_time=DEFAULT_Z,
         os.makedirs(out_dir, exist_ok=True)
         sarif_path = os.path.join(out_dir, "indramesh.sarif")
         with open(sarif_path, "w", encoding="utf-8") as fh:
-            fh.write(generate_sarif(findings, root=target_dir))
+            fh.write(generate_sarif(findings, root=target_dir, coverage=coverage))
         print(f"[+] SARIF 2.1.0   -> {sarif_path}")
         print("    upload with:  github/codeql-action/upload-sarif (Security tab annotations)")
     else:

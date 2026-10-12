@@ -67,10 +67,13 @@ def _rule_metadata(finding):
 
 
 def generate_sarif(findings, root=None, tool_name="IndraMesh",
-                   tool_version="2.0.0", sarif_uri="https://github.com/givemehat/INDRAMESH"):
+                   tool_version="2.0.0", sarif_uri="https://github.com/givemehat/INDRAMESH",
+                   coverage=None):
     """Return a SARIF 2.1.0 document (as a JSON string) for `findings`.
 
     `root` is the directory the scan was pointed at; relative URIs are computed against it.
+    `coverage` is the scanner's coverage manifest; when given, the honest limits travel with
+    the SARIF run, so a CI artifact cannot read as "clean" when it means "nothing was read".
     Each finding may carry `risk` (from engine.mosca); a finding without one degrades to a
     `warning` result rather than being dropped.
     """
@@ -135,9 +138,36 @@ def generate_sarif(findings, root=None, tool_name="IndraMesh",
             "properties": {
                 "indramesh/findings_total": len(results),
                 "indramesh/rules_exercised": len(rules),
+                # The blind spots travel with the artefact: a SARIF uploaded to a Security
+                # tab says "here is what we found" and must also say what was never looked at.
+                "indramesh/coverage": _coverage_summary(coverage),
             },
         }],
     }
     return json.dumps(doc, indent=2)
+
+
+def _coverage_summary(coverage):
+    """A flat, JSON-safe summary of the coverage manifest (never None)."""
+    if not coverage:
+        return {"state": "not-supplied",
+                "message": "no coverage manifest was supplied to the SARIF emitter"}
+    seen = coverage.get("files_seen", 0)
+    scanned = coverage.get("files_scanned", 0)
+    errors = coverage.get("errors") or []
+    if not seen and not scanned:
+        state = "nothing-examined"
+    elif errors:
+        state = "incomplete"
+    else:
+        state = "covered"
+    return {
+        "state": state,
+        "files_seen": seen,
+        "files_scanned": scanned,
+        "files_skipped": coverage.get("files_skipped", 0),
+        "unreadable": len(errors),
+        "never_in_scope": list(coverage.get("never_in_scope") or []),
+    }
 
 
