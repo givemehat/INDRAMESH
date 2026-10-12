@@ -46,5 +46,8 @@ EXPOSE 8501
 HEALTHCHECK --interval=30s --timeout=10s --start-period=20s --retries=3 \
     CMD curl --fail --silent http://localhost:8501/api/status || exit 1
 
-# Default command: launch the interactive UI
-CMD ["python", "app.py", "--host", "0.0.0.0", "--port", "8501"]
+# Default command: launch the interactive UI.
+# `--allow-unauthenticated-public` is required because a container is bound to 0.0.0.0 by
+# nature and app.py now refuses an off-loopback bind without it (the console has no auth, so
+# the flag makes the exposure an explicit decision rather than a default).
+CMD ["python", "app.py", "--host", "0.0.0.0", "--port", "8501", "--allow-unauthenticated-public"]
