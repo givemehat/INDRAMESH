@@ -15,6 +15,7 @@ Interfaces directly with `engine/` modules:
 """
 import asyncio
 import datetime
+import html
 import json
 import os
 import sys
@@ -532,6 +533,40 @@ def generate_executive_report_html() -> str:
 
     q_rows = queue_rows(records, deadline_year=active_policy.get("year"))
 
+    # HONESTY SECTION. The on-screen console headlines the coverage verdict, but this exported
+    # report -- the artefact that leaves the building and gets shown to a board -- did not
+    # mention coverage at all. `c_verdict` was computed above and then thrown away, which is
+    # precisely how a report that says "0 CRITICAL findings" gets read as "you are clean" when
+    # the truth is "nothing could be read". A scan's blind spots travel with the scan.
+    seen = c_verdict.get("files_seen", 0)
+    read_pct = f"{c_verdict.get('read_fraction', 0.0) * 100:.0f}%"
+    verdict_state = c_verdict.get("state", "unknown")
+    verdict_colour = {"covered": "#16a34a", "incomplete": "#ea580c"}.get(verdict_state, "#dc2626")
+    scope_items = "".join(
+        f"<li>{html.escape(str(g))}</li>" for g in (cov.get("never_in_scope") or [])
+    )
+    unreadable = c_verdict.get("errors") or []
+    unreadable_items = "".join(
+        f"<li><code>{html.escape(str(e.get('file', '?')))}</code> &mdash; "
+        f"{html.escape(str(e.get('reason', 'unreadable')))}</li>"
+        for e in unreadable[:10]
+    )
+    if len(unreadable) > 10:
+        unreadable_items += f"<li>&hellip; and {len(unreadable) - 10} more</li>"
+    coverage_html = f"""
+<div class="callout" style="border-left:4px solid {verdict_colour}">
+  <strong style="color:#0f172a;font-size:0.95rem">Scan Coverage &amp; Honest Limits:</strong>
+  <div style="margin-top:0.35rem;font-size:0.88rem;color:#334155">{html.escape(str(c_verdict.get('message', '')))}</div>
+  <div style="margin-top:0.6rem;font-size:0.82rem;color:#475569">
+    Files seen <strong>{seen}</strong> &middot; read <strong>{c_verdict.get('files_scanned', 0)}</strong>
+    ({read_pct}) &middot; skipped <strong>{c_verdict.get('files_skipped', 0)}</strong>
+    &middot; unreadable <strong>{len(unreadable)}</strong>
+  </div>
+  {f'<div style="margin-top:0.6rem;font-size:0.82rem"><strong style="color:#9a3412">Files that could not be read (NOT evidence of safety):</strong><ul style="margin:0.3rem 0 0 1.1rem;color:#475569">{unreadable_items}</ul></div>' if unreadable_items else ''}
+  {f'<div style="margin-top:0.6rem;font-size:0.82rem"><strong style="color:#334155">Never in scope for any scan (require a different sensor or an attestation):</strong><ul style="margin:0.3rem 0 0 1.1rem;color:#475569">{scope_items}</ul></div>' if scope_items else ''}
+</div>
+"""
+
     table_rows_html = "".join([
         f"<tr><td><span class='badge tier-{r.get('Risk tier', 'LOW')}'>{r.get('Risk tier')}</span></td>"
         f"<td><strong>{r.get('Artefact', '')}</strong></td>"
@@ -622,6 +657,7 @@ def generate_executive_report_html() -> str:
   </div>
 </div>
 
+{coverage_html}
 <h3 style="margin-top:1.5rem;font-size:1.1rem;color:#0f172a">Actionable Post-Quantum Remediation Workstreams</h3>
 <table>
   <thead>
@@ -687,6 +723,13 @@ def download_executive_report_json():
             "policy_deadline": active_policy.get("year"),
         },
         "cbom_validation": _STATE.get("last_cbom_validation"),
+        # The blind spots travel with the report: a JSON export that lists findings but not
+        # what could not be read invites the same "0 findings == clean" misreading the console
+        # exists to prevent.
+        "coverage": {
+            **coverage_verdict(scan.get("coverage") or {}),
+            "never_in_scope": (scan.get("coverage") or {}).get("never_in_scope", []),
+        },
         "remediation_workstreams": queue_rows(records, deadline_year=active_policy.get("year")),
     }
     return Response(
