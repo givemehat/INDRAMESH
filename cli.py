@@ -3,6 +3,7 @@
     python cli.py ./target --format cbom --z 10 --policy india-dst-nqm
     python cli.py ./image.tar --format text
     python cli.py . --format cbom --no-ml --out reports/
+    python cli.py . --format sarif --out reports/    # upload to GitHub code scanning
 
 Exit codes:  0 = no finding at or above --fail-on   1 = threshold exceeded   2 = scan error
 """
@@ -15,6 +16,7 @@ from engine.scanner import IndraMeshScanner
 from engine.mosca import calculate_risk, DEFAULT_Z, POLICY_DEADLINES, Z_PRESETS
 from engine.recommender import get_pqc_recommendation
 from engine.cbom import generate_cbom
+from engine.sarif import generate_sarif
 
 SEVERITY_ORDER = ["LOW", "MEDIUM", "HIGH", "CRITICAL"]
 
@@ -75,6 +77,16 @@ def run_headless_scan(target_dir, output_format="text", z_time=DEFAULT_Z,
         print(f"[+] CBOM          -> {cbom_path}")
         print(f"[+] Recommendations-> {recs_path}")
         print(f"[+] Coverage      -> {cov_path}")
+    elif output_format == "sarif":
+        # SARIF is the CI-facing format: one file, uploadable to GitHub code scanning, where
+        # each finding becomes an annotation on the diff. Paths are made relative to the scan
+        # root so the artefact does not leak the builder's directory layout.
+        os.makedirs(out_dir, exist_ok=True)
+        sarif_path = os.path.join(out_dir, "indramesh.sarif")
+        with open(sarif_path, "w", encoding="utf-8") as fh:
+            fh.write(generate_sarif(findings, root=target_dir))
+        print(f"[+] SARIF 2.1.0   -> {sarif_path}")
+        print("    upload with:  github/codeql-action/upload-sarif (Security tab annotations)")
     else:
         for f in findings:
             r = f["risk"]
@@ -99,7 +111,9 @@ def run_headless_scan(target_dir, output_format="text", z_time=DEFAULT_Z,
 def main(argv=None):
     parser = argparse.ArgumentParser(description="IndraMesh headless cryptographic scanner")
     parser.add_argument("target", help="Directory, file or container-image tar to scan")
-    parser.add_argument("--format", choices=["text", "cbom"], default="text")
+    parser.add_argument("--format", choices=["text", "cbom", "sarif"], default="text",
+                        help="text for humans, cbom for a CycloneDX 1.7 inventory, "
+                             "sarif for GitHub code scanning / any SARIF viewer")
     parser.add_argument("--z", type=float, default=DEFAULT_Z,
                         help="Years until a CRQC. Presets: " + _z_presets_help())
     parser.add_argument("--policy", default="india_dst_nqm", choices=sorted(POLICY_DEADLINES))

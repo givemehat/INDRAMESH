@@ -204,13 +204,19 @@ docker run -p 8501:8501 -v $(pwd):/target indramesh
 python cli.py ./your-project --no-ml                    # read findings
 python cli.py ./your-project --format cbom --out ./out   # emit schema-valid CBOM
 python validate_cbom.py ./out/indramesh_report.json      # verify Ecma-424 validation
+python cli.py ./your-project --format sarif --out ./out  # SARIF 2.1.0 for GitHub code scanning
 python cli.py . --z 10 --policy india_dst_nqm           # score against India 2029 CII milestone
 python cli_advanced.py ./your-project                   # secondary sensor suite
 python cli_certificates.py certs ./your-project         # X.509 certificate sensor
 
 python app.py                                           # launch FastAPI web console
-python -m pytest tests/ -v                              # 891+ test verification
+python -m pytest tests/ -v                              # 945+ test verification
 ```
+
+`--format sarif` writes `indramesh.sarif`: relative paths, one rule per artefact, and a level
+that follows the Mosca tier (CRITICAL/HIGH → `error`, MEDIUM → `warning`, LOW → `note`). Upload
+it with `github/codeql-action/upload-sarif` and every finding becomes a code-scanning alert with
+an annotation on the offending line. `.github/workflows/indramesh_scan.yml` does exactly this.
 
 ### Offline by Design
 

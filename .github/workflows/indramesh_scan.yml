@@ -6,6 +6,12 @@ on:
   pull_request:
     branches: [ "master", "main" ]
 
+# SARIF upload needs write access to the repo's code-scanning results. Without this block
+# the upload step is rejected with 403 and the findings never reach the Security tab.
+permissions:
+  contents: read
+  security-events: write
+
 jobs:
   quantum-security-scan:
     runs-on: ubuntu-latest
@@ -47,6 +53,23 @@ jobs:
           echo "::error::IndraMesh scan failed to run (exit $rc) -- this is a tool failure, not a finding"
           exit "$rc"
         fi
+
+    # The same scan, re-emitted as SARIF so every finding becomes a code-scanning alert with
+    # an annotation on the offending line. `continue-on-error` is deliberate: an upload
+    # refusal (fork PRs get a read-only token) must not reclassify a completed scan as a
+    # failed one -- the artefact is still uploaded below either way.
+    - name: Emit SARIF for code scanning
+      if: always()
+      run: |
+        export PYTHONPATH=.
+        python cli.py . --format sarif --z 10 --policy india_dst_nqm --out ./out --no-ml
+
+    - name: Upload SARIF to the Security tab
+      if: always()
+      continue-on-error: true
+      uses: github/codeql-action/upload-sarif@v3
+      with:
+        sarif_file: ./out/indramesh.sarif
 
     - name: Summarise
       if: always()
