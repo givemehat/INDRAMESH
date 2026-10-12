@@ -7,8 +7,8 @@
 <!-- CI/CD & Cloud Launch Badges -->
 [![Tests](https://github.com/givemehat/IndraMesh/actions/workflows/tests.yml/badge.svg)](https://github.com/givemehat/IndraMesh/actions/workflows/tests.yml)
 [![Quantum Risk Scan](https://github.com/givemehat/IndraMesh/actions/workflows/indramesh_scan.yml/badge.svg)](https://github.com/givemehat/IndraMesh/actions/workflows/indramesh_scan.yml)
-[![Open in Streamlit](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://share.streamlit.io/deploy?repository=givemehat/ECDAT&branch=master&mainModule=app.py)
-[![Web Console](https://img.shields.io/badge/Console-FastAPI_%C2%B7_Port_8501-00F5D4?style=for-the-badge&logo=fastapi&logoColor=040812)](#quickstart)
+[![Docker](https://img.shields.io/badge/Docker-Ready_%C2%B7_run_-p_8501-2496ED?style=for-the-badge&logo=docker&logoColor=white)](#installation)
+[![Web Console](https://img.shields.io/badge/Console-FastAPI_%C2%B7_Port_8501-00F5D4?style=for-the-badge&logo=fastapi&logoColor=040812)](#usage)
 
 # INDRAMESH (इन्द्रमेश)
 ### Enterprise Cryptographic Discovery, Inventory (ACDI) &amp; Post-Quantum Migration Mesh
@@ -28,7 +28,7 @@
 
 <!-- Security & Quality Badges -->
 [![Air Gapped](https://img.shields.io/badge/Air--Gapped-Zero_CDN_%C2%B7_Zero_Telemetry-10B981?style=for-the-badge&logo=checkmarx&logoColor=white)](#)
-[![Tests Passing](https://img.shields.io/badge/Pytest-924_Passing_%C2%B7_0_Regressions-10B981?style=for-the-badge&logo=pytest&logoColor=white)](#)
+[![Tests Passing](https://img.shields.io/badge/Pytest-949_Passing_%C2%B7_0_Regressions-10B981?style=for-the-badge&logo=pytest&logoColor=white)](#)
 [![Rules](https://img.shields.io/badge/Detection-145_Rules_%C2%B7_9_Languages-38BDF8?style=for-the-badge&logo=codewars&logoColor=040812)](#)
 [![Python](https://img.shields.io/badge/Python-3.11_%7C_3.12_%7C_3.13_%7C_3.14-3776AB?style=for-the-badge&logo=python&logoColor=white)](#)
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue?style=for-the-badge&logo=apache&logoColor=white)](#)
@@ -210,7 +210,7 @@ python cli_advanced.py ./your-project                   # secondary sensor suite
 python cli_certificates.py certs ./your-project         # X.509 certificate sensor
 
 python app.py                                           # launch FastAPI web console
-python -m pytest tests/ -v                              # 945+ test verification
+python -m pytest tests/ -v                              # 949 passing + 8 skipped; see tests/test_readme_contract.py
 ```
 
 `--format sarif` writes `indramesh.sarif`: relative paths, one rule per artefact, and a level

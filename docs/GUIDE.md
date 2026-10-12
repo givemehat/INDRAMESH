@@ -961,7 +961,7 @@ cli.py             headless + CBOM
 cli_advanced.py    verify-migration
 cli_certificates.py X.509
 schemas/           vendored CycloneDX 1.7 JSON Schema (offline validation)
-tests/             28 files, 924 tests
+tests/             28 files, 957 tests
 docs/GUIDE.md      <- this document
 docs/COMPARISON.md measured comparison with the sibling project
 research/competitive/ANALYSIS.md   17 repos analysed, take/adapt/reject each
