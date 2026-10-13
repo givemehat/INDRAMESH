@@ -325,10 +325,10 @@
       <text x="0" y="0" fill="#00f5d4" class="brand-title" font-size="58" filter="url(#glowFilter)" opacity="0.35">INDRAMESH</text>
       <!-- Crisp Foreground Title -->
       <text x="0" y="0" fill="url(#textNeon)" class="brand-title" font-size="58">INDRAMESH</text>
-      <!-- Devnagari Script Name -->
-      <text x="395" y="-6" fill="#ffd166" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans Devanagari', sans-serif" font-size="24" font-weight="700" letter-spacing="0.05em">इन्द्रमेश</text>
+      <!-- Devnagari Script Name with generous spacing -->
+      <text x="490" y="-8" fill="#ffd166" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans Devanagari', sans-serif" font-size="26" font-weight="700" letter-spacing="0.06em">इन्द्रमेश</text>
       <!-- Version & Security Class Super-Badge -->
-      <g transform="translate(520, -40)">
+      <g transform="translate(625, -40)">
         <rect width="78" height="22" rx="11" fill="#00f5d4" fill-opacity="0.12" stroke="#00f5d4" stroke-opacity="0.5" stroke-width="1.2"/>
         <text x="14" y="15" fill="#00f5d4" class="mono-badge" font-size="11">v2.4 PQC</text>
       </g>

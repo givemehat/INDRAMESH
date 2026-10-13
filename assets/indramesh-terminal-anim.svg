@@ -65,34 +65,34 @@
       100% { width: 100%; }
     }
     @keyframes msgReveal1 {
-      0% { opacity: 0; transform: translateY(4px); }
-      4%, 90% { opacity: 1; transform: translateY(0); }
-      96%, 100% { opacity: 0; transform: translateY(-2px); }
+      0%, 3% { opacity: 0; }
+      5%, 90% { opacity: 1; }
+      96%, 100% { opacity: 0; }
     }
     @keyframes msgReveal2 {
-      0%, 12% { opacity: 0; transform: translateY(4px); }
-      16%, 90% { opacity: 1; transform: translateY(0); }
-      96%, 100% { opacity: 0; transform: translateY(-2px); }
+      0%, 14% { opacity: 0; }
+      17%, 90% { opacity: 1; }
+      96%, 100% { opacity: 0; }
     }
     @keyframes msgReveal3 {
-      0%, 28% { opacity: 0; transform: translateY(4px); }
-      32%, 90% { opacity: 1; transform: translateY(0); }
-      96%, 100% { opacity: 0; transform: translateY(-2px); }
+      0%, 30% { opacity: 0; }
+      34%, 90% { opacity: 1; }
+      96%, 100% { opacity: 0; }
     }
     @keyframes msgReveal4 {
-      0%, 44% { opacity: 0; transform: translateY(4px); }
-      48%, 90% { opacity: 1; transform: translateY(0); }
-      96%, 100% { opacity: 0; transform: translateY(-2px); }
+      0%, 46% { opacity: 0; }
+      50%, 90% { opacity: 1; }
+      96%, 100% { opacity: 0; }
     }
     @keyframes msgReveal5 {
-      0%, 60% { opacity: 0; transform: translateY(4px); }
-      64%, 90% { opacity: 1; transform: translateY(0); }
-      96%, 100% { opacity: 0; transform: translateY(-2px); }
+      0%, 62% { opacity: 0; }
+      66%, 90% { opacity: 1; }
+      96%, 100% { opacity: 0; }
     }
     @keyframes msgReveal6 {
-      0%, 76% { opacity: 0; transform: translateY(4px); }
-      80%, 90% { opacity: 1; transform: translateY(0); }
-      96%, 100% { opacity: 0; transform: translateY(-2px); }
+      0%, 78% { opacity: 0; }
+      82%, 90% { opacity: 1; }
+      96%, 100% { opacity: 0; }
     }
 
     .radar-beam {
@@ -200,7 +200,7 @@
       <rect x="0" y="-12" width="70" height="17" rx="3" fill="#0284c7" fill-opacity="0.2"/>
       <text x="8" y="0" fill="#38bdf8" font-weight="700">DISCOVERY</text>
       <text x="82" y="0" fill="#94a3b8">Scanning 203 source files &amp; manifests across 9 languages...</text>
-      <text x="800" y="0" text-anchor="end" fill="#10b981" font-weight="700">[145 RULES OK]</text>
+      <text x="780" y="0" text-anchor="end" fill="#10b981" font-weight="700">[145 RULES OK]</text>
     </g>
 
     <!-- Streamed Line 2: Cryptographic Artefacts Found -->
@@ -208,7 +208,7 @@
       <rect x="0" y="-12" width="70" height="17" rx="3" fill="#6366f1" fill-opacity="0.2"/>
       <text x="8" y="0" fill="#818cf8" font-weight="700">INVENTORY</text>
       <text x="82" y="0" fill="#94a3b8">Found 128 assets: RSA-4096 (14), ECDH P-384 (8), AES-256 (32)</text>
-      <text x="800" y="0" text-anchor="end" fill="#38bdf8" font-weight="700">[ECMA-424]</text>
+      <text x="780" y="0" text-anchor="end" fill="#38bdf8" font-weight="700">[ECMA-424]</text>
     </g>
 
     <!-- Streamed Line 3: Mosca's Inequality Breach -->
@@ -216,7 +216,7 @@
       <rect x="0" y="-12" width="70" height="17" rx="3" fill="#e11d48" fill-opacity="0.25"/>
       <text x="8" y="0" fill="#fb7185" font-weight="700">MOSCA X+Y</text>
       <text x="82" y="0" fill="#e2e8f0">X(25y) + Y(3y) = <tspan fill="#f43f5e" font-weight="700">28y &gt; Z(10y CRQC)</tspan></text>
-      <text x="800" y="0" text-anchor="end" fill="#f43f5e" font-weight="700">&#9888; CRITICAL (HNDL EXPOSURE)</text>
+      <text x="780" y="0" text-anchor="end" fill="#f43f5e" font-weight="700">&#9888; CRITICAL (HNDL)</text>
     </g>
 
     <!-- Streamed Line 4: FIPS Recommendations -->
@@ -224,7 +224,7 @@
       <rect x="0" y="-12" width="70" height="17" rx="3" fill="#ca8a04" fill-opacity="0.2"/>
       <text x="8" y="0" fill="#facc15" font-weight="700">PQC TARGET</text>
       <text x="82" y="0" fill="#94a3b8">Assigned <tspan fill="#00f5d4" font-weight="700">FIPS 203 (ML-KEM-768)</tspan> &amp; <tspan fill="#38bdf8" font-weight="700">FIPS 204 (ML-DSA-65)</tspan></text>
-      <text x="800" y="0" text-anchor="end" fill="#ffd166" font-weight="700">[COST MAPPED]</text>
+      <text x="780" y="0" text-anchor="end" fill="#ffd166" font-weight="700">[COST MAPPED]</text>
     </g>
 
     <!-- Streamed Line 5: CycloneDX 1.7 CBOM Output -->
@@ -232,7 +232,7 @@
       <rect x="0" y="-12" width="70" height="17" rx="3" fill="#059669" fill-opacity="0.2"/>
       <text x="8" y="0" fill="#34d399" font-weight="700">CBOM 1.7</text>
       <text x="82" y="0" fill="#94a3b8">Exported CycloneDX 1.7 CBOM to <tspan fill="#e2e8f0">./indramesh_cbom.json</tspan></text>
-      <text x="800" y="0" text-anchor="end" fill="#10b981" font-weight="700">&#10004; SCHEMA VALID</text>
+      <text x="780" y="0" text-anchor="end" fill="#10b981" font-weight="700">&#10004; SCHEMA VALID</text>
     </g>
 
     <!-- Streamed Line 6: Verification Guarantee & Blinking Cursor -->
@@ -242,7 +242,7 @@
       <text x="82" y="0" fill="#00f5d4" font-weight="700">Air-Gapped Zero-CDN &#183; 1,027 Passing Tests (1000+)</text>
       <!-- Blinking Cursor positioned clearly without colliding -->
       <rect x="520" y="-10" width="8" height="14" fill="#00f5d4" class="cursor-blink"/>
-      <text x="800" y="0" text-anchor="end" fill="#00f5d4" font-weight="700">&#10004; 0 REGRESSIONS</text>
+      <text x="780" y="0" text-anchor="end" fill="#00f5d4" font-weight="700">&#10004; 0 REGRESSIONS</text>
     </g>
   </g>
 
