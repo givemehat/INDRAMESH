@@ -108,3 +108,146 @@ def test_coverage_rejects_invalid_status():
     except ValueError:
         return
     raise AssertionError("reconcile must raise ValueError on invalid probe status")
+
+
+def test_cbom_occ_refs_stable_across_reorder():
+    a = _mk("AES-128", "a.py", 1)
+    b = _mk("RSA", "b.py", 2, primitive="pke", key_length=2048)
+    doc1 = json.loads(generate_cbom([a, b], subject_name="s1"))
+    doc2 = json.loads(generate_cbom([b, a], subject_name="s1"))
+    refs1 = sorted(o["bom-ref"] for c in doc1["components"]
+                   for o in c.get("evidence", {}).get("occurrences", []))
+    refs2 = sorted(o["bom-ref"] for c in doc2["components"]
+                   for o in c.get("evidence", {}).get("occurrences", []))
+    # Same finding content -> same hash prefix regardless of input order
+    # (suffix idx may differ, but the hash stem must match).
+    stems1 = sorted(r.rsplit("-", 1)[0] for r in refs1)
+    stems2 = sorted(r.rsplit("-", 1)[0] for r in refs2)
+    assert stems1 == stems2, f"occ refs not stable: {refs1} vs {refs2}"
+
+
+def test_cbom_always_emits_dependencies_and_covers_all():
+    doc = json.loads(generate_cbom([], subject_name="empty-subject"))
+    assert "dependencies" in doc, "dependencies key must always exist"
+    assert doc["dependencies"][0]["ref"] == "empty-subject"
+    assert doc["dependencies"][0]["dependsOn"] == []
+    doc2 = json.loads(generate_cbom([_mk("AES-128", "a.py", 1)], subject_name="s2"))
+    valid = {c["bom-ref"] for c in doc2["components"]}
+    assert set(doc2["dependencies"][0]["dependsOn"]) == valid, \
+        "subject must depend on every discovered asset"
+
+
+def test_cbom_subject_collision_disambiguated():
+    doc = json.loads(generate_cbom([_mk("AES-128", "a.py", 1)],
+                                   subject_name="crypto-asset-0"))
+    assert doc["metadata"]["component"]["bom-ref"].startswith("subject-")
+    assert doc["dependencies"][0]["ref"] == doc["metadata"]["component"]["bom-ref"]
+
+
+def test_history_store_corrupt_row_skipped(tmp_path, monkeypatch):
+    import sqlite3
+    from engine import history_store
+    p = tmp_path / "h.db"
+    monkeypatch.setenv("INDRAMESH_HISTORY_DB", str(p))
+    assert history_store.append({"id": "A", "scanned_at": "2026-01-01T00:00:00Z"}) is True
+    with sqlite3.connect(str(p)) as conn:
+        conn.execute("INSERT OR REPLACE INTO history (id, ts, blob) VALUES (?,?,?)",
+                     ("BAD", "2026-01-02T00:00:00Z", "{not-json"))
+    listed = history_store.list_recent()
+    assert all(isinstance(e, dict) for e in listed)
+    assert any(e.get("id") == "A" for e in listed)
+    assert history_store.get("BAD") is None
+
+
+def test_graph_variant_separation():
+    from engine.graph import generate_crypto_graph
+    from pyvis.network import Network
+    seen = []
+    orig = Network.add_node
+
+    def spy(self, n, *a, **k):
+        seen.append(n)
+        return orig(self, n, *a, **k)
+    Network.add_node = spy
+    try:
+        generate_crypto_graph([
+            {"name": "RSA", "primitive": "pke", "file": "a.py", "line": 1,
+             "key_length": 2048, "risk": {"tier": "CRITICAL"}},
+            {"name": "RSA", "primitive": "pke", "file": "a.py", "line": 2,
+             "key_length": 4096, "risk": {"tier": "CRITICAL"}},
+        ])
+        artefacts = [n for n in seen if "____" in str(n)]
+        assert len(artefacts) == 2, f"RSA-2048 vs 4096 must not merge in graph: {artefacts}"
+    finally:
+        Network.add_node = orig
+
+
+def test_cbom_occ_refs_fully_stable_across_reorder():
+    """Per-digest counters make refs fully order-independent (not just stems)."""
+    a = _mk("AES-128", "a.py", 1)
+    b = _mk("RSA", "b.py", 2, primitive="pke", key_length=2048)
+    doc1 = json.loads(generate_cbom([a, b], subject_name="s1"))
+    doc2 = json.loads(generate_cbom([b, a], subject_name="s1"))
+    refs1 = sorted(o["bom-ref"] for c in doc1["components"]
+                   for o in c.get("evidence", {}).get("occurrences", []))
+    refs2 = sorted(o["bom-ref"] for c in doc2["components"]
+                   for o in c.get("evidence", {}).get("occurrences", []))
+    assert refs1 == refs2, f"occ refs must be fully stable: {refs1} vs {refs2}"
+
+
+def test_graph_tolerates_string_risk_and_library_case():
+    from engine.graph import generate_crypto_graph
+    # risk as a plain string must not raise (regression: .get on str).
+    html = generate_crypto_graph([
+        {"name": "AES", "primitive": "block-cipher", "file": "a.py", "line": 1,
+         "risk": "CRITICAL"},
+        {"name": "OpenSSL", "type": "Library", "file": "b.py", "line": 2,
+         "risk": {"tier": "LOW"}},
+    ])
+    assert isinstance(html, str) and len(html) > 0
+
+
+def test_history_load_restores_config_and_reinserts(tmp_path, monkeypatch):
+    """LOAD from DB must re-insert into memory history and restore last_config."""
+    import copy
+    from fastapi.testclient import TestClient
+    import server
+    from engine import history_store
+    p = tmp_path / "h2.db"
+    monkeypatch.setenv("INDRAMESH_HISTORY_DB", str(p))
+    with TestClient(server.app) as client:
+        saved = copy.deepcopy(server._STATE)
+        try:
+            resp = client.post("/api/scan", json={
+                "target": "./dummy_target", "enable_ml": False,
+                "policy": "india_dst_nqm", "data_class": "operational-record",
+                "z_years": 10.0})
+            assert resp.status_code == 200, resp.text
+            entry_id = server._STATE["history"][0]["id"]
+            # Wipe memory completely, then GET must fall back to the store.
+            server._STATE["history"] = []
+            hist = client.get("/api/history")
+            assert hist.status_code == 200, hist.text
+            assert any(h["id"] == entry_id for h in hist.json()), \
+                "GET /api/history must fall back to durable store"
+            # Wipe again, LOAD from DB must work and re-insert.
+            server._STATE["history"] = []
+            loaded = client.post("/api/history/load", json={"id": entry_id})
+            assert loaded.status_code == 200, loaded.text
+            assert any(h["id"] == entry_id for h in server._STATE["history"]), \
+                "DB-loaded entry must be re-inserted into memory history"
+            assert server._STATE.get("last_config", {}).get("policy") == "india_dst_nqm"
+        finally:
+            server._STATE.clear()
+            server._STATE.update(saved)
+
+
+def test_coverage_inventory_ids_consistent():
+    """home_lab.csv must use SLC10 (not SLC010); both scripts must agree."""
+    import csv
+    inv = ROOT / "docs" / "inventory" / "home_lab.csv"
+    with open(inv, newline="", encoding="utf-8") as fh:
+        ids = [r["id"] for r in csv.DictReader(fh)]
+    assert "SLC10" in ids, f"inventory must contain SLC10, got {ids}"
+    assert "SLC010" not in ids, f"inventory must not contain SLC010 typo: {ids}"
+    assert len(ids) == 12

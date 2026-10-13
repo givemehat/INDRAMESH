@@ -165,8 +165,15 @@ def main(argv=None):
         return 2
     if args.coverage:
         report = reconcile_coverage()
-        cov_path = os.path.join(args.out, "coverage_reconciliation.json")
-        os.makedirs(args.out, exist_ok=True)
+        # Enterprise-grade: default --out "." still lands in the canonical
+        # out/coverage_reconciliation.json (coverage_reconcile.DEFAULT_OUT);
+        # an explicit --out redirects the artifact there instead.
+        from engine.coverage_reconcile import DEFAULT_OUT as _COV_DEFAULT
+        if args.out == ".":
+            cov_path = _COV_DEFAULT
+        else:
+            cov_path = os.path.join(args.out, "coverage_reconciliation.json")
+        os.makedirs(os.path.dirname(cov_path) or ".", exist_ok=True)
         with open(cov_path, "w", encoding="utf-8") as fh:
             json.dump(report, fh, indent=2)
         print(f"[+] Coverage      -> {cov_path}")

@@ -50,7 +50,8 @@ def generate_crypto_graph(findings):
         # collapse from basename), label stays human-readable basename.
         file_node = raw_file
         file_label = os.path.basename(raw_file) or raw_file
-        risk = (f.get("risk") or {}).get("tier", "LOW")
+        _risk = f.get("risk")
+        risk = (_risk.get("tier", "LOW") if isinstance(_risk, dict) else "LOW")
         name = str(f.get("name") or "unknown")
         norm_name = name.strip().casefold()
         # Distinguish variants that must not merge (RSA-2048 vs RSA-4096,
@@ -64,7 +65,7 @@ def generate_crypto_graph(findings):
             str(f.get("curve") or "").strip().casefold(),
             str(f.get("mode") or "").strip().casefold(),
         ])
-        is_library = f.get("type") == "library"
+        is_library = str(f.get("type") or "").strip().casefold() == "library"
         label = f"{name}" + (f" ({f['key_length']})" if f.get("key_length") else "")
         title = (f"Tier: {risk}\n"
                  f"Primitive: {f.get('primitive', '-')}\n"
@@ -121,5 +122,24 @@ def generate_crypto_graph(findings):
             lambda _: f"<script>\n{vis_js}\n</script>",
             html
         )
+    # Enterprise-grade air-gap: pyvis template pulls Bootstrap from jsdelivr.
+    # The graph works without it; strip remote refs so topology view never
+    # phones home on open in an isolated enclave.
+    html = re.sub(
+        r'<link[^>]*href="https?://[^"]*bootstrap[^"]*"[^>]*>',
+        "<!-- bootstrap css removed for air-gap -->",
+        html, flags=re.IGNORECASE,
+    )
+    html = re.sub(
+        r'<script[^>]*src="https?://[^"]*bootstrap[^"]*"[^>]*>\s*</script>',
+        "<!-- bootstrap js removed for air-gap -->",
+        html, flags=re.IGNORECASE,
+    )
+    # Belt-and-braces: drop any other remote src/href that slipped through.
+    html = re.sub(
+        r'\s(?:src|href)="https?://(?!www\.w3\.org)[^"]*"',
+        ' data-removed-remote="1"',
+        html,
+    )
 
     return html

@@ -20,6 +20,8 @@ import html
 import json
 import os
 import sys
+import threading
+import uuid
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
@@ -79,6 +81,10 @@ from engine.verify_migration import verify_migration
 
 
 # In-memory store for the active/latest scan and scan history
+# _STATE_LOCK serialises concurrent /api/scan mutations (insert/slice/last_*)
+# so parallel scans cannot interleave and publish a torn bundle. SQLite WAL
+# handles the durable side; this handles the in-memory side.
+_STATE_LOCK = threading.Lock()
 _STATE: Dict[str, Any] = {
     "last_scan": None,
     "last_records": None,
@@ -106,9 +112,20 @@ async def lifespan(app: FastAPI):
     # scan below, so the boot scan is prepended on top of the restored past rather than
     # being buried under it. Disabled store -> no-op, old in-memory behaviour.
     try:
-        restored = history_list(20)
+        from engine.history_store import RETAIN as _HIST_RETAIN
+        restored = history_list(_HIST_RETAIN)
         if restored:
             _STATE["history"] = restored
+            # Enterprise-grade: restore the newest bundle too, so /api/cbom
+            # works immediately after reboot instead of 404 despite persisted data.
+            newest = restored[0]
+            for key, hkey in (("last_scan", "scan_info"), ("last_records", "records"),
+                              ("last_cbom", "cbom_str"), ("last_cbom_doc", "cbom_doc"),
+                              ("last_cbom_validation", "validation"),
+                              ("last_target", "target"),
+                              ("last_config", "last_config")):
+                if hkey in newest:
+                    _STATE[key] = newest[hkey]
             print(f"[IndraMesh] Restored {len(restored)} scan(s) from history store")
     except Exception as exc:
         print(f"[IndraMesh] History store restore notice: {exc}")
@@ -284,8 +301,11 @@ def _compute_scan_bundle(target: str, enable_ml: bool, policy: str, data_class: 
 
     payload = _build_response_payload(scan_info, records, validation, policy, z_years)
 
-    # Save to history (keep latest 20 scans)
-    scan_id = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+    # Save to history (keep latest RETAIN scans, aligned with the durable store).
+    # ID includes micros + random suffix: two scans in the same second must not
+    # overwrite each other via INSERT OR REPLACE.
+    from engine.history_store import RETAIN as _HIST_RETAIN
+    scan_id = datetime.datetime.now().strftime("%Y%m%d_%H%M%S_%f") + "_" + uuid.uuid4().hex[:6]
     history_entry = {
         "id": scan_id,
         "target": target,
@@ -302,10 +322,12 @@ def _compute_scan_bundle(target: str, enable_ml: bool, policy: str, data_class: 
         "records": records,
         "scan_info": scan_info,
         "validation": validation,
+        "last_config": dict(_STATE.get("last_config") or {}),
     }
-    _STATE.setdefault("history", []).insert(0, history_entry)
-    if len(_STATE["history"]) > 20:
-        _STATE["history"] = _STATE["history"][:20]
+    with _STATE_LOCK:
+        _STATE.setdefault("history", []).insert(0, history_entry)
+        if len(_STATE["history"]) > _HIST_RETAIN:
+            _STATE["history"] = _STATE["history"][:_HIST_RETAIN]
     try:
         history_append(history_entry)
     except Exception as exc:
@@ -533,7 +555,20 @@ def download_recommendations():
 
 @app.get("/api/history")
 def get_scan_history():
-    """Return list of past scans."""
+    """Return list of past scans (memory first, durable-store fallback)."""
+    hist = _STATE.get("history", [])
+    if not hist:
+        # Enterprise-grade: after a restart without lifespan (or a memory
+        # wipe in tests), the DB still has data — serve it instead of [].
+        try:
+            from engine.history_store import RETAIN as _HIST_RETAIN
+            restored = history_list(_HIST_RETAIN)
+            if restored:
+                with _STATE_LOCK:
+                    _STATE["history"] = restored
+                hist = restored
+        except Exception as exc:
+            print(f"[IndraMesh] History store list notice: {exc}")
     return [
         {
             "id": h["id"],
@@ -553,14 +588,34 @@ def get_scan_history():
 @app.post("/api/history/load")
 def load_scan_history(req: LoadHistoryRequest):
     """Load a past scan from history (memory first, then the durable store)."""
+    def _apply(h):
+        _STATE["last_scan"] = h["scan_info"]
+        _STATE["last_records"] = h["records"]
+        _STATE["last_cbom"] = h["cbom_str"]
+        _STATE["last_cbom_doc"] = h["cbom_doc"]
+        _STATE["last_cbom_validation"] = h["validation"]
+        _STATE["last_target"] = h["target"]
+        # Enterprise-grade: restore the rating config so POST /api/rate after
+        # a load uses the loaded scan's policy/z_years instead of stale state.
+        # Older rows predate last_config — rebuild it from policy/z_years/target.
+        cfg = h.get("last_config")
+        if isinstance(cfg, dict) and cfg:
+            _STATE["last_config"] = cfg
+        else:
+            prev = _STATE.get("last_config") or {}
+            _STATE["last_config"] = {
+                "target": h.get("target", prev.get("target", "./dummy_target")),
+                "enable_ml": prev.get("enable_ml", False),
+                "policy": h.get("policy", prev.get("policy", "india_dst_nqm")),
+                "data_class": prev.get("data_class", "operational-record"),
+                "z_years": h.get("z_years", prev.get("z_years", float(DEFAULT_Z))),
+                "x_override": prev.get("x_override"),
+                "y_override": prev.get("y_override"),
+            }
     for h in _STATE.get("history", []):
         if h["id"] == req.id:
-            _STATE["last_scan"] = h["scan_info"]
-            _STATE["last_records"] = h["records"]
-            _STATE["last_cbom"] = h["cbom_str"]
-            _STATE["last_cbom_doc"] = h["cbom_doc"]
-            _STATE["last_cbom_validation"] = h["validation"]
-            _STATE["last_target"] = h["target"]
+            with _STATE_LOCK:
+                _apply(h)
             return h["bundle"]
     try:
         h = history_get(req.id)
@@ -569,12 +624,15 @@ def load_scan_history(req: LoadHistoryRequest):
         h = None
     if h and all(k in h for k in ("scan_info", "records", "cbom_str",
                                   "cbom_doc", "validation", "target", "bundle")):
-        _STATE["last_scan"] = h["scan_info"]
-        _STATE["last_records"] = h["records"]
-        _STATE["last_cbom"] = h["cbom_str"]
-        _STATE["last_cbom_doc"] = h["cbom_doc"]
-        _STATE["last_cbom_validation"] = h["validation"]
-        _STATE["last_target"] = h["target"]
+        with _STATE_LOCK:
+            _apply(h)
+            # Enterprise-grade: a DB-loaded entry must be visible to
+            # GET /api/history afterwards — re-insert it at the head.
+            if not any(e.get("id") == h.get("id") for e in _STATE.get("history", [])):
+                from engine.history_store import RETAIN as _HIST_RETAIN
+                _STATE.setdefault("history", []).insert(0, h)
+                if len(_STATE["history"]) > _HIST_RETAIN:
+                    _STATE["history"] = _STATE["history"][:_HIST_RETAIN]
         return h["bundle"]
     raise HTTPException(status_code=404, detail="Scan history entry not found.")
 

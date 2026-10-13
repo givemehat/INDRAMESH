@@ -1,5 +1,7 @@
 """Smoke check: build the artifact and validate the four coverage buckets."""
+import csv
 import json
+import os
 import sys
 from pathlib import Path
 
@@ -7,27 +9,42 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
 import engine.coverage_reconcile as cr  # noqa: E402
-from engine.coverage_records import Record  # noqa: E402
+from engine.coverage_records import Record, _default_path  # noqa: E402
 
 
-def _load_csv(name):
-    with open(ROOT / "docs" / "inventory" / name, newline="", encoding="utf-8") as fh:
-        return list(__import__("csv").DictReader(fh))
+def _load_csv_env(env_name, fallback_name):
+    # Enterprise-grade: respect INDRAMESH_* overrides so CI can point at
+    # fixtures; fall back to the checked-in home-lab inventory for smoke.
+    raw = os.environ.get(env_name, "").strip()
+    if raw:
+        p = Path(raw)
+        if p.exists():
+            with open(p, newline="", encoding="utf-8") as fh:
+                return list(csv.DictReader(fh))
+        return []
+    with open(ROOT / "docs" / "inventory" / fallback_name, newline="", encoding="utf-8") as fh:
+        return list(csv.DictReader(fh))
 
 
 def main():
+    home_rows = _load_csv_env("INDRAMESH_LOCAL_INVENTORY", "home_lab.csv")
+    cloud_rows = _load_csv_env("INDRAMESH_COVERAGE_CLOUD", "cloud.csv")
+    # Fallback: legacy smoke used docs/inventory/cloud.csv directly.
+    if not cloud_rows:
+        with open(ROOT / "docs" / "inventory" / "cloud.csv", newline="", encoding="utf-8") as fh:
+            import csv as _csv
+            cloud_rows = list(_csv.DictReader(fh))
     records = [
         Record(id=r["id"], name=r["name"], kind=r["kind"], location=r["location"],
                owned=True)
-        for r in _load_csv("home_lab.csv")
+        for r in home_rows
     ]
-    cloud_rows = _load_csv("cloud.csv")
     scan = {}
-    for r in _load_csv("home_lab.csv"):
+    for r in home_rows:
         if r["id"] == "SLC11":
             scan[r["id"]] = {"status": "inaccessible"}
         elif r["id"] in {"SLC01", "SLC02", "SLC03", "SLC04", "SLC05",
-                         "SLC06", "SLC07", "SLC08", "SLC09", "SLC010"}:
+                         "SLC06", "SLC07", "SLC08", "SLC09", "SLC10"}:
             scan[r["id"]] = {"status": "scanned"}
     report = cr.reconcile(records=records, scan_results=scan, cloud_rows=cloud_rows)
 

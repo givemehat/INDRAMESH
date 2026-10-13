@@ -25,6 +25,7 @@ the document was never checked against the schema. This revision emits a schema-
 document, keeps all IndraMesh-specific values in a documented `im:` property namespace so the base
 document stays valid, and `validate_real_world.py` now performs local schema validation.
 """
+import hashlib
 import json
 import re
 import uuid
@@ -728,10 +729,30 @@ def generate_cbom(findings, enriched=False, subject_name="IndraMesh-Scanned-Arte
             group_order.append(key)
         return groups[key]
 
+    _occ_counters: dict[str, int] = {}
+
+    def _occ_ref(f):
+        # Enterprise-grade: stable per-finding refs. occ-{idx} changes when scan
+        # order changes; hash(file|line|name|primitive) is stable across runs.
+        # Per-digest counter guarantees uniqueness on exact duplicates while
+        # keeping distinct findings fully order-independent.
+        base = "|".join([
+            str(f.get("file") or "").strip(),
+            str(f.get("line") or "").strip(),
+            str(f.get("name") or "").strip().casefold(),
+            str(f.get("primitive") or "").strip().casefold(),
+        ])
+        digest = hashlib.sha1(base.encode("utf-8")).hexdigest()[:10]
+        n = _occ_counters.get(digest, 0)
+        _occ_counters[digest] = n + 1
+        return f"occ-{digest}-{n}"
+
     for idx, f in enumerate(findings):
         primitive = _canonical_primitive(f.get("primitive"))
-        is_library = f.get("type") == "library"
-        is_protocol = f.get("primitive") == "protocol" or f.get("type") == "protocol"
+        _ftype = str(f.get("type") or "").strip().casefold()
+        _prim = str(f.get("primitive") or "").strip().casefold()
+        is_library = _ftype == "library"
+        is_protocol = _prim == "protocol" or _ftype == "protocol"
         is_material = (not is_library and not is_protocol
                        and _related_material_type(f) is not None)
         risk = f.get("risk") if enriched else None
@@ -739,7 +760,7 @@ def generate_cbom(findings, enriched=False, subject_name="IndraMesh-Scanned-Arte
 
         occ = None
         if f.get("file") or f.get("line"):
-            occ = {"bom-ref": f"occ-{idx}",
+            occ = {"bom-ref": _occ_ref(f),
                    "location": str(f.get("file", "") or "")}
             try:
                 if f.get("line") not in (None, ""):
@@ -845,28 +866,40 @@ def generate_cbom(findings, enriched=False, subject_name="IndraMesh-Scanned-Arte
 
     for _k in group_order:
         components.append(groups[_k]["comp"])
-        if not groups[_k]["has_file"]:
-            uses_targets.append(groups[_k]["comp"]["bom-ref"])
+        # Enterprise-grade: the scanned app uses every discovered asset,
+        # file-backed or ambient. Earlier builds only listed file-less
+        # components, so the common case had no machine-readable edge.
+        uses_targets.append(groups[_k]["comp"]["bom-ref"])
 
-    if uses_targets:
-        # NO `dependencyType` field here. The vendored CycloneDX 1.7 `definitions.dependency`
-        # allows only `ref`, `dependsOn` and `provides`, and sets additionalProperties:false --
-        # emitting `dependencyType` makes the document invalid for every consumer that validates
-        # it, which defeats the purpose of publishing a CBOM at all. The `implements` vs `uses`
-        # distinction the design intends is expressed through `compositions` and component
-        # `type`, not through a field on a dependency edge. Findings with no `file` are ambient
-        # or global, so the subject genuinely does use them; that is what `dependsOn` says.
-        dependencies.append({
-            "ref": subject_name,
-            "dependsOn": uses_targets,
-        })
+    # Guard against subject/component bom-ref collision (e.g. subject named
+    # "crypto-asset-0"): disambiguate the subject so dependsOn stays exact.
+    safe_subject = str(subject_name)
+    comp_refs = {c.get("bom-ref") for c in components}
+    occ_refs = {o.get("bom-ref") for c in components
+                for o in c.get("evidence", {}).get("occurrences", [])}
+    if safe_subject in comp_refs or safe_subject in occ_refs:
+        safe_subject = f"subject-{safe_subject}"
+
+    # NO `dependencyType` field here. The vendored CycloneDX 1.7 `definitions.dependency`
+    # allows only `ref`, `dependsOn` and `provides`, and sets additionalProperties:false --
+    # emitting `dependencyType` makes the document invalid for every consumer that validates
+    # it, which defeats the purpose of publishing a CBOM at all. The `implements` vs `uses`
+    # distinction the design intends is expressed through `compositions` and component
+    # `type`, not through a field on a dependency edge. Findings with no `file` are ambient
+    # or global, so the subject genuinely does use them; that is what `dependsOn` says.
+    # Always emit the edge (even with empty dependsOn) so consumers never
+    # branch on a missing key.
+    dependencies.append({
+        "ref": safe_subject,
+        "dependsOn": sorted(set(uses_targets)),
+    })
 
     timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
-    # Give metadata.component a bom-ref equal to subject_name so the
+    # Give metadata.component a bom-ref equal to safe_subject so the
     # dependencies[].ref edge resolves to a real bom-ref (CycloneDX
     # referential integrity) instead of dangling.
     metadata_component = {"type": "application", "name": str(subject_name),
-                          "bom-ref": str(subject_name)}
+                          "bom-ref": safe_subject}
     if subject_version is not None and str(subject_version).strip():
         # CycloneDX types `component.version` as a string. A caller passing `1` (an int) would
         # otherwise produce a document that fails schema validation, so coerce rather than
@@ -911,9 +944,8 @@ def generate_cbom(findings, enriched=False, subject_name="IndraMesh-Scanned-Arte
         "version": 1,
         "metadata": metadata,
         "components": components,
+        "dependencies": dependencies,
     }
-    if dependencies:
-        cbom["dependencies"] = dependencies
 
     return json.dumps(cbom, indent=2)
 
