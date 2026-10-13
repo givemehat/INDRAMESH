@@ -179,6 +179,15 @@ def main(argv=None):
         print(f"[+] Coverage      -> {cov_path}")
         print(f"    expected={report['expected']} scanned={report['scanned']}"
               f" inaccessible={report['inaccessible']} unknown={report['unknown']}")
+        # Enterprise-grade: bind the coverage artifact to the evidence ledger
+        # like cbom/sarif when a signing key is configured.
+        try:
+            _write_attestation(os.path.dirname(cov_path) or ".",
+                               os.path.basename(args.target.rstrip("/\\")) or "coverage",
+                               "coverage", {"coverage_reconciliation": report},
+                               cov_path, os.environ.get("INDRAMESH_ATTEST_KEY"))
+        except Exception as exc:
+            print(f"[!] Coverage attestation notice: {exc}")
         return 0
     return run_headless_scan(args.target, args.format, args.z, args.policy,
                              not args.no_ml, args.out, args.fail_on, args.subject)

@@ -247,7 +247,93 @@ def test_coverage_inventory_ids_consistent():
     import csv
     inv = ROOT / "docs" / "inventory" / "home_lab.csv"
     with open(inv, newline="", encoding="utf-8") as fh:
-        ids = [r["id"] for r in csv.DictReader(fh)]
+        rows = list(csv.DictReader(fh))
+        ids = [r["id"] for r in rows]
     assert "SLC10" in ids, f"inventory must contain SLC10, got {ids}"
     assert "SLC010" not in ids, f"inventory must not contain SLC010 typo: {ids}"
     assert len(ids) == 12
+    # Enterprise-grade: owned must be explicit (no reliance on None->True default).
+    for r in rows:
+        assert str(r.get("owned", "")).strip() == "1", f"owned must be explicit 1: {r}"
+
+
+def test_graph_preserves_valid_string_risk_tier():
+    from engine.graph import generate_crypto_graph
+    from pyvis.network import Network
+    colors = {}
+    orig = Network.add_node
+
+    def spy(self, n, *a, **k):
+        if "____" in str(n):
+            colors[n] = k.get("color")
+        return orig(self, n, *a, **k)
+    Network.add_node = spy
+    try:
+        generate_crypto_graph([
+            {"name": "AES", "primitive": "block-cipher", "file": "a.py", "line": 1,
+             "risk": "CRITICAL"},
+        ])
+        assert colors, "expected artefact node"
+        assert list(colors.values())[0] == "#ff4b4b", f"string CRITICAL must keep red: {colors}"
+    finally:
+        Network.add_node = orig
+
+
+def test_graph_colors_case_insensitive_and_path_canonicalized():
+    from engine.graph import generate_crypto_graph
+    from pyvis.network import Network
+    seen = []
+    orig = Network.add_node
+
+    def spy(self, n, *a, **k):
+        seen.append((n, k.get("color")))
+        return orig(self, n, *a, **k)
+    Network.add_node = spy
+    try:
+        generate_crypto_graph([
+            {"name": "A", "primitive": "p", "file": "./a.py", "line": 1,
+             "risk": {"tier": "critical"}},
+            {"name": "A", "primitive": "p", "file": "a.py", "line": 1,
+             "risk": {"tier": "critical"}},
+        ])
+        files = [n for n, _ in seen if "____" not in str(n) and n != "App"]
+        assert files == ["a.py"], f"./a.py vs a.py must canonicalize: {files}"
+        arts = [c for n, c in seen if "____" in str(n)]
+        assert arts and arts[0] == "#ff4b4b", f"lowercase critical must map to red: {arts}"
+        # Single-quoted remote refs must also be stripped for air-gap.
+        html = generate_crypto_graph([{"name": "A", "file": "a.py", "line": 1}])
+        assert "https://" not in html or "www.w3.org" in html.replace("https://www.w3.org", "")
+        assert "data-removed-remote" in html or "bootstrap css removed" in html
+    finally:
+        Network.add_node = orig
+
+
+def test_coverage_out_of_scope_filters_blank_ids():
+    recs = [Record(id="A1", name="a", kind="k", location="l", owned=True)]
+    report = reconcile(records=recs, scan_results={"A1": {"status": "scanned"}},
+                       cloud_rows=[{"id": "CLOUD-01"}, {"id": ""}, {"id": None}, {}])
+    assert report["out_of_scope"] == ["CLOUD-01"], report["out_of_scope"]
+
+
+def test_history_apply_deepcopies_config():
+    import copy
+    from fastapi.testclient import TestClient
+    import server
+    with TestClient(server.app):
+        saved = copy.deepcopy(server._STATE)
+        try:
+            r = __import__("fastapi.testclient", fromlist=["TestClient"])
+            client = r.TestClient(server.app)
+            resp = client.post("/api/scan", json={
+                "target": "./dummy_target", "enable_ml": False,
+                "policy": "india_dst_nqm", "data_class": "operational-record",
+                "z_years": 10.0})
+            assert resp.status_code == 200
+            eid = server._STATE["history"][0]["id"]
+            client.post("/api/history/load", json={"id": eid})
+            # Mutating last_config must not mutate the history entry (aliasing guard).
+            server._STATE["last_config"]["policy"] = "MUTATED"
+            assert server._STATE["history"][0].get("last_config", {}).get("policy") != "MUTATED"
+        finally:
+            server._STATE.clear()
+            server._STATE.update(saved)

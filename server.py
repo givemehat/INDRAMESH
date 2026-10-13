@@ -113,19 +113,35 @@ async def lifespan(app: FastAPI):
     # being buried under it. Disabled store -> no-op, old in-memory behaviour.
     try:
         from engine.history_store import RETAIN as _HIST_RETAIN
+        import copy as _copy
         restored = history_list(_HIST_RETAIN)
         if restored:
-            _STATE["history"] = restored
-            # Enterprise-grade: restore the newest bundle too, so /api/cbom
-            # works immediately after reboot instead of 404 despite persisted data.
-            newest = restored[0]
-            for key, hkey in (("last_scan", "scan_info"), ("last_records", "records"),
-                              ("last_cbom", "cbom_str"), ("last_cbom_doc", "cbom_doc"),
-                              ("last_cbom_validation", "validation"),
-                              ("last_target", "target"),
-                              ("last_config", "last_config")):
-                if hkey in newest:
-                    _STATE[key] = newest[hkey]
+            with _STATE_LOCK:
+                _STATE["history"] = restored
+                # Enterprise-grade: restore the newest bundle too, so /api/cbom
+                # works immediately after reboot instead of 404 despite persisted data.
+                newest = restored[0]
+                for key, hkey in (("last_scan", "scan_info"), ("last_records", "records"),
+                                  ("last_cbom", "cbom_str"), ("last_cbom_doc", "cbom_doc"),
+                                  ("last_cbom_validation", "validation"),
+                                  ("last_target", "target")):
+                    if hkey in newest:
+                        _STATE[key] = _copy.deepcopy(newest[hkey])
+                # last_config with legacy-row rebuild (mirrors POST /api/history/load).
+                cfg = newest.get("last_config")
+                if isinstance(cfg, dict) and cfg:
+                    _STATE["last_config"] = _copy.deepcopy(cfg)
+                else:
+                    prev = dict(_STATE.get("last_config") or {})
+                    _STATE["last_config"] = {
+                        "target": newest.get("target", prev.get("target", "./dummy_target")),
+                        "enable_ml": prev.get("enable_ml", False),
+                        "policy": newest.get("policy", prev.get("policy", "india_dst_nqm")),
+                        "data_class": prev.get("data_class", "operational-record"),
+                        "z_years": newest.get("z_years", prev.get("z_years", float(DEFAULT_Z))),
+                        "x_override": prev.get("x_override"),
+                        "y_override": prev.get("y_override"),
+                    }
             print(f"[IndraMesh] Restored {len(restored)} scan(s) from history store")
     except Exception as exc:
         print(f"[IndraMesh] History store restore notice: {exc}")
@@ -282,22 +298,23 @@ def _compute_scan_bundle(target: str, enable_ml: bool, policy: str, data_class: 
     except Exception as exc:
         validation = {"ok": False, "state": "error", "errors": [str(exc)], "message": f"CBOM error: {exc}"}
 
-    # Save to state
-    _STATE["last_scan"] = scan_info
-    _STATE["last_records"] = records
-    _STATE["last_cbom"] = cbom_str
-    _STATE["last_cbom_doc"] = cbom_doc
-    _STATE["last_cbom_validation"] = validation
-    _STATE["last_target"] = target
-    _STATE["last_config"] = {
-        "target": target,
-        "enable_ml": enable_ml,
-        "policy": policy,
-        "data_class": data_class,
-        "z_years": z_years,
-        "x_override": x_override,
-        "y_override": y_override,
-    }
+    # Save to state (locked: parallel /api/scan must not publish a torn bundle).
+    with _STATE_LOCK:
+        _STATE["last_scan"] = scan_info
+        _STATE["last_records"] = records
+        _STATE["last_cbom"] = cbom_str
+        _STATE["last_cbom_doc"] = cbom_doc
+        _STATE["last_cbom_validation"] = validation
+        _STATE["last_target"] = target
+        _STATE["last_config"] = {
+            "target": target,
+            "enable_ml": enable_ml,
+            "policy": policy,
+            "data_class": data_class,
+            "z_years": z_years,
+            "x_override": x_override,
+            "y_override": y_override,
+        }
 
     payload = _build_response_payload(scan_info, records, validation, policy, z_years)
 
@@ -589,18 +606,20 @@ def get_scan_history():
 def load_scan_history(req: LoadHistoryRequest):
     """Load a past scan from history (memory first, then the durable store)."""
     def _apply(h):
-        _STATE["last_scan"] = h["scan_info"]
-        _STATE["last_records"] = h["records"]
+        import copy as _copy
+        _STATE["last_scan"] = _copy.deepcopy(h["scan_info"])
+        _STATE["last_records"] = _copy.deepcopy(h["records"])
         _STATE["last_cbom"] = h["cbom_str"]
-        _STATE["last_cbom_doc"] = h["cbom_doc"]
-        _STATE["last_cbom_validation"] = h["validation"]
+        _STATE["last_cbom_doc"] = _copy.deepcopy(h["cbom_doc"])
+        _STATE["last_cbom_validation"] = _copy.deepcopy(h["validation"])
         _STATE["last_target"] = h["target"]
         # Enterprise-grade: restore the rating config so POST /api/rate after
         # a load uses the loaded scan's policy/z_years instead of stale state.
         # Older rows predate last_config — rebuild it from policy/z_years/target.
+        # Deep-copy so later _STATE["last_config"].update() cannot mutate history.
         cfg = h.get("last_config")
         if isinstance(cfg, dict) and cfg:
-            _STATE["last_config"] = cfg
+            _STATE["last_config"] = dict(cfg)
         else:
             prev = _STATE.get("last_config") or {}
             _STATE["last_config"] = {

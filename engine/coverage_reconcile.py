@@ -48,7 +48,7 @@ def reconcile(records=None, scan_results=None, cloud_rows=None):
         _bucket(rec)
 
     scoped = [r for r in records if r.owned]
-    out_of_scope = [r.get("id") for r in cloud_rows]
+    out_of_scope = [r.get("id") for r in cloud_rows if r.get("id")]
 
     control_gap_rows = []
     for rec in records:

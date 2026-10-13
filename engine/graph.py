@@ -46,12 +46,21 @@ def generate_crypto_graph(findings):
         if not isinstance(f, dict):
             continue
         raw_file = str(f.get("file") or "unknown").replace("\\", "/").strip() or "unknown"
+        # Canonicalize: collapse ./, //, trailing / while keeping full-path
+        # semantics (d1/u.py vs d2/u.py must stay separate).
+        import posixpath as _posixpath
+        raw_file = _posixpath.normpath(raw_file)
         # Node id keeps the normalized relative path (avoids d1/u.py vs d2/u.py
         # collapse from basename), label stays human-readable basename.
         file_node = raw_file
         file_label = os.path.basename(raw_file) or raw_file
         _risk = f.get("risk")
-        risk = (_risk.get("tier", "LOW") if isinstance(_risk, dict) else "LOW")
+        if isinstance(_risk, dict):
+            risk = str(_risk.get("tier", "LOW") or "LOW").strip().upper() or "LOW"
+        elif isinstance(_risk, str) and _risk.strip().upper() in COLORS:
+            risk = _risk.strip().upper()
+        else:
+            risk = "LOW"
         name = str(f.get("name") or "unknown")
         norm_name = name.strip().casefold()
         # Distinguish variants that must not merge (RSA-2048 vs RSA-4096,
@@ -83,7 +92,7 @@ def generate_crypto_graph(findings):
         if node_id in added:
             continue
         net.add_node(node_id, label=label, title=title,
-                     color="#8d99ae" if is_library else COLORS.get(risk, "#4cc9f0"),
+                     color="#8d99ae" if is_library else COLORS.get(str(risk).strip().upper(), "#4cc9f0"),
                      shape="dot" if is_library else "diamond", size=22)
         added.add(node_id)
         net.add_edge(file_node, node_id, dashes=is_library)
@@ -135,9 +144,10 @@ def generate_crypto_graph(findings):
         "<!-- bootstrap js removed for air-gap -->",
         html, flags=re.IGNORECASE,
     )
-    # Belt-and-braces: drop any other remote src/href that slipped through.
+    # Belt-and-braces: drop any other remote src/href that slipped through
+    # (match both double- and single-quoted attributes).
     html = re.sub(
-        r'\s(?:src|href)="https?://(?!www\.w3\.org)[^"]*"',
+        r"""\s(?:src|href)=["']https?://(?!www\.w3\.org)[^"']*["']""",
         ' data-removed-remote="1"',
         html,
     )

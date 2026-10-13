@@ -13,6 +13,7 @@ diff against the cloud catalog.
 
 import csv
 import json
+import os
 import sys
 from pathlib import Path
 
@@ -20,7 +21,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
 import engine.coverage_reconcile as cr  # noqa: E402
-from engine.coverage_records import Record  # noqa: E402
+from engine.coverage_records import Record, _default_path  # noqa: E402
 
 
 def _load(path):
@@ -28,18 +29,37 @@ def _load(path):
         return list(csv.DictReader(fh))
 
 
+def _resolve(purpose: str, fallback_name: str) -> Path:
+    # Enterprise-grade: respect INDRAMESH_* overrides like check_coverage.py
+    # and coverage_records do, so CI fixtures can redirect inputs.
+    raw = os.environ.get(purpose, "").strip()
+    if raw:
+        return Path(raw)
+    try:
+        return Path(_default_path(purpose))
+    except KeyError:
+        return ROOT / "docs" / "inventory" / fallback_name
+
+
 def main():
+    inv_path = _resolve("INDRAMESH_LOCAL_INVENTORY", "home_lab.csv")
+    if not inv_path.is_absolute():
+        # _default_path returns repo-relative defaults; anchor them at ROOT.
+        cand = ROOT / inv_path
+        inv_path = cand if cand.exists() else inv_path
+    cloud_env = os.environ.get("INDRAMESH_COVERAGE_CLOUD", "").strip()
+    cloud_path = Path(cloud_env) if cloud_env else (ROOT / "docs/inventory/cloud.csv")
     records = []
-    for row in _load(ROOT / "docs/inventory/home_lab.csv"):
+    for row in _load(inv_path):
         records.append(
             Record(
                 id=row["id"], name=row["name"], kind=row["kind"],
                 location=row["location"],                 owned=True,
             )
         )
-    cloud_rows = _load(ROOT / "docs/inventory/cloud.csv")
+    cloud_rows = _load(cloud_path)
     scan_results = {}
-    for row in _load(ROOT / "docs/inventory/home_lab.csv"):
+    for row in _load(inv_path):
         rid = row["id"]
         if rid == "SLC11":
             scan_results[rid] = {"status": "inaccessible"}
