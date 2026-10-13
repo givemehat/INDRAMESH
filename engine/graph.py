@@ -43,10 +43,29 @@ def generate_crypto_graph(findings):
     added.add("App")
 
     for f in findings:
-        file_node = os.path.basename(str(f.get("file", "unknown")))
+        if not isinstance(f, dict):
+            continue
+        raw_file = str(f.get("file") or "unknown").replace("\\", "/").strip() or "unknown"
+        # Node id keeps the normalized relative path (avoids d1/u.py vs d2/u.py
+        # collapse from basename), label stays human-readable basename.
+        file_node = raw_file
+        file_label = os.path.basename(raw_file) or raw_file
         risk = (f.get("risk") or {}).get("tier", "LOW")
+        name = str(f.get("name") or "unknown")
+        norm_name = name.strip().casefold()
+        # Distinguish variants that must not merge (RSA-2048 vs RSA-4096,
+        # different curves/modes/primitives) while deduping exact repeats
+        # case- and whitespace-insensitively.
+        variant = "|".join([
+            norm_name,
+            str(f.get("primitive") or "").strip().casefold(),
+            str(f.get("type") or "").strip().casefold(),
+            str(f.get("key_length") or "").strip(),
+            str(f.get("curve") or "").strip().casefold(),
+            str(f.get("mode") or "").strip().casefold(),
+        ])
         is_library = f.get("type") == "library"
-        label = f"{f['name']}" + (f" ({f['key_length']})" if f.get("key_length") else "")
+        label = f"{name}" + (f" ({f['key_length']})" if f.get("key_length") else "")
         title = (f"Tier: {risk}\n"
                  f"Primitive: {f.get('primitive', '-')}\n"
                  f"Rule: {f.get('rule_id', '-')}\n"
@@ -55,11 +74,11 @@ def generate_crypto_graph(findings):
             title = "LIBRARY (implements, not uses)\n" + title
 
         if file_node not in added:
-            net.add_node(file_node, label=file_node, color="#ffffff", shape="box")
+            net.add_node(file_node, label=file_label, color="#ffffff", shape="box")
             added.add(file_node)
             net.add_edge("App", file_node)
 
-        node_id = f"{file_node}____{f['name']}"
+        node_id = f"{file_node}____{variant}"
         if node_id in added:
             continue
         net.add_node(node_id, label=label, title=title,

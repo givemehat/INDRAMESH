@@ -43,6 +43,9 @@ def reconcile(records=None, scan_results=None, cloud_rows=None):
 
     for rec in records:
         rec.probe_status = scan_results.get(rec.id, {}).get("status", "unknown")
+        # Enterprise-grade: fail fast on invalid probe status instead of
+        # silently yielding scanned=0/inaccessible=0/unknown=0.
+        _bucket(rec)
 
     scoped = [r for r in records if r.owned]
     out_of_scope = [r.get("id") for r in cloud_rows]

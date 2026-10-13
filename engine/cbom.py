@@ -695,6 +695,13 @@ def generate_cbom(findings, enriched=False, subject_name="IndraMesh-Scanned-Arte
     dependencies = []
     uses_targets = []
 
+    def _norm_key(value):
+        # Enterprise-grade dedup: case- and whitespace-insensitive keys.
+        # Display names keep original casing; only grouping keys normalize.
+        if not isinstance(value, str) or not value.strip():
+            return "unknown"
+        return value.strip().casefold()
+
     def _algo_key_name(f):
         name = f.get("name")
         if not isinstance(name, str) or not name:
@@ -741,7 +748,7 @@ def generate_cbom(findings, enriched=False, subject_name="IndraMesh-Scanned-Arte
                 pass
 
         if is_library:
-            lkey = ("library", str(f.get("name", "unknown") or "unknown"))
+            lkey = ("library", _norm_key(f.get("name")))
             lname = str(f.get("name", "unknown") or "unknown")
             lprops = _ecd_properties(f, risk, recommendation)
             g = _group(lkey, lambda _n=lname, _p=lprops: {"comp": {
@@ -762,8 +769,8 @@ def generate_cbom(findings, enriched=False, subject_name="IndraMesh-Scanned-Arte
             if proto_type not in PROTOCOL_TYPE_ENUM:
                 proto_type = "other"
             pver = str(f.get("match", "") or "")[:120]
-            pkey = ("protocol", str(f.get("name", "unknown") or "unknown"),
-                    proto_type, pver)
+            pkey = ("protocol", _norm_key(f.get("name")),
+                    proto_type, pver.strip().casefold())
             pname = str(f.get("name", "unknown") or "unknown")
             pprops = _ecd_properties(f, risk, recommendation)
             pmatch = str(f["match"])[:120] if f.get("match") else None
@@ -788,7 +795,7 @@ def generate_cbom(findings, enriched=False, subject_name="IndraMesh-Scanned-Arte
 
         if is_material:
             material = _related_material_type(f)
-            mkey = ("related", str(f.get("name") or "unknown"), str(material))
+            mkey = ("related", _norm_key(f.get("name")), str(material).strip().casefold())
             mname = str(f.get("name") or "unknown")
             mprops = _ecd_properties(f, risk, recommendation)
             def _mk_mat(_t=material, _n=mname, _p=mprops):
@@ -810,7 +817,12 @@ def generate_cbom(findings, enriched=False, subject_name="IndraMesh-Scanned-Arte
             continue
         algo_name = _algo_key_name(f)
         purpose, assurance = _resolve_pa(f)
-        akey = ("algorithm", algo_name, primitive, purpose, assurance)
+        # Include key_length/curve/mode so RSA-2048 vs RSA-4096 (or different
+        # curves/modes) never merge into one component and lose the variant.
+        akey = ("algorithm", _norm_key(algo_name), primitive, purpose, assurance,
+                str(f.get("key_length") or "").strip(),
+                str(f.get("curve") or "").strip().casefold(),
+                str(f.get("mode") or "").strip().casefold())
         a_algo = _algorithm_properties(f, primitive)
         a_props = _ecd_properties(f, risk, recommendation)
         a_oid = OID_BY_NAME.get(algo_name)
@@ -850,7 +862,11 @@ def generate_cbom(findings, enriched=False, subject_name="IndraMesh-Scanned-Arte
         })
 
     timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
-    metadata_component = {"type": "application", "name": str(subject_name)}
+    # Give metadata.component a bom-ref equal to subject_name so the
+    # dependencies[].ref edge resolves to a real bom-ref (CycloneDX
+    # referential integrity) instead of dangling.
+    metadata_component = {"type": "application", "name": str(subject_name),
+                          "bom-ref": str(subject_name)}
     if subject_version is not None and str(subject_version).strip():
         # CycloneDX types `component.version` as a string. A caller passing `1` (an int) would
         # otherwise produce a document that fails schema validation, so coerce rather than
