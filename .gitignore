@@ -89,3 +89,10 @@ SIH_PITCH_private.md
 
 # Reference repos
 reference_repos/
+
+# Opt-in durable scan history (INDRAMESH_HISTORY_DB); never commit a local db
+*.db
+*.sqlite3
+*.out
+*.err
+half1.txt

@@ -1,12 +1,12 @@
-# IndraMesh — The Complete Guide
+﻿# IndraMesh â€” The Complete Guide
 
 ### From "what is a lock?" to a defensible post-quantum security tool
 
 > **Who this is for.** Someone who has never thought about cryptography. Not engineers. Not
 > security people. A friend who asked *"explain it to me properly."*
 >
-> **How to use it.** Read Part 0 to Part 4 in order — that is the foundation, and it is written so
-> each idea only uses the ones before it. Parts 5–9 are the project itself. Parts 10–12 are the
+> **How to use it.** Read Part 0 to Part 4 in order â€” that is the foundation, and it is written so
+> each idea only uses the ones before it. Parts 5â€“9 are the project itself. Parts 10â€“12 are the
 > competition angle. If you only have twenty minutes, read [The Whole Thing in One
 > Page](#the-whole-thing-in-one-page) at the bottom.
 >
@@ -17,43 +17,43 @@
 
 ## Table of contents
 
-**Part 0 — Orientation**
+**Part 0 â€” Orientation**
 - [The whole thing in one page](#the-whole-thing-in-one-page)
 
-**Part 1 — Cryptography from nothing**
+**Part 1 â€” Cryptography from nothing**
 1. [A padlock, and the two kinds of it](#1-a-padlock-and-the-two-kinds-of-it)
 2. [Hashing: the one-way fingerprint](#2-hashing-the-one-way-fingerprint)
 3. [Digital signatures: proving who sent it](#3-digital-signatures-proving-who-sent-it)
 4. [Certificates: the ID card](#4-certificates-the-id-card)
 5. [Key exchange: the hard part, and why it is hard for *us* too](#5-key-exchange-the-hard-part-and-why-it-is-hard-for-us-too)
 
-**Part 2 — Why quantum computers change this**
+**Part 2 â€” Why quantum computers change this**
 6. [Shor and Grover: the only two attacks that matter](#6-shor-and-grover-the-only-two-attacks-that-matter)
 7. [NIST security levels: the ruler we measure with](#7-nist-security-levels-the-ruler-we-measure-with)
 8. [What a post-quantum algorithm actually is](#8-what-a-post-quantum-algorithm-actually-is)
 9. [Mosca's inequality: the clock that matters](#9-moscas-inequality-the-clock-that-matters)
 
-**Part 3 — The project**
+**Part 3 â€” The project**
 10. [What IndraMesh does, in one paragraph](#10-what-indramesh-does-in-one-paragraph)
 11. [System architecture](#11-system-architecture)
 12. [The fourteen engines](#12-the-fourteen-engines)
 13. [The three ideas that make IndraMesh different](#13-the-three-ideas-that-make-indramesh-different)
-14. [Testing: 961 tests, and why count is not proof](#14-testing-961-tests-and-why-count-is-not-proof)
+14. [Testing: 985 tests, and why count is not proof](#14-testing-985-tests-and-why-count-is-not-proof)
 
-**Part 4 — Proving it works**
+**Part 4 â€” Proving it works**
 15. [Mutation testing: breaking our own tests on purpose](#15-mutation-testing-breaking-our-own-tests-on-purpose)
 16. [Benchmarks: measuring accuracy on real code](#16-benchmarks-measuring-accuracy-on-real-code)
 17. [The defects we found this way](#17-the-defects-we-found-this-way)
 18. [Who we are compared against](#18-who-we-are-compared-against)
 19. [Where we are genuinely ahead](#19-where-we-are-genuinely-ahead)
 
-**Part 5 — Competition**
+**Part 5 â€” Competition**
 20. [Where we are behind](#20-where-we-are-behind)
 21. [What to improve first](#21-what-to-improve-first)
 22. [Talking points for the SIH pitch](#22-talking-points-for-the-sih-pitch)
 23. [Glossary](#23-glossary)
 
-**Part 6 — Diagram appendix**
+**Part 6 â€” Diagram appendix**
 24. [Where everything lives](#24-where-everything-lives)
 
 ---
@@ -62,20 +62,20 @@
 
 ---
 
-# Part 0 — Orientation
+# Part 0 â€” Orientation
 
 ## The whole thing in one page
 
 **The problem.** Almost every company on Earth runs software that encrypts things. That software
-uses algorithms like RSA and ECC, invented in the 1970s–1990s. A sufficiently powerful quantum
-computer would break all of them. Not in theory — Shor's algorithm breaks RSA and ECC in a
+uses algorithms like RSA and ECC, invented in the 1970sâ€“1990s. A sufficiently powerful quantum
+computer would break all of them. Not in theory â€” Shor's algorithm breaks RSA and ECC in a
 feasible amount of quantum time.
 
 **Why you cannot just wait.** Data has a shelf life. If you encrypt medical records today with
 RSA, an attacker can record that traffic *today* and decrypt it *later*, when the quantum computer
 exists. This is **harvest now, decrypt later**, and it is why the work starts now and not in ten
 years. The US federal standard (NIST) disallows RSA and ECC for new applications from roughly
-2030–2035.
+2030â€“2035.
 
 **What IndraMesh is.** A tool that reads a codebase and tells you *which cryptography it is using*,
 what risk each piece carries, and **what it could not tell you**. It also produces a machine-
@@ -96,7 +96,7 @@ screen.
 
 ---
 
-# Part 1 — Cryptography from nothing
+# Part 1 â€” Cryptography from nothing
 
 > Everything below builds only on what came before it. If a sentence confuses you, the glossary
 > unpacks it.
@@ -111,13 +111,13 @@ friend to apply, and hard for anyone else to reverse.
 A **key** is that rule. A key has two halves in some designs, one half in others. The word
 *cryptography* literally means "hidden writing."
 
-### 1.2 Symmetric encryption — one key, two padlocks
+### 1.2 Symmetric encryption â€” one key, two padlocks
 
 Imagine you and your friend both own the **same physical key**. Anyone who has a copy of that key
 can open anything you lock, and you can open anything they lock.
 
-- ✔ Fast
-- ✖ **The catch:** you must already have secretly exchanged that identical key. If an attacker is
+- âœ” Fast
+- âœ– **The catch:** you must already have secretly exchanged that identical key. If an attacker is
   listening when you send it, they get it.
 
 Real example: **AES**. AES-128 uses a 128-bit key, AES-256 uses a 256-bit key. AES is what
@@ -126,14 +126,14 @@ encrypts your disk, your HTTPS traffic, and most of your WhatsApp messages.
 That "catch" is the **key distribution problem**, and it is the entire reason cryptography has
 two kinds of key.
 
-### 1.3 Asymmetric encryption — the padlock and the key are different objects
+### 1.3 Asymmetric encryption â€” the padlock and the key are different objects
 
 This is the clever trick, and it solves the problem above.
 
 Instead of one identical key, you make **two different objects**:
 
-- a **public key** — give this to *everyone*, publish it, put it on your website
-- a **private key** — give this to **no one**
+- a **public key** â€” give this to *everyone*, publish it, put it on your website
+- a **private key** â€” give this to **no one**
 
 They are mathematically linked. Anything you lock with the public key, **only** the private key
 can open. And here is the magic: if I want to send *you* a secret, I lock it with **your** public
@@ -154,9 +154,9 @@ Press your thumb into soft clay. You get a unique print. Now smash the clay.
 
 A hash function takes any input and produces a fixed-length "print" such that:
 
-1. **One-way** — you cannot get the original back from the print.
-2. **Deterministic** — the same input always gives the same print.
-3. **Avalanche** — change one letter of the input and *every* digit of the print changes.
+1. **One-way** â€” you cannot get the original back from the print.
+2. **Deterministic** â€” the same input always gives the same print.
+3. **Avalanche** â€” change one letter of the input and *every* digit of the print changes.
 
 That last one surprises people. Here is what it looks like:
 
@@ -171,40 +171,40 @@ can never "tweak" a hash to make it match something.
 ### 2.2 The security properties that matter
 
 Hashes are used in security for four different jobs, and each job needs a different property.
-Confusing them is a classic mistake — including one we found and fixed in our own code (see
-§19).
+Confusing them is a classic mistake â€” including one we found and fixed in our own code (see
+Â§19).
 
 | Property | What it prevents | Real algorithm |
 |---|---|---|
 | **Preimage resistance** | Attacker cannot find *any* input giving this hash | SHA-256, SHA-3 |
 | **Second-preimage resistance** | Attacker cannot find a *different* input giving the same hash | SHA-256, SHA-3 |
 | **Collision resistance** | Attacker cannot find *any pair* of inputs with the same hash | SHA-256, SHA-3 |
-| **Length extension** | Attacker cannot compute `H(secret ‖ padding ‖ extra)` from `H(secret)` | SHA-3, BLAKE2 |
+| **Length extension** | Attacker cannot compute `H(secret â€– padding â€– extra)` from `H(secret)` | SHA-3, BLAKE2 |
 
-**MD5 and SHA-1 are broken.** Not "theoretically weak" — practically broken. You can produce two
+**MD5 and SHA-1 are broken.** Not "theoretically weak" â€” practically broken. You can produce two
 different files with the same MD5 in seconds on a laptop. This matters constantly: a certificate
 signed with SHA-1 is compromised *today*, classically, with no quantum computer involved. IndraMesh
 flags this separately from any quantum concern, because conflating them would be dishonest.
 
 > **A trap worth knowing.** SHA-1's *output* is 160 bits. People say "SHA-1 gives 160-bit
 > security." It does not. The output size and the security level are different numbers, and MD5's
-> 128-bit output does not mean 128-bit security either — MD5's security is 0. Our code once had
+> 128-bit output does not mean 128-bit security either â€” MD5's security is 0. Our code once had
 > this exact confusion and it is now a documented comment in `engine/cbom.py`.
 
 ### 2.3 Where hashing meets keys
 
 Two important combinations:
 
-- **Key derivation (KDF)** — `PBKDF2`, `Argon2id`, `scrypt`. Turn a possibly-weak password into a
+- **Key derivation (KDF)** â€” `PBKDF2`, `Argon2id`, `scrypt`. Turn a possibly-weak password into a
   strong key, by doing the same slow operation many times.
-- **Message authentication (MAC)** — `HMAC-SHA256`. Proves a message came from someone holding a
+- **Message authentication (MAC)** â€” `HMAC-SHA256`. Proves a message came from someone holding a
   key, and was not edited in transit. This is what `HMAC` in a crypto library actually is.
 
 > **This is a real bug we had.** Our own CBOM generator classified `kdf` as "broken by quantum
 > computing" and published PBKDF2 with `nistQuantumSecurityLevel: 0`. It is not a Shor target. A
 > second module in the same repository correctly said "not in scope." One module over-stating a
 > risk by five levels while another said "no idea" is exactly the kind of contradiction that
-> destroys trust in a report. Fixed — see §19.
+> destroys trust in a report. Fixed â€” see Â§19.
 
 ---
 
@@ -218,14 +218,14 @@ Real examples: **RSA**, and the **elliptic curve family** (ECDSA for signatures,
 
 ## 3. Digital signatures: proving who sent it
 
-Encryption gives secrecy. Signatures give **authenticity and integrity** — a different job.
+Encryption gives secrecy. Signatures give **authenticity and integrity** â€” a different job.
 
 ### 3.1 The wax seal analogy
 
 You write a letter and press your personal seal into hot wax. Two things become true:
 
-1. The letter has not been altered — breaking the wax shows tampering.
-2. It came from whoever owns that seal — you cannot forge the impression.
+1. The letter has not been altered â€” breaking the wax shows tampering.
+2. It came from whoever owns that seal â€” you cannot forge the impression.
 
 A digital signature does this with mathematics. And here is the elegant part: **it uses the
 asymmetric keys in reverse.**
@@ -243,10 +243,10 @@ without breaking verification.
 A scanner that finds "ECDSA" must know which job it is doing, because the answer changes the whole
 risk calculation and the whole recommendation:
 
-- **ECDSA as a signature** → quantum-vulnerable; migrate to a signature scheme (**ML-DSA**)
-- **ECDH as key exchange** → quantum-vulnerable; migrate to a key encapsulation mechanism (**ML-KEM**)
+- **ECDSA as a signature** â†’ quantum-vulnerable; migrate to a signature scheme (**ML-DSA**)
+- **ECDH as key exchange** â†’ quantum-vulnerable; migrate to a key encapsulation mechanism (**ML-KEM**)
 
-Same underlying curve, same breakage — but recommending ML-DSA where ML-KEM belongs would be
+Same underlying curve, same breakage â€” but recommending ML-DSA where ML-KEM belongs would be
 nonsense advice.
 
 ### 3.3 HNDL: the case signatures get wrong
@@ -256,19 +256,19 @@ Here is a subtlety that separates good tools from bad ones.
 For **encryption**, "harvest now, decrypt later" applies: ciphertext recorded today gets decrypted
 when the quantum computer arrives. Urgency is real.
 
-For **signatures**, it does **not** work the same way. A signature is not a secret — it is already
+For **signatures**, it does **not** work the same way. A signature is not a secret â€” it is already
 public, right now, to everyone. There is no ciphertext to store. The risk is a **forgery**:
 
 
 ## 4. Certificates: the ID card
 
 A **certificate** says: *"The holder of the public key inside this document is named Example Bank
-Ltd."* It is signed by a **Certificate Authority** (CA) — an organisation your device already
+Ltd."* It is signed by a **Certificate Authority** (CA) â€” an organisation your device already
 trusts, like a government office for passports. Your browser ships with ~150 CA public keys.
 
 ### 4.1 The X.509 extensions that matter to us
 
-**KeyUsage** — what this key is allowed to do.
+**KeyUsage** â€” what this key is allowed to do.
 
 | Value | Meaning |
 |---|---|
@@ -279,7 +279,7 @@ trusts, like a government office for passports. Your browser ships with ~150 CA 
 
 This is evidence read **from the certificate itself**, not guessed.
 
-**ExtendedKeyUsage** — the refined purpose (`serverAuth`, `clientAuth`, `codeSigning`…).
+**ExtendedKeyUsage** â€” the refined purpose (`serverAuth`, `clientAuth`, `codeSigning`â€¦).
 
 ### 4.2 The rule that makes the certificate sensor honest
 
@@ -289,13 +289,13 @@ If a certificate says *only* `digitalSignature`, it is definitely a **signature*
 But **both**? The certificate genuinely does not settle it. Anyone telling you the purpose there is
 guessing.
 
-So IndraMesh returns `unresolved`, and the recommendation states *what would resolve it* — from RFC
+So IndraMesh returns `unresolved`, and the recommendation states *what would resolve it* â€” from RFC
 5280 evidence rather than a wildcard regex.
 
 > This connects to competitive research: our closest sibling project identifies
 > `digitalSignature|keyCertSign` as a signature, `keyEncipherment|keyAgreement` as key
 > establishment, and correctly lists dual-use KeyUsage as a case where **nothing** is named. We
-> adopted the same discipline — the sharpest idea we took from them. Ideas are attributed in
+> adopted the same discipline â€” the sharpest idea we took from them. Ideas are attributed in
 > `research/competitive/ANALYSIS.md`; no code was copied.
 
 ---
@@ -305,7 +305,7 @@ So IndraMesh returns `unresolved`, and the recommendation states *what would res
 ### 5.1 The impossible-sounding task
 
 Two people, opposite sides of the world, both on public wifi, have never met. They must agree on a
-secret the eavesdropper in the middle — who sees every byte — cannot learn.
+secret the eavesdropper in the middle â€” who sees every byte â€” cannot learn.
 
 This is the **Diffie-Hellman problem**, solved in 1976. It sounds impossible. It is not, because
 of one property: certain computations are easy one way and extremely hard the other (the
@@ -325,7 +325,7 @@ In elliptic-curve form this is **ECDH**, and it is how most modern systems agree
 ### 5.3 Why this is the hard part for a *scanner*
 
 Because `g^a mod p` is **arithmetic**, and quantum computers break exactly this arithmetic,
-**ECDH is quantum-vulnerable** — as is every key exchange built on RSA or elliptic curves.
+**ECDH is quantum-vulnerable** â€” as is every key exchange built on RSA or elliptic curves.
 
 The hard part is not the cryptography. It is that real code rarely says "I am doing ECDH":
 
@@ -337,7 +337,7 @@ exchange = ec.ECDH()                                # a factory call, no algorit
 
 The string "ECDH" may appear **zero** times while the code unambiguously does ECDH. A scanner
 looking only for the word misses it completely. That is why our Python recall is 0.596 and not
-1.0 — and §21 says exactly what would close it.
+1.0 â€” and Â§21 says exactly what would close it.
 
 ---
 
@@ -349,56 +349,56 @@ This is **HNDL for signatures**: a *future forgery* risk, not a *stored-data* ri
 
 ---
 
-# Part 2 — Why quantum computers change this
+# Part 2 â€” Why quantum computers change this
 
 Everything so far assumed a **classical** attacker. Two quantum algorithms change the arithmetic;
 nothing else in this section is quantum theory.
 
 ## 6. Shor and Grover: the only two attacks that matter
 
-### 6.1 Shor's algorithm — the big one
+### 6.1 Shor's algorithm â€” the big one
 
 Shor (1994) solves two problems exponentially faster than any classical computer:
 
 | Problem | Classical | With Shor |
 |---|---|---|
-| Factoring a large number | hard — RSA's foundation | **easy** |
-| Discrete logarithm | hard — ECDH's foundation | **easy** |
+| Factoring a large number | hard â€” RSA's foundation | **easy** |
+| Discrete logarithm | hard â€” ECDH's foundation | **easy** |
 
 So this is not a general speed-up that makes everything moderately weaker. It is a **targeted
 annihilation** of every public-key algorithm ever standardised.
 
 ```
                     Shor's algorithm
-RSA            ────────────────► BROKEN
-ECDH           ────────────────► BROKEN
-ECDSA          ────────────────► BROKEN
-AES-256        ────────────────► untouched (Grover only, §6.2)
-SHA-256        ────────────────► untouched (preimage still hard)
+RSA            â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â–º BROKEN
+ECDH           â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â–º BROKEN
+ECDSA          â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â–º BROKEN
+AES-256        â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â–º untouched (Grover only, Â§6.2)
+SHA-256        â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â–º untouched (preimage still hard)
 ```
 
-### 6.2 Grover's algorithm — the smaller one
+### 6.2 Grover's algorithm â€” the smaller one
 
-Grover gives a **square-root** speed-up on brute-force search — and brute force is exactly how
+Grover gives a **square-root** speed-up on brute-force search â€” and brute force is exactly how
 symmetric crypto is attacked.
 
-- AES-128: 2¹²⁸ keys → Grover searches ~2⁶⁴
-- AES-256: 2²⁵⁶ keys → Grover searches ~2¹²⁸
+- AES-128: 2Â¹Â²â¸ keys â†’ Grover searches ~2â¶â´
+- AES-256: 2Â²âµâ¶ keys â†’ Grover searches ~2Â¹Â²â¸
 
 **The elegant consequence: double the key length, halve the quantum threat.**
 
-- AES-128 → ~64-bit quantum security → **NIST level 1**
-- AES-192 → ~96-bit → **level 3**
-- AES-256 → ~128-bit → **level 5**
+- AES-128 â†’ ~64-bit quantum security â†’ **NIST level 1**
+- AES-192 â†’ ~96-bit â†’ **level 3**
+- AES-256 â†’ ~128-bit â†’ **level 5**
 
 So **AES-256 is generally accepted as quantum-safe**, and symmetric algorithms are not the
 emergency. The emergency is public-key. That distinction shapes the whole project.
 
 > **A subtlety our code documents rather than hides.** "Level 5" for AES-256 is our
 > `nistQuantumSecurityLevel` *category*, inherited from the NIST quantum-safe set. The
-> brute-force quantum cost of AES-256 is ~2¹²⁸ — classically equivalent to 128-bit security. The
+> brute-force quantum cost of AES-256 is ~2Â¹Â²â¸ â€” classically equivalent to 128-bit security. The
 > category and the raw cost answer different questions. Conflating them is the same class of error
-> as calling SHA-1's 160-bit *output* a 160-bit *security level* (§2.2).
+> as calling SHA-1's 160-bit *output* a 160-bit *security level* (Â§2.2).
 
 ### 6.3 The crucial word: *sufficiently large*
 
@@ -420,7 +420,7 @@ exist. Estimates range widely. What is not in dispute is the trend, and the stan
 | 5 | 256-bit | ML-KEM-1024, ML-DSA-87, SLH-DSA-256 |
 
 In the CBOM we emit, **level 0 is the alarming one**: CycloneDX defines
-`nistQuantumSecurityLevel: 0` as *"vulnerable to attack by a quantum computer"* — i.e. Shor-broken.
+`nistQuantumSecurityLevel: 0` as *"vulnerable to attack by a quantum computer"* â€” i.e. Shor-broken.
 RSA, ECDH, ECDSA, DH are all level 0.
 
 **A level we cannot compute is omitted, not guessed.** The schema has no "unknown" member, so when
@@ -431,13 +431,13 @@ one.
 > the SLH-DSA tokens were written lower-case (`"128s"`), so they could never match. Every SLH-DSA
 > parameter set fell through to a default of level 3: a **level-1** signature over-reported as
 > level 3, a **level-5** one under-reported as level 3. The FIPS 205 *fast* variants
-> (`128f`/`192f`/`256f`) had no token at all. The code looked correct and every test passed. §19.
+> (`128f`/`192f`/`256f`) had no token at all. The code looked correct and every test passed. Â§19.
 
 ---
 
 ## 8. What a post-quantum algorithm actually is
 
-Not magic — different mathematics, chosen to be hard for *both* classical and quantum computers.
+Not magic â€” different mathematics, chosen to be hard for *both* classical and quantum computers.
 
 | Family | Job | FIPS | Stands for |
 |---|---|---|---|
@@ -450,10 +450,10 @@ The best single idea in post-quantum planning. Michele Mosca's inequality:
 
 ```
    X  +  Y  >  Z
-   │   │    │
-   │   │    └─ Z = years until a CRQC breaks RSA-2048
-   │   └────── Y = years you must keep data secret  ("shelf life")
-   └────────── X = years to migrate your estate
+   â”‚   â”‚    â”‚
+   â”‚   â”‚    â””â”€ Z = years until a CRQC breaks RSA-2048
+   â”‚   â””â”€â”€â”€â”€â”€â”€ Y = years you must keep data secret  ("shelf life")
+   â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ X = years to migrate your estate
 ```
 
 **If X + Y > Z, you are already late.**
@@ -461,24 +461,24 @@ The best single idea in post-quantum planning. Michele Mosca's inequality:
 ### 9.1 The two ways people get this wrong
 
 1. **"Z is 15 years away, we have time."** But if your shelf life is 5 years and migration takes
-   20, then 5 + 20 = 25 > 15 — **you are already late.** The arithmetic does not care that no
+   20, then 5 + 20 = 25 > 15 â€” **you are already late.** The arithmetic does not care that no
    quantum computer exists yet, because the *ciphertexts* recorded today are still decryptable
    later. This is **harvest now, decrypt later**.
 
 2. **"Quantum is far away, defer it."** Shelf life is invisible in a code review. Patient records,
-   bank records and government documents routinely need 10–30 years of confidentiality. For those,
+   bank records and government documents routinely need 10â€“30 years of confidentiality. For those,
    X + Y is large *right now*.
 
 ### 9.2 How IndraMesh uses it
 
 Per finding, IndraMesh takes X (migration effort band), Y (data-class shelf life) and Z (policy
-deadline), evaluates the inequality, and reports a **band — not a day count**. It also explicitly
+deadline), evaluates the inequality, and reports a **band â€” not a day count**. It also explicitly
 refuses to estimate engineering cost.
 
 
 ---
 
-# Part 3 — The project
+# Part 3 â€” The project
 
 ## 10. What IndraMesh does, in one paragraph
 
@@ -497,78 +497,78 @@ shows all of it, plus what it could not see.
 ### 11.1 The five layers
 
 ```
-╔══════════════════════════════════════════════════════════════════════════════╗
-║  INTERFACE LAYER                                                              ║
-║  ┌────────────────┐  ┌────────────────┐  ┌──────────────┐  ┌─────────────┐  ║
-║  │  app.py        │  │  cli.py        │  │ cli_advanced │  │ cli_certs   │  ║
-║  │  FastAPI       │  │  headless      │  │ verify-migr. │  │ X.509       │  ║
-║  │  console       │  │  + CBOM        │  │ advanced     │  │             │  ║
-║  └───────┬────────┘  └───────┬────────┘  └──────┬───────┘  └──────┬──────┘  ║
-║          │  engine/theme.py (design system)   │                  │         ║
-╚══════════╪═══════════════════╪══════════════════╪══════════════════╪═════════╝
-           │                   │                  │                  │
-           └───────────────────┴──────────┬───────┴──────────────────┘
-                                          ▼
-╔══════════════════════════════════════════════════════════════════════════════╗
-║  POLICY / TRUST BOUNDARY      ◄── everything below is input-data-derived ───  ║
-║  ┌──────────────────┐  ┌──────────────┐  ┌────────────────┐  ┌───────────┐  ║
-║  │ fspolicy.py      │  │ netpolicy.py │  │ purpose.py     │  │  mosca.py │  ║
-║  │ symlink escape   │  │ SSRF / DNS   │  │ what is this   │  │ X + Y > Z │  ║
-║  │ credential-store │  │ rebinding    │  │ FOR?  (+ the   │  │ tiers     │  ║
-║  │ refusal          │  │ private/link │  │ unresolved     │  │ HNDL vs   │  ║
-║  │                  │  │ local/metadata│ │ state)         │  │ forgery   │  ║
-║  └──────────────────┘  └──────────────┘  └────────────────┘  └───────────┘  ║
-╚════════════════════════════════════════════════════════╤═════════════════════╝
-                                                          ▼
-╔══════════════════════════════════════════════════════════════════════════════╗
-║  DETECTION LAYER — 14 modules, 124 rules, 7 languages                          ║
-║  ┌───────────────┐ ┌──────────────┐ ┌───────────────┐ ┌──────────────────┐  ║
-║  │  scanner.py   │ │certificates  │ │ dependencies  │ │  verify_migration│  ║
-║  │  SOURCE +     │ │  .py         │ │   .py         │ │   .py            │  ║
-║  │  BINARY +     │ │ X.509 / DER  │ │ 9 ecosystems  │ │ ML-KEM/ML-DSA/   │  ║
-║  │  CONTAINER    │ │ KeyUsage     │ │ capability    │ │ SLH-DSA/FN-DSA   │  ║
-║  └───────┬───────┘ └──────┬───────┘ └───────┬───────┘ └────────┬─────────┘  ║
-║          └────────────────┴─────────────────┴────────────────────┘           ║
-║  ┌──────────────┐ ┌──────────────┐ ┌──────────────┐ ┌──────────────────┐    ║
-║  │  netprobe.py │ │ recommender  │ │  ml/         │ │  graph.py        │    ║
-║  │  opt-in TLS  │ │  target per   │ │ classifier   │ │  topology viz    │    ║
-║  │  + SSH       │ │  finding      │ │ (optional)   │ │                  │    ║
-║  └──────────────┘ └──────────────┘ └──────────────┘ └──────────────────┘    ║
-╚════════════════════════════════════════════════════════╤═════════════════════╝
-                                                          ▼
-╔══════════════════════════════════════════════════════════════════════════════╗
-║  OUTPUT LAYER                                                                  ║
-║  ┌──────────────────────┐  ┌───────────────────┐  ┌──────────────────────┐  ║
-║  │  cbom.py             │  │ gui_helpers.py    │  │  schemas/            │  ║
-║  │  CycloneDX 1.7       │  │ SVG, no network,  │  │  vendored 1.7 JSON   │  ║
-║  │  nistQuantumLevel    │  │ headless-testable │  │  Schema (offline     │  ║
-║  │  classicalStrength   │  │                   │  │  validation)         │  ║
-║  └──────────────────────┘  └───────────────────┘  └──────────────────────┘  ║
-╚══════════════════════════════════════════════════════════════════════════════╝
+â•”â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•—
+â•‘  INTERFACE LAYER                                                              â•‘
+â•‘  â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”  â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”  â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”  â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”  â•‘
+â•‘  â”‚  app.py        â”‚  â”‚  cli.py        â”‚  â”‚ cli_advanced â”‚  â”‚ cli_certs   â”‚  â•‘
+â•‘  â”‚  FastAPI       â”‚  â”‚  headless      â”‚  â”‚ verify-migr. â”‚  â”‚ X.509       â”‚  â•‘
+â•‘  â”‚  console       â”‚  â”‚  + CBOM        â”‚  â”‚ advanced     â”‚  â”‚             â”‚  â•‘
+â•‘  â””â”€â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”€â”˜  â””â”€â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”€â”˜  â””â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”˜  â””â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”˜  â•‘
+â•‘          â”‚  engine/theme.py (design system)   â”‚                  â”‚         â•‘
+â•šâ•â•â•â•â•â•â•â•â•â•â•ªâ•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•ªâ•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•ªâ•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•ªâ•â•â•â•â•â•â•â•â•â•
+           â”‚                   â”‚                  â”‚                  â”‚
+           â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”´â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”´â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
+                                          â–¼
+â•”â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•—
+â•‘  POLICY / TRUST BOUNDARY      â—„â”€â”€ everything below is input-data-derived â”€â”€â”€  â•‘
+â•‘  â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”  â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”  â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”  â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”  â•‘
+â•‘  â”‚ fspolicy.py      â”‚  â”‚ netpolicy.py â”‚  â”‚ purpose.py     â”‚  â”‚  mosca.py â”‚  â•‘
+â•‘  â”‚ symlink escape   â”‚  â”‚ SSRF / DNS   â”‚  â”‚ what is this   â”‚  â”‚ X + Y > Z â”‚  â•‘
+â•‘  â”‚ credential-store â”‚  â”‚ rebinding    â”‚  â”‚ FOR?  (+ the   â”‚  â”‚ tiers     â”‚  â•‘
+â•‘  â”‚ refusal          â”‚  â”‚ private/link â”‚  â”‚ unresolved     â”‚  â”‚ HNDL vs   â”‚  â•‘
+â•‘  â”‚                  â”‚  â”‚ local/metadataâ”‚ â”‚ state)         â”‚  â”‚ forgery   â”‚  â•‘
+â•‘  â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜  â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜  â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜  â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜  â•‘
+â•šâ•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•¤â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+                                                          â–¼
+â•”â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•—
+â•‘  DETECTION LAYER â€” 14 modules, 124 rules, 7 languages                          â•‘
+â•‘  â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â” â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â” â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â” â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”  â•‘
+â•‘  â”‚  scanner.py   â”‚ â”‚certificates  â”‚ â”‚ dependencies  â”‚ â”‚  verify_migrationâ”‚  â•‘
+â•‘  â”‚  SOURCE +     â”‚ â”‚  .py         â”‚ â”‚   .py         â”‚ â”‚   .py            â”‚  â•‘
+â•‘  â”‚  BINARY +     â”‚ â”‚ X.509 / DER  â”‚ â”‚ 9 ecosystems  â”‚ â”‚ ML-KEM/ML-DSA/   â”‚  â•‘
+â•‘  â”‚  CONTAINER    â”‚ â”‚ KeyUsage     â”‚ â”‚ capability    â”‚ â”‚ SLH-DSA/FN-DSA   â”‚  â•‘
+â•‘  â””â”€â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”˜ â””â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”˜ â””â”€â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”˜ â””â”€â”€â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜  â•‘
+â•‘          â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”´â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”´â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜           â•‘
+â•‘  â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â” â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â” â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â” â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”    â•‘
+â•‘  â”‚  netprobe.py â”‚ â”‚ recommender  â”‚ â”‚  ml/         â”‚ â”‚  graph.py        â”‚    â•‘
+â•‘  â”‚  opt-in TLS  â”‚ â”‚  target per   â”‚ â”‚ classifier   â”‚ â”‚  topology viz    â”‚    â•‘
+â•‘  â”‚  + SSH       â”‚ â”‚  finding      â”‚ â”‚ (optional)   â”‚ â”‚                  â”‚    â•‘
+â•‘  â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜ â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜ â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜ â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜    â•‘
+â•šâ•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•¤â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+                                                          â–¼
+â•”â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•—
+â•‘  OUTPUT LAYER                                                                  â•‘
+â•‘  â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”  â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”  â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”  â•‘
+â•‘  â”‚  cbom.py             â”‚  â”‚ gui_helpers.py    â”‚  â”‚  schemas/            â”‚  â•‘
+â•‘  â”‚  CycloneDX 1.7       â”‚  â”‚ SVG, no network,  â”‚  â”‚  vendored 1.7 JSON   â”‚  â•‘
+â•‘  â”‚  nistQuantumLevel    â”‚  â”‚ headless-testable â”‚  â”‚  Schema (offline     â”‚  â•‘
+â•‘  â”‚  classicalStrength   â”‚  â”‚                   â”‚  â”‚  validation)         â”‚  â•‘
+â•‘  â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜  â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜  â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜  â•‘
+â•šâ•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 ```
 
 ### 11.3 Data flow for a single finding
 
 ```
-source line  ──►  scanner.py  ──►  {name, primitive, evidence_class, key_length, curve}
-                                                    │
-                        ┌───────────────────────────┼───────────────────────────┐
-                        ▼                           ▼                           ▼
+source line  â”€â”€â–º  scanner.py  â”€â”€â–º  {name, primitive, evidence_class, key_length, curve}
+                                                    â”‚
+                        â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¼â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+                        â–¼                           â–¼                           â–¼
                 purpose.py                   mosca.py                    recommender.py
-          what is this FOR?              X + Y > Z → tier           which PQC target?
+          what is this FOR?              X + Y > Z â†’ tier           which PQC target?
           (or: UNRESOLVED)               HNDL vs forgery             (or: UNRESOLVED)
-                        │                           │                           │
-                        └───────────────────────────┴───────────────────────────┘
-                                                    ▼
+                        â”‚                           â”‚                           â”‚
+                        â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”´â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
+                                                    â–¼
                                           enriched finding record
-                                                    │
-                        ┌───────────────────┬───────┴───────┬────────────────────┐
-                        ▼                   ▼               ▼                    ▼
+                                                    â”‚
+                        â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”´â”€â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+                        â–¼                   â–¼               â–¼                    â–¼
                   cbom.py            gui_helpers.py     queue_rows()      coverage manifest
                   CycloneDX 1.7      inline SVG         migration order   what we could NOT see
 ```
 
-### 11.4 The five evidence classes — the most important concept in the tool
+### 11.4 The five evidence classes â€” the most important concept in the tool
 
 This is the distinction that makes IndraMesh different, so it is worth a table.
 
@@ -597,11 +597,11 @@ cases from the engine:
 
 | Evidence | What we do |
 |---|---|
-| `padding.PSS`, `Signature.getInstance` | → signature (settled) |
-| `padding.OAEP`, `Cipher.getInstance("RSA/…")` | → key establishment (settled) |
-| `padding.PKCS1v15`, `KeyPairGenerator` | → **unresolved** |
-| Certificate KeyUsage `digitalSignature` \| `keyCertSign` | → signature (settled) |
-| Certificate KeyUsage `digitalSignature` \| `keyEncipherment` | → **unresolved** |
+| `padding.PSS`, `Signature.getInstance` | â†’ signature (settled) |
+| `padding.OAEP`, `Cipher.getInstance("RSA/â€¦")` | â†’ key establishment (settled) |
+| `padding.PKCS1v15`, `KeyPairGenerator` | â†’ **unresolved** |
+| Certificate KeyUsage `digitalSignature` \| `keyCertSign` | â†’ signature (settled) |
+| Certificate KeyUsage `digitalSignature` \| `keyEncipherment` | â†’ **unresolved** |
 
 The reasoning: a `unresolved` finding a human reviews is worth more than a resolved one that is
 wrong. Guessing looks better on a dashboard and is worse for the person who has to act on it.
@@ -615,11 +615,11 @@ wrong. Guessing looks better on a dashboard and is worse for the person who has 
 | `scanner.py` | Source, binary and container detection; 124 rules across 7 languages |
 | `purpose.py` | Resolves what an algorithm is **for**; owns the `unresolved` state |
 | `mosca.py` | `X + Y > Z`; risk tiers; HNDL vs forgery; policy deadline packs |
-| `recommender.py` | Chooses the PQC replacement — or declines to |
-| `certificates.py` | X.509 / PEM / DER parsing; KeyUsage → purpose (stdlib-only, no `cryptography` dep) |
+| `recommender.py` | Chooses the PQC replacement â€” or declines to |
+| `certificates.py` | X.509 / PEM / DER parsing; KeyUsage â†’ purpose (stdlib-only, no `cryptography` dep) |
 | `dependencies.py` | 9 manifest ecosystems; capability-tier findings |
 | `verify_migration.py` | Confirms ML-KEM / ML-DSA / SLH-DSA / FN-DSA are actually used |
-| `netprobe.py` | Live TLS/SSH probing — **opt-in, allowlist-only** |
+| `netprobe.py` | Live TLS/SSH probing â€” **opt-in, allowlist-only** |
 | `netpolicy.py` | SSRF defence: address vetting, DNS-rebinding closure |
 | `fspolicy.py` | Symlink containment, credential-store refusal |
 | `cbom.py` | CycloneDX 1.7 emission; NIST + classical strength levels |
@@ -629,28 +629,28 @@ wrong. Guessing looks better on a dashboard and is worse for the person who has 
 | `ml/` | Optional classifier; every import degrades gracefully |
 
 **Languages covered:** Python, Java, Go, Rust, JavaScript/TypeScript, C/C++, C#.
-**Not covered:** PHP, Ruby — see §22.
+**Not covered:** PHP, Ruby â€” see Â§22.
 
 ---
 
 ## 13. The three ideas that make IndraMesh different
 
-### Idea 1 — Assurance is not confidence
+### Idea 1 â€” Assurance is not confidence
 
-Explained in §11.4. Most tools have one confidence number. We have two orthogonal axes and show
+Explained in Â§11.4. Most tools have one confidence number. We have two orthogonal axes and show
 
 ---
 
-# Part 4 — Proving it works
+# Part 4 â€” Proving it works
 
-## 14. Testing: 961 tests, and why count is not proof
+## 14. Testing: 985 tests, and why count is not proof
 
 ```
-961 passed, 8 skipped, 0 failing
+985 passed, 8 skipped, 0 failing
 ```
 
 **A test count is not evidence of correctness.** Eight hundred trivial always-passing assertions
-give you a green suite and zero confidence. This is not rhetoric — the sibling project has 664
+give you a green suite and zero confidence. This is not rhetoric â€” the sibling project has 664
 tests and we have 838, and putting those numbers side by side in a pitch without a caveat is
 exactly the argument that loses to a reviewer who asks *what do the tests assert*.
 
@@ -675,8 +675,8 @@ def test_escape_is_total(s):
     assert escape(escape(s)) == escape(s)      # idempotent: escaping twice changes nothing
 ```
 
-The value: it finds inputs **you would not have thought of** — including the fact that a filename
-in a repository you do not control can be hostile (§19).
+The value: it finds inputs **you would not have thought of** â€” including the fact that a filename
+in a repository you do not control can be hostile (Â§19).
 
 ### 14.2 Fuzz testing
 
@@ -699,7 +699,7 @@ A surviving mutant means a test that *looks* like it covers that behaviour but d
 19 / 19 killed  (100%)
 ```
 
-The mutants target the claims that matter most — the Shor list, the NIST level table, the
+The mutants target the claims that matter most â€” the Shor list, the NIST level table, the
 `unresolved` decision, the HNDL branch.
 
 ### 15.1 The bug this found in the harness itself
@@ -712,7 +712,7 @@ The most instructive defect in the project was in this very script.
 return 1 if survived else 0        # exit 0 = "every mutant was killed"
 ```
 
-But a **STALE** mutant — one whose regex no longer matches after the code moved — never had a
+But a **STALE** mutant â€” one whose regex no longer matches after the code moved â€” never had a
 mutant applied and never ran a test. And an all-STALE run returned **0**, printing a perfect score.
 
 So the harness could report *"the suite has teeth, 100% killed"* while measuring **nothing**. And
@@ -723,14 +723,14 @@ Fixed. The exit code is now:
 | Code | Meaning |
 |---|---|
 | 0 | every applicable mutant killed |
-| 1 | a mutant survived — a real test gap |
+| 1 | a mutant survived â€” a real test gap |
 | **2** | **nothing was measured, or only part of it** |
 
 ---
 
 ## 16. Benchmarks: measuring accuracy on real code
 
-"Works well" is not a measurement. We run against **pinned third-party corpora** — cloned at a fixed
+"Works well" is not a measurement. We run against **pinned third-party corpora** â€” cloned at a fixed
 commit, never vendored into our repo, never committed.
 
 | Corpus | Commit | What it is |
@@ -749,16 +749,16 @@ commit, never vendored into our repo, never committed.
 
 ### 16.2 How to read these honestly
 
-- **Precision is excellent** (0.89–0.99). When IndraMesh says "there is RSA here," it is almost always
+- **Precision is excellent** (0.89â€“0.99). When IndraMesh says "there is RSA here," it is almost always
   right.
 - **Recall is uneven, and that is the real story.** Go: perfect. Java: we miss ~21%. Python: we
   miss **40%**.
 
-**Why Python is worst.** From §5.3: paramiko does ECDH and ECDSA through object references and
+**Why Python is worst.** From Â§5.3: paramiko does ECDH and ECDSA through object references and
 factory calls where the algorithm name may never appear as a string. Regex-shaped rules cannot see
 that.
 
-### 16.3 The honesty problem this created — and fixed
+### 16.3 The honesty problem this created â€” and fixed
 
 Our top-level `README.md` claimed **recall 0.22 / 0.11** while `RESULTS.md` and `results.json` said
 **0.786 / 0.596**. The README was stale.
@@ -785,26 +785,26 @@ a green suite.
 | 11 | `deadline_countdown` had an empty body | **Lapsed deadline rendered blank** | review test |
 | 12 | 5 crash paths on malformed input | **Console traceback on its own page** | audit |
 | 13 | `proven_use` unguarded `record["assurance"]` | **One bad record killed every view** | audit |
-| 14 | Top-level README understated recall 4–5× | **Worst-read file, self-defeating claim** | audit |
+| 14 | Top-level README understated recall 4â€“5Ã— | **Worst-read file, self-defeating claim** | audit |
 
 > **Look at the pattern.** Defects 1, 2, 9 and 14 are all *a number that looks right and is not*.
-> That is the exact failure this tool exists to detect in other people's cryptography — and it was
+> That is the exact failure this tool exists to detect in other people's cryptography â€” and it was
 > in ours, four times, undetected. That is the strongest possible argument for why measurement
 > discipline matters more than feature count.
 
 ---
 
-# Part 5 — The competition
+# Part 5 â€” The competition
 
 ## 18. Who we are compared against
 
 The nearest sibling project is **`sgtsujith141-wq/cryptodrishti`**, entered in the same track. We
-scraped 349 repositories, shortlisted 119, and analysed 17 in depth — recorded in
+scraped 349 repositories, shortlisted 119, and analysed 17 in depth â€” recorded in
 `research/competitive/ANALYSIS.md` with pinned commits and an explicit take/adapt/reject decision
 for each.
 
 Their stack: Python 3.11 + FastAPI + vanilla-JS console + SQLite. Seven sensors, 27 commits, a
-6-slide deck, demo films and a presenter script — i.e. they already manage the *whole* submission
+6-slide deck, demo films and a presenter script â€” i.e. they already manage the *whole* submission
 deliverable, not just the code.
 
 **Read this as a measurement, not a boast.** Several rows are marked against us.
@@ -815,17 +815,17 @@ deliverable, not just the code.
 
 | Capability | Us | Them | Why it matters |
 |---|---|---|---|
-| **External, pinned accuracy benchmarks** | ✅ published, reproducible | ❌ none found | Claims vs measurement |
-| **Mutation-measured test quality** | ✅ 19/19, stale-safe | ❌ not found | Proves our tests can fail |
-| **Assurance ≠ confidence** | ✅ 5 classes, 2 axes | ✅ *(their idea)* | Adopted and attributed |
-| **Deliberate `unresolved`** | ✅ everywhere | ✅ *(their idea)* | The sharpest thing we took |
-| **HNDL encryption vs signature split** | ✅ distinct branches | ⚠️ not verified | Signatures are a *forgery* risk, not a *decryption* risk |
-| **Python recall** | **0.596** | ❌ not measured | We publish a number they do not |
-| **Go coverage** | ✅ **recall 1.000** | ❌ not measured | Complete on one language, and we say so |
-| **Symlink + credential refusal** | ✅ | ✅ | Tie in capability; their docs better |
-| **Refuses to price an engineer** | ✅ | ✅ | Their stated stance |
-| **CycloneDX 1.7, schema-validated offline** | ✅ vendored schema | ⚠️ not verified | Validated before download |
-| **Hybrid not treated as one algorithm** | ✅ both halves reported | ❌ not verified | Breaking one half is not enough |
+| **External, pinned accuracy benchmarks** | âœ… published, reproducible | âŒ none found | Claims vs measurement |
+| **Mutation-measured test quality** | âœ… 19/19, stale-safe | âŒ not found | Proves our tests can fail |
+| **Assurance â‰  confidence** | âœ… 5 classes, 2 axes | âœ… *(their idea)* | Adopted and attributed |
+| **Deliberate `unresolved`** | âœ… everywhere | âœ… *(their idea)* | The sharpest thing we took |
+| **HNDL encryption vs signature split** | âœ… distinct branches | âš ï¸ not verified | Signatures are a *forgery* risk, not a *decryption* risk |
+| **Python recall** | **0.596** | âŒ not measured | We publish a number they do not |
+| **Go coverage** | âœ… **recall 1.000** | âŒ not measured | Complete on one language, and we say so |
+| **Symlink + credential refusal** | âœ… | âœ… | Tie in capability; their docs better |
+| **Refuses to price an engineer** | âœ… | âœ… | Their stated stance |
+| **CycloneDX 1.7, schema-validated offline** | âœ… vendored schema | âš ï¸ not verified | Validated before download |
+| **Hybrid not treated as one algorithm** | âœ… both halves reported | âŒ not verified | Breaking one half is not enough |
 
 ### 19.1 The three arguments that actually land with a judge
 
@@ -839,8 +839,8 @@ Stated plainly, because a judge will find these anyway and it is better that we 
 
 | Gap | Detail | Severity |
 |---|---|---|
-| **PHP — no rules at all** | cryptodrishti detects PHP; we do not | **High** |
-| **Ruby — no rules at all** | cryptodrishti detects Ruby; we do not | **High** |
+| **PHP â€” no rules at all** | cryptodrishti detects PHP; we do not | **High** |
+| **Ruby â€” no rules at all** | cryptodrishti detects Ruby; we do not | **High** |
 | **Java recall 0.786** | ~45 false negatives on CryptoAPI-Bench | Medium |
 | **Python recall 0.596** | 9/30 ECDH, 11/42 ECDSA missed | Medium |
 | **Console access control** | They require a token off-loopback and refuse to start without one. We have **no auth, no bind guard** | **High** |
@@ -848,7 +848,7 @@ Stated plainly, because a judge will find these anyway and it is better that we 
 | **Documentation of posture** | Their netpolicy documentation is more detailed than ours | Medium |
 | **Publicly demonstrated breadth** | Their 7 sensors are all reachable in-product; ours were unreachable until this cycle | Medium |
 
-**On the PHP/Ruby gap — why we did not just fix it.** We could have written regexes for `openssl_*`
+**On the PHP/Ruby gap â€” why we did not just fix it.** We could have written regexes for `openssl_*`
 calls in an afternoon. We did not, for a reason worth stating: some "misses" in our own benchmark
 are *labels on message constants* like `_MSG_KEXECDH_INIT`. Rules for those raise false positives.
 Writing rules to raise our own benchmark score, without first building a labelled PHP/Ruby corpus
@@ -858,18 +858,18 @@ to write them *from*, would be optimising the measurement rather than the tool.
 
 ## 21. What to improve first
 
-Ordered by value per unit of effort — not by how easy they look.
+Ordered by value per unit of effort â€” not by how easy they look.
 
-### Tier 1 — closes the biggest measured gaps
+### Tier 1 â€” closes the biggest measured gaps
 
 1. **Build PHP and Ruby benchmark corpora *first*.** No rules until labels exist. That is the only
    honest order.
 2. **Console access control.** They have it, we do not. A security console with no auth is an
    obvious finding for any reviewer, and it is not a hard problem.
 3. **Paramiko ECDH/ECDSA.** Needs import-graph and object-reference patterns, not better regexes.
-   Precision must not regress — we have a benchmark to prove it.
+   Precision must not regress â€” we have a benchmark to prove it.
 
-### Tier 2 — turns existing capability into *visible* capability
+### Tier 2 â€” turns existing capability into *visible* capability
 
 
 ---
@@ -879,24 +879,24 @@ Ordered by value per unit of effort — not by how easy they look.
 ### 22.1 The 30-second version
 
 > "Every company runs cryptography it cannot inventory. Quantum computers will break RSA and ECC,
-> and the data you care about has to survive until the fix — which is why starting now is late, not
+> and the data you care about has to survive until the fix â€” which is why starting now is late, not
 > early. IndraMesh finds the cryptography, tells you what it is *for*, and tells you what it could not
-> determine. It reports accuracy against pinned third-party code — including the corpus where we
-> only find 60% — and it mutation-tests its own suite to prove those tests can fail. We built the
+> determine. It reports accuracy against pinned third-party code â€” including the corpus where we
+> only find 60% â€” and it mutation-tests its own suite to prove those tests can fail. We built the
 > thing to catch confident wrong numbers, then caught four of our own."
 
 ### 22.2 Slide-by-slide structure
 
 | # | Slide | One line |
 |---|---|---|
-| 1 | Title | IndraMesh — Enterprise Cryptographic Discovery & Analysis Tool |
+| 1 | Title | IndraMesh â€” Enterprise Cryptographic Discovery & Analysis Tool |
 | 2 | Problem | You cannot migrate what you cannot find. HNDL makes it urgent now. |
 | 3 | Why it's hard | The algorithm name often isn't in the source. Show the `ec.generate_private_key` example. |
 | 4 | Approach | 14 engines, 7 languages, 124 rules, 9 manifest ecosystems |
-| 5 | The differentiator | Assurance ≠ confidence. Show the 5 classes side by side. |
+| 5 | The differentiator | Assurance â‰  confidence. Show the 5 classes side by side. |
 | 6 | `unresolved` | We decline to guess. Show the dual-use KeyUsage case. |
 | 7 | Honesty | The coverage manifest: files seen, skipped, unreadable |
-| 8 | Evidence | Benchmarks, pinned, reproducible — *including 0.596* |
+| 8 | Evidence | Benchmarks, pinned, reproducible â€” *including 0.596* |
 | 9 | Proof of tests | 19/19 mutants killed |
 | 10 | Self-criticism | The 14 defects we found, and that 4 were wrong numbers |
 | 11 | Honest gaps | PHP, Ruby, console auth, Python recall |
@@ -909,14 +909,14 @@ Ordered by value per unit of effort — not by how easy they look.
 > variants published, and the harness that produced them is in the repo. You can re-run it.
 
 **"Isn't a test count enough?"**
-> No — and we say so in our own docs. Ours is 838, a competitor's is 664, and putting those numbers
+> No â€” and we say so in our own docs. Ours is 838, a competitor's is 664, and putting those numbers
 > side by side without a caveat proves nothing. What proves something is mutation testing: 19
 > deliberately broken behaviours, 19 caught.
 
 **"What happens if you're wrong?"**
 > The tool has an `unresolved` state and a coverage manifest; it states what it could not read. And
-> in our own audit we found four cases of a number that looked right and wasn't — including a
-> PBKDF2 wrongly labelled quantum-broken — and we shipped the fixes.
+> in our own audit we found four cases of a number that looked right and wasn't â€” including a
+> PBKDF2 wrongly labelled quantum-broken â€” and we shipped the fixes.
 
 **"Why no PHP support?"**
 > Because we haven't built a labelled PHP corpus yet, and writing rules without labels to measure
@@ -925,7 +925,7 @@ Ordered by value per unit of effort — not by how easy they look.
 **"Is this safe to run on untrusted code?"**
 > Symlinks cannot escape the scan root, credential stores are refused outright, the network probe is
 > opt-in and allowlist-only, and it refuses to phone a CDN. The last one we broke ourselves and
-> fixed — it is in the defect list.
+> fixed â€” it is in the defect list.
 
 **"What are you behind on?"**
 > Submission assets, and PHP/Ruby coverage. Neither is a technical gap, and both are named in our
@@ -937,17 +937,17 @@ Ordered by value per unit of effort — not by how easy they look.
 
 | Term | Meaning |
 |---|---|
-| **A CRQC** | Cryptographically Relevant Quantum Computer — one that can break RSA/ECC |
+| **A CRQC** | Cryptographically Relevant Quantum Computer â€” one that can break RSA/ECC |
 | **HNDL** | Harvest Now, Decrypt Later |
 | **Shor** | Shor's algorithm; breaks factoring and discrete log |
-| **Grover** | √n brute-force speed-up; affects symmetric crypto and hashes |
+| **Grover** | âˆšn brute-force speed-up; affects symmetric crypto and hashes |
 | **X + Y > Z** | Mosca's inequality: migration + shelf life > time to quantum threat |
 | **Assurance** | What the evidence *proves* (capability / declared / used / observed) |
-| **Confidence** | How sure we are the identification is correct — a *different* axis |
+| **Confidence** | How sure we are the identification is correct â€” a *different* axis |
 | **`unresolved`** | We found something but cannot honestly say what it is for |
-| **KEM** | Key Encapsulation Mechanism — the PQC replacement for key exchange |
+| **KEM** | Key Encapsulation Mechanism â€” the PQC replacement for key exchange |
 | **CBOM** | Cryptographic Bill of Materials |
-| **NIST level 0–5** | Quantum security categories: 128/192/256-bit equivalents |
+| **NIST level 0â€“5** | Quantum security categories: 128/192/256-bit equivalents |
 | **L1 / L2** | Our two labelling variants for benchmark ground truth |
 
 ---
@@ -955,13 +955,13 @@ Ordered by value per unit of effort — not by how easy they look.
 ## 24. Where everything lives
 
 ```
-engine/            the 14 engines (§12)
+engine/            the 14 engines (Â§12)
 app.py             FastAPI console launcher (uvicorn; loopback by default)
 cli.py             headless + CBOM
 cli_advanced.py    verify-migration
 cli_certificates.py X.509
 schemas/           vendored CycloneDX 1.7 JSON Schema (offline validation)
-tests/             29 files, 961 tests
+tests/             29 files, 985 tests
 docs/GUIDE.md      <- this document
 docs/COMPARISON.md measured comparison with the sibling project
 research/competitive/ANALYSIS.md   17 repos analysed, take/adapt/reject each
@@ -1002,10 +1002,10 @@ python benchmark/run_benchmark.py
 
 ## A final word
 
-The one idea to take from this document is in §17. Four of the fourteen defects we found in our
-own tool were **a number that looked right and was not** — a KDF labelled quantum-broken, a
+The one idea to take from this document is in Â§17. Four of the fourteen defects we found in our
+own tool were **a number that looked right and was not** â€” a KDF labelled quantum-broken, a
 signature claiming the wrong security level, a certificate with a broken signature reported
-healthy, and a README understating our own recall by 4–5×.
+healthy, and a README understating our own recall by 4â€“5Ã—.
 
 We built a tool to find confident wrong numbers in other people's cryptography. It found them in
 ours. That is not a failure of the tool; it is the argument for the tool, and the reason the
@@ -1016,11 +1016,11 @@ Everything else here is detail. That is the thing worth remembering.
 
 ### 22.4 Do not say these
 
-- ❌ *"We're 100% accurate"* — you publish 0.596. The claim is refutable in one click.
-- ❌ *"We have more tests"* — 838 vs 664 is not a quality argument; it invites the obvious reply.
-- ❌ *"It's AI-powered"* — the ML classifier is optional; the value is in the deterministic rules.
-- ❌ *"It's quantum-proof"* — nothing is. Say "it tells you what is at risk, and by when."
-- ❌ *"cryptodrishti does X wrong"* — they invented two ideas you adopted. Be gracious and specific;
+- âŒ *"We're 100% accurate"* â€” you publish 0.596. The claim is refutable in one click.
+- âŒ *"We have more tests"* â€” 838 vs 664 is not a quality argument; it invites the obvious reply.
+- âŒ *"It's AI-powered"* â€” the ML classifier is optional; the value is in the deterministic rules.
+- âŒ *"It's quantum-proof"* â€” nothing is. Say "it tells you what is at risk, and by when."
+- âŒ *"cryptodrishti does X wrong"* â€” they invented two ideas you adopted. Be gracious and specific;
   it makes your own measurements more credible, not less.
 
 4. **Submission assets.** Deck, architecture diagram, threat model, live demo script, presenter
@@ -1028,28 +1028,28 @@ Everything else here is detail. That is the thing worth remembering.
 5. **Document the netpolicy posture** to the level their documentation reaches.
 6. **Apply the design system to all six views.** The theme exists; not every view uses it yet.
 
-### Tier 3 — raises the ceiling
+### Tier 3 â€” raises the ceiling
 
-7. **Scan history** — readiness tracked over time, not a single snapshot.
-8. **Live TLS sensor in the console** — it exists and is tested; it has no button.
-9. **More language depth** — Kotlin, Swift.
+7. **Scan history** â€” readiness tracked over time, not a single snapshot.
+8. **Live TLS sensor in the console** â€” it exists and is tested; it has no button.
+9. **More language depth** â€” Kotlin, Swift.
 10. **Reduce the L1/L2 benchmark spread** (0.878 vs 0.675 on Java) by tightening label criteria.
 
-publishing a 0.596 and explaining *why* — from §5.3, the algorithm name often never appears as a
-string — is a categorically different claim.
+publishing a 0.596 and explaining *why* â€” from Â§5.3, the algorithm name often never appears as a
+string â€” is a categorically different claim.
 
 **2. "We prove our tests can fail."** 19/19 mutants killed, on the exact logic that matters: the
 Shor list, the NIST table, the `unresolved` decision. And we found a bug *in the mutation harness
-itself* (§15.1) that would have let it lie.
+itself* (Â§15.1) that would have let it lie.
 
 **3. "We have caught ourselves doing the thing we built this to catch."** Defects 1, 2, 9 and 14 are
-all a number that looked right and was not. Telling that story — unprompted, with the fix
-committed — is far more convincing than claiming perfection. **Perfection claims are the first
+all a number that looked right and was not. Telling that story â€” unprompted, with the fix
+committed â€” is far more convincing than claiming perfection. **Perfection claims are the first
 thing a technical judge tests.**
 
 
 A strange way to fail. The sentence read: *"including the unflattering ones (recall is 0.22/0.11,
-published by us)"* — using *low* numbers as a credibility signal. But those were **4–5× worse than
+published by us)"* â€” using *low* numbers as a credibility signal. But those were **4â€“5Ã— worse than
 reality**, so the credibility play inverted into a caught exaggeration. Anyone opening the linked
 `RESULTS.md` would spot it instantly. Corrected to the measured figures.
 
@@ -1059,19 +1059,19 @@ reality**, so the credibility play inverted into a caught exaggeration. Anyone o
 x/crypto ship no labels at all. The ground truth is hand-annotated by the author of this harness,
 with every label carrying its verbatim source line.
 
-We therefore report **two label variants** — L1 and the stricter L2 — so the effect of our own
+We therefore report **two label variants** â€” L1 and the stricter L2 â€” so the effect of our own
 labelling choices is visible rather than hidden. On CryptoAPI-Bench, L2 gives F1 **0.675** vs L1's
 **0.878**. We publish both.
 
 both.
 
-### Idea 2 — `unresolved` is a first-class state
+### Idea 2 â€” `unresolved` is a first-class state
 
-Explained in §11.5. The tool can decline to answer, and says what would let it answer.
+Explained in Â§11.5. The tool can decline to answer, and says what would let it answer.
 
-### Idea 3 — HNDL means different things for encryption and signatures
+### Idea 3 â€” HNDL means different things for encryption and signatures
 
-Explained in §3.3, and implemented as a distinct branch. For encrypted data the risk is **retrospective
+Explained in Â§3.3, and implemented as a distinct branch. For encrypted data the risk is **retrospective
 decryption** of recorded ciphertext. For signatures it is **prospective forgery** of future
 documents. A tool that treats them as one number is wrong about half of your estate.
 
@@ -1084,7 +1084,7 @@ documents. A tool that treats them as one number is wrong about half of your est
 ### 11.2 Why the policy layer sits where it does
 
 `fspolicy.py` and `netpolicy.py` sit **above** the detection layer, not inside it, because they are
-not detection rules — they are **safety boundaries** constraining what the scanners may touch.
+not detection rules â€” they are **safety boundaries** constraining what the scanners may touch.
 
 This follows directly from "the tool takes a filesystem path and a list of hosts over HTTP and acts
 on both." Without a boundary that is a server-side request forgery primitive and an arbitrary file
@@ -1112,7 +1112,7 @@ read.
 | **HQC** | Key encapsulation | pending | Hamming Quasi-Cyclic |
 
 Lattice-based (ML-KEM, ML-DSA) are the practical default; hash-based (SLH-DSA) have the shortest
-proofs but are slow and large — insurance if lattices fall.
+proofs but are slow and large â€” insurance if lattices fall.
 
 ### 8.1 The three attack classes, and what each algorithm must survive
 
@@ -1127,13 +1127,13 @@ proofs but are slow and large — insurance if lattices fall.
 - **A hybrid is not one algorithm.** Both halves must be broken. IndraMesh's verification reports
   hybrids separately for exactly this reason.
 - **Deprecated Kyber drafts are not ML-KEM.** `kyber512r1` is a pre-standardisation draft of what
-  became ML-KEM-512 — a different algorithm. A migration checker reporting "migrated" because it
+  became ML-KEM-512 â€” a different algorithm. A migration checker reporting "migrated" because it
   found a Kyber draft is lying. IndraMesh keeps the markers visibly separate, and it is a tested rule.
 
-urgent as encryption" is also wrong — the risk *shape* differs.
+urgent as encryption" is also wrong â€” the risk *shape* differs.
 
 **IndraMesh treats these differently on purpose.** It is one of the most important ideas in the
-project, and §13 covers the implementation.
+project, and Â§13 covers the implementation.
 
 ---
 

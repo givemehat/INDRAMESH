@@ -40,6 +40,9 @@ from engine.cbom import generate_cbom
 from engine.certificates import scan_certificates
 from engine.dependencies import DependencyScanner
 from engine.graph import generate_crypto_graph
+from engine.history_store import append as history_append
+from engine.history_store import get as history_get
+from engine.history_store import list_recent as history_list
 from engine.gui_helpers import (
     TIER_COLOURS,
     assurance_counts,
@@ -99,6 +102,16 @@ _STATE: Dict[str, Any] = {
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Auto-seed scan on startup so the console and APIs are immediately populated."""
+    # Restore durable history (when INDRAMESH_HISTORY_DB is configured) BEFORE the auto-seed
+    # scan below, so the boot scan is prepended on top of the restored past rather than
+    # being buried under it. Disabled store -> no-op, old in-memory behaviour.
+    try:
+        restored = history_list(20)
+        if restored:
+            _STATE["history"] = restored
+            print(f"[IndraMesh] Restored {len(restored)} scan(s) from history store")
+    except Exception as exc:
+        print(f"[IndraMesh] History store restore notice: {exc}")
     try:
         abs_dummy = os.path.join(_REPO_ROOT, "dummy_target")
         if os.path.exists(abs_dummy):
@@ -293,6 +306,11 @@ def _compute_scan_bundle(target: str, enable_ml: bool, policy: str, data_class: 
     _STATE.setdefault("history", []).insert(0, history_entry)
     if len(_STATE["history"]) > 20:
         _STATE["history"] = _STATE["history"][:20]
+    try:
+        history_append(history_entry)
+    except Exception as exc:
+        # A broken store must never fail a scan; the in-memory copy still has the entry.
+        print(f"[IndraMesh] History store append notice: {exc}")
 
     return payload
 
@@ -534,7 +552,7 @@ def get_scan_history():
 
 @app.post("/api/history/load")
 def load_scan_history(req: LoadHistoryRequest):
-    """Load a past scan from history."""
+    """Load a past scan from history (memory first, then the durable store)."""
     for h in _STATE.get("history", []):
         if h["id"] == req.id:
             _STATE["last_scan"] = h["scan_info"]
@@ -544,6 +562,20 @@ def load_scan_history(req: LoadHistoryRequest):
             _STATE["last_cbom_validation"] = h["validation"]
             _STATE["last_target"] = h["target"]
             return h["bundle"]
+    try:
+        h = history_get(req.id)
+    except Exception as exc:
+        print(f"[IndraMesh] History store read notice: {exc}")
+        h = None
+    if h and all(k in h for k in ("scan_info", "records", "cbom_str",
+                                  "cbom_doc", "validation", "target", "bundle")):
+        _STATE["last_scan"] = h["scan_info"]
+        _STATE["last_records"] = h["records"]
+        _STATE["last_cbom"] = h["cbom_str"]
+        _STATE["last_cbom_doc"] = h["cbom_doc"]
+        _STATE["last_cbom_validation"] = h["validation"]
+        _STATE["last_target"] = h["target"]
+        return h["bundle"]
     raise HTTPException(status_code=404, detail="Scan history entry not found.")
 
 

@@ -1,4 +1,4 @@
-<div align="center">
+﻿<div align="center">
 
 <img src="assets/indramesh-logo.svg" alt="IndraMesh &mdash; Enterprise Cryptographic Discovery &amp; Analysis Mesh" width="100%" />
 
@@ -10,7 +10,7 @@
 [![Docker](https://img.shields.io/badge/Docker-Ready_%C2%B7_run_-p_8501-2496ED?style=for-the-badge&logo=docker&logoColor=white)](#installation)
 [![Web Console](https://img.shields.io/badge/Console-FastAPI_%C2%B7_Port_8501-00F5D4?style=for-the-badge&logo=fastapi&logoColor=040812)](#usage)
 
-# INDRAMESH (इन्द्रमेश)
+# INDRAMESH (à¤‡à¤¨à¥à¤¦à¥à¤°à¤®à¥‡à¤¶)
 ### Enterprise Cryptographic Discovery, Inventory (ACDI) &amp; Post-Quantum Migration Mesh
 **Smart India Hackathon 2026 &bull; Problem Statement SIH26164 &bull; National Technical Research Organisation (NTRO)**
 
@@ -28,7 +28,7 @@
 
 <!-- Security & Quality Badges -->
 [![Air Gapped](https://img.shields.io/badge/Air--Gapped-Zero_CDN_%C2%B7_Zero_Telemetry-10B981?style=for-the-badge&logo=checkmarx&logoColor=white)](#)
-[![Tests Passing](https://img.shields.io/badge/Pytest-961_Passing_%C2%B7_0_Regressions-10B981?style=for-the-badge&logo=pytest&logoColor=white)](#)
+[![Tests Passing](https://img.shields.io/badge/Pytest-985_Passing_%C2%B7_0_Regressions-10B981?style=for-the-badge&logo=pytest&logoColor=white)](#)
 [![Rules](https://img.shields.io/badge/Detection-145_Rules_%C2%B7_9_Languages-38BDF8?style=for-the-badge&logo=codewars&logoColor=040812)](#)
 [![Python](https://img.shields.io/badge/Python-3.11_%7C_3.12_%7C_3.13_%7C_3.14-3776AB?style=for-the-badge&logo=python&logoColor=white)](#)
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue?style=for-the-badge&logo=apache&logoColor=white)](#)
@@ -214,7 +214,7 @@ python -m pytest tests/ -v                              # 952 passing + 8 skippe
 ```
 
 `--format sarif` writes `indramesh.sarif`: relative paths, one rule per artefact, and a level
-that follows the Mosca tier (CRITICAL/HIGH → `error`, MEDIUM → `warning`, LOW → `note`). Upload
+that follows the Mosca tier (CRITICAL/HIGH â†’ `error`, MEDIUM â†’ `warning`, LOW â†’ `note`). Upload
 it with `github/codeql-action/upload-sarif` and every finding becomes a code-scanning alert with
 an annotation on the offending line. `.github/workflows/indramesh_scan.yml` does exactly this.
 
