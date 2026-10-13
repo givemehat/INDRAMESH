@@ -8,6 +8,7 @@
 Exit codes:  0 = no finding at or above --fail-on   1 = threshold exceeded   2 = scan error
 """
 import argparse
+import hashlib
 import json
 import os
 import sys
@@ -17,6 +18,7 @@ from engine.mosca import calculate_risk, DEFAULT_Z, POLICY_DEADLINES, Z_PRESETS
 from engine.recommender import get_pqc_recommendation
 from engine.cbom import generate_cbom
 from engine.sarif import generate_sarif
+from engine.attest import build_payload, sign_attestation
 
 SEVERITY_ORDER = ["LOW", "MEDIUM", "HIGH", "CRITICAL"]
 
@@ -25,9 +27,34 @@ def _z_presets_help():
     return ", ".join("{}={}".format(name, preset["years"]) for name, preset in Z_PRESETS.items())
 
 
+def _write_attestation(out_dir, subject, output_format, coverage, report_path, key):
+    """Write a signed attestation sidecar, or skip it visibly when no key is configured.
+
+    The key comes from the argument or the INDRAMESH_ATTEST_KEY environment variable --
+    deliberately NOT from a --attest-key flag, because a command-line argument is visible
+    in `ps` and shell history on shared CI runners. With no key the attestation is skipped
+    loudly rather than emitted unsigned: an unsigned "attestation" is a false assurance.
+    """
+    if not key:
+        key = os.environ.get("INDRAMESH_ATTEST_KEY") or None
+    if not key:
+        print("[ ] Attestation  -> skipped (set INDRAMESH_ATTEST_KEY to sign this report)")
+        return None
+    with open(report_path, "rb") as fh:
+        report_digest = hashlib.sha256(fh.read()).hexdigest()
+    payload = build_payload(subject=subject, output_format=output_format,
+                            coverage=coverage, report_digest=report_digest)
+    attestation = sign_attestation(payload, key)
+    att_path = os.path.join(out_dir, "indramesh_attestation.json")
+    with open(att_path, "w", encoding="utf-8") as fh:
+        json.dump(attestation, fh, indent=2)
+    print(f"[+] Attestation   -> {att_path}")
+    return att_path
+
+
 def run_headless_scan(target_dir, output_format="text", z_time=DEFAULT_Z,
                       policy="india_dst_nqm", enable_ml=True, out_dir=".",
-                      fail_on="CRITICAL", subject_name=None):
+                      fail_on="CRITICAL", subject_name=None, attest_key=None):
     print(f"[*] IndraMesh scan starting on: {target_dir}")
     print(f"    Z={z_time}y  policy={policy}"
           f"  policy deadline={POLICY_DEADLINES.get(policy, {}).get('year', 'n/a')}")
@@ -77,6 +104,9 @@ def run_headless_scan(target_dir, output_format="text", z_time=DEFAULT_Z,
         print(f"[+] CBOM          -> {cbom_path}")
         print(f"[+] Recommendations-> {recs_path}")
         print(f"[+] Coverage      -> {cov_path}")
+        _write_attestation(out_dir,
+                           subject_name or os.path.basename(target_dir.rstrip("/\\")),
+                           "cbom", coverage, cbom_path, attest_key)
     elif output_format == "sarif":
         # SARIF is the CI-facing format: one file, uploadable to GitHub code scanning, where
         # each finding becomes an annotation on the diff. Paths are made relative to the scan
@@ -87,6 +117,9 @@ def run_headless_scan(target_dir, output_format="text", z_time=DEFAULT_Z,
             fh.write(generate_sarif(findings, root=target_dir, coverage=coverage))
         print(f"[+] SARIF 2.1.0   -> {sarif_path}")
         print("    upload with:  github/codeql-action/upload-sarif (Security tab annotations)")
+        _write_attestation(out_dir,
+                           subject_name or os.path.basename(target_dir.rstrip("/\\")),
+                           "sarif", coverage, sarif_path, attest_key)
     else:
         for f in findings:
             r = f["risk"]

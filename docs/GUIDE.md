@@ -38,7 +38,7 @@
 11. [System architecture](#11-system-architecture)
 12. [The fourteen engines](#12-the-fourteen-engines)
 13. [The three ideas that make IndraMesh different](#13-the-three-ideas-that-make-indramesh-different)
-14. [Testing: 952 tests, and why count is not proof](#14-testing-952-tests-and-why-count-is-not-proof)
+14. [Testing: 961 tests, and why count is not proof](#14-testing-961-tests-and-why-count-is-not-proof)
 
 **Part 4 — Proving it works**
 15. [Mutation testing: breaking our own tests on purpose](#15-mutation-testing-breaking-our-own-tests-on-purpose)
@@ -643,10 +643,10 @@ Explained in §11.4. Most tools have one confidence number. We have two orthogon
 
 # Part 4 — Proving it works
 
-## 14. Testing: 952 tests, and why count is not proof
+## 14. Testing: 961 tests, and why count is not proof
 
 ```
-952 passed, 8 skipped, 0 failing
+961 passed, 8 skipped, 0 failing
 ```
 
 **A test count is not evidence of correctness.** Eight hundred trivial always-passing assertions
@@ -961,7 +961,7 @@ cli.py             headless + CBOM
 cli_advanced.py    verify-migration
 cli_certificates.py X.509
 schemas/           vendored CycloneDX 1.7 JSON Schema (offline validation)
-tests/             28 files, 952 tests
+tests/             29 files, 961 tests
 docs/GUIDE.md      <- this document
 docs/COMPARISON.md measured comparison with the sibling project
 research/competitive/ANALYSIS.md   17 repos analysed, take/adapt/reject each
@@ -979,6 +979,13 @@ python app.py
 # a headless scan with a schema-validated CBOM
 python cli.py <your-repo> --format cbom --out out
 python validate_cbom.py out\indramesh_report.json
+
+# optionally sign the report (writes out\indramesh_attestation.json beside it).
+# The key comes from the environment, never a CLI flag, because flags show up in `ps`.
+# Without it the attestation is skipped visibly -- IndraMesh never writes an unsigned one.
+$env:INDRAMESH_ATTEST_KEY = "<your-signing-key>"
+python cli.py <your-repo> --format cbom --out out
+# verify later, offline:  engine.attest.verify_attestation(envelope, key)
 
 # prove the test suite has teeth
 python mutation_test.py
