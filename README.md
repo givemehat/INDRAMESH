@@ -10,9 +10,12 @@
 [![Docker](https://img.shields.io/badge/Docker-Ready_%C2%B7_run_-p_8501-2496ED?style=for-the-badge&logo=docker&logoColor=white)](#installation)
 [![Web Console](https://img.shields.io/badge/Console-FastAPI_%C2%B7_Port_8501-00F5D4?style=for-the-badge&logo=fastapi&logoColor=040812)](#usage)
 
-# INDRAMESH (à¤‡à¤¨à¥à¤¦à¥à¤°à¤®à¥‡à¤¶)
+# INDRAMESH (इन्द्रमेश / इंद्रमेश)
 ### Enterprise Cryptographic Discovery, Inventory (ACDI) &amp; Post-Quantum Migration Mesh
 **Smart India Hackathon 2026 &bull; Problem Statement SIH26164 &bull; National Technical Research Organisation (NTRO)**
+
+> **इन्द्रमेश (IndraMesh) &mdash; Etymology & National Defense Vision:**  
+> Named after *Indra* (the ancient sovereign deity of the celestial firmament and master of the invincible *Vajra* lightning shield) and *Mesh* (an interconnected, zero-trust cryptographic defense network). In ancient Indian philosophical thought, *Indrajaal* (इन्द्रजाल) represents the cosmic, multifaceted network where every jewel reflects every other jewel. IndraMesh translates this vision into modern national defense &mdash; discovering and safeguarding every cryptographic node across India's Critical Information Infrastructure (CII) against Store-Now-Decrypt-Later (SNDL) quantum threats.
 
 <br/>
 
@@ -28,7 +31,7 @@
 
 <!-- Security & Quality Badges -->
 [![Air Gapped](https://img.shields.io/badge/Air--Gapped-Zero_CDN_%C2%B7_Zero_Telemetry-10B981?style=for-the-badge&logo=checkmarx&logoColor=white)](#)
-[![Tests Passing](https://img.shields.io/badge/Pytest-1027_Passing_%C2%B7_0_Regressions-10B981?style=for-the-badge&logo=pytest&logoColor=white)](#)
+[![Tests Passing](https://img.shields.io/badge/Pytest-1027_Passing_%C2%B7_1000%2B_Test_Cases-10B981?style=for-the-badge&logo=pytest&logoColor=white)](#)
 [![Rules](https://img.shields.io/badge/Detection-145_Rules_%C2%B7_9_Languages-38BDF8?style=for-the-badge&logo=codewars&logoColor=040812)](#)
 [![Python](https://img.shields.io/badge/Python-3.11_%7C_3.12_%7C_3.13_%7C_3.14-3776AB?style=for-the-badge&logo=python&logoColor=white)](#)
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue?style=for-the-badge&logo=apache&logoColor=white)](#)
@@ -38,6 +41,8 @@
 
 ### *You cannot migrate what you cannot see.*
 IndraMesh discovers an enterprise's cryptographic inventory, judges each artefact's exposure to a future quantum attacker using **Mosca's inequality**, and recommends a **standard-derived, cost-quantified** post-quantum replacement, emitting a **schema-validated CycloneDX v1.7 CBOM** and stating exactly what it could not see.
+
+> 🛡️ **Verified at Industrial Scale:** Tested across **1,000+ automated test cases** (1,027 passing pytest tests, 0 regressions), multi-round property-based fuzzing with Hypothesis, AST mutation kill testing, and frozen ground-truth corpora (CryptoAPI-Bench, Paramiko, and Go x/crypto).
 
 </div>
 
@@ -174,6 +179,51 @@ Planned ramp-up aligned with PSU and CERT-In empanelment cycles under India's Na
 
 ---
 
+## Core Cryptographic Innovations & Defensive Architecture
+
+### 1. Late-Bound Runtime Cryptographic Resolution (`runtime-resolved` Assurance Tier)
+In enterprise software, **the algorithm written in source code is rarely the algorithm that actually runs**:
+- A static AST pass sees `SSLContext.getInstance("TLS")`, unparameterized `Cipher.getInstance("AES")`, or provider-delegated `Cipher.getInstance(crypto, "SunJCE")`. What actually executes is determined at runtime outside the scanned source file:
+  1. `java.security` provider preference ordering (`security.provider.<n>`), `jdk.tls.disabledAlgorithms`, or `jdk.tls.client.protocols` (JDK-8076369).
+  2. System-wide OpenSSL configuration (`openssl.cnf` `CipherString`).
+  3. Dynamic wire negotiation (ClientHello / ServerHello mutual cipher suite intersection).
+  4. Cloud KMS key specifications bound at deployment time.
+- **Why False Certainty is Dangerous**: A CBOM recording "RSA" when the code negotiates whatever cipher the peer requests creates false assurance &mdash; security auditors tick off the entry and discontinue investigation.
+- **IndraMesh Solution**: Establishes a dedicated **`runtime-resolved`** assurance tier (positioned between `declared` and `used`). Components carry the **`im:resolver`** property naming the governing file or registry key (`java.security`, `openssl.cnf`, Windows SCHANNEL registry, or toolchain version), making runtime dependencies explicit rather than guessing.
+
+### 2. Zero-Slack Mosca Boundary Invariant ($X + Y = Z \implies 0.0\text{y}$ Margin)
+Michele Mosca's foundational inequality states:
+$$\text{If } X + Y > Z \implies \text{Data is exposed to quantum attack before migration completes.}$$
+Where:
+- $X$ = Data confidentiality lifetime (retention obligation).
+- $Y$ = Migration duration (rollout and regression testing time).
+- $Z$ = Years until a Cryptographically Relevant Quantum Computer (CRQC) exists.
+
+- **The Boundary Flaw**: When $X + Y = Z$, the safety margin is exactly $0.0\text{y}$. Standard tools naively render this boundary in calm green ("SAFE").
+- **Mathematical Reality**: $X + Y = Z$ is the critical boundary of the inequality &mdash; it means migration completes on the exact day quantum capability arrives. There is **zero cushion** for rollout delays, vendor blockers, or earlier quantum milestones.
+- **IndraMesh Solution**: A $0.0\text{y}$ margin is tagged with `margin_at_boundary=True` and elevated to the **`HIGH`** risk tier, alerting decision-makers to critical tipping points before they slip into exposure.
+
+### 3. Empirical Migration Velocity ($Y$) from Real Enterprise History
+Practitioners frequently debate $Z$ (when a CRQC will arrive &mdash; 2029, 2035, or 2040), which is an exogenous cryptanalytic speculation. In contrast, **$Y$ (migration duration) is an internal, empirically measurable engineering metric**:
+- **SHA-1 Phaseout**: Wang 2005 collision $\to$ Google 2017 SHAttered $\to$ final browser retirement took **7–10 years**.
+- **TLS 1.0/1.1 Sunset**: PCI-DSS mandate (2015) $\to$ IETF RFC 8996 deprecation (2021) took **5–6 years**.
+- **Core Banking / HSM Firmware Transitions**: Historically require **8–9 years**.
+- **IndraMesh Solution**: Through `migration_rate_from_history()`, IndraMesh derives $Y$ from an enterprise's actual completed migration logs using the median elapsed years. The risk report stops reflecting speculative dev-cycle assumptions and starts measuring the organization's real agility.
+
+### 4. Deployed OpenSSH Server Negotiation Configuration (`sshd_config`)
+OpenSSH servers declare wire cryptographic policies using unquoted directive parameters:
+```text
+Ciphers aes256-gcm@openssh.com,chacha20-poly1305@openssh.com
+HostKeyAlgorithms ssh-ed25519-cert-v01@openssh.com,rsa-sha2-512
+KexAlgorithms mlkem768x25519-sha256@openssh.com,sntrup761x25519-sha512@openssh.com
+```
+IndraMesh detects all OpenSSH wire identifiers in `sshd_config` and accurately classifies them under `configured` assurance (stating what policy permits, rather than overclaiming what an active connection negotiated).
+
+### 5. Multi-Layer Container Image Scanning
+IndraMesh natively scans inside container archives (`.tar`, `.tar.gz`, `.tgz`), extracting nested filesystem layers to identify embedded cryptographic binaries, libraries, scripts, certificates, and environment manifests without requiring Docker daemon execution.
+
+---
+
 ## Installation
 
 ```bash
@@ -214,7 +264,7 @@ python -m pytest tests/ -v                              # 1027 passing + 8 skipp
 ```
 
 `--format sarif` writes `indramesh.sarif`: relative paths, one rule per artefact, and a level
-that follows the Mosca tier (CRITICAL/HIGH â†’ `error`, MEDIUM â†’ `warning`, LOW â†’ `note`). Upload
+that follows the Mosca tier (CRITICAL/HIGH → `error`, MEDIUM → `warning`, LOW → `note`). Upload
 it with `github/codeql-action/upload-sarif` and every finding becomes a code-scanning alert with
 an annotation on the offending line. `.github/workflows/indramesh_scan.yml` does exactly this.
 
@@ -340,9 +390,21 @@ schemas/               vendored CycloneDX 1.7 JSON Schema
 
 ## Testing
 
+### 1,000+ Comprehensive Test Suite & Verification Matrix
+
+IndraMesh is rigorously tested across more than **1,000+ automated test cases** (1,027 passing pytest tests, 0 regressions):
+
+| Verification Pillar | Scope & Volume | Target Guarantees |
+|---|---|---|
+| **Automated Pytest Suite** | **1,027 Passing Tests** (0 Regressions) | End-to-end scanner, Mosca theorem, FIPS 203/204/205 recommender, CycloneDX 1.7 CBOM serializer, multi-sensor array, and web APIs. |
+| **Hypothesis Property Fuzzing** | Hundreds of synthetic executions | Invariant verification: Mosca inequality boundaries, decimal precision preservation, and RFC 5280 KeyUsage resolution. |
+| **AST Mutation Testing** | Mutation kill verification | Validates that every scanner pattern and risk rating assertion actively kills adversarial logic mutations (`mutation_test.py`). |
+| **Ground-Truth Benchmarks** | 203 Java + 322 Go + SSH files | CryptoAPI-Bench (0.994 P, 0.786 R), Paramiko SSH (0.9101 P, 0.7167 R), and x/crypto (0.983 P, 0.985 R). |
+| **Air-Gapped Compliance** | Zero-CDN contract enforcement | Verifies 0 external network dependencies, 0 remote fonts, and 0 telemetry requests (`test_frontend_assets.py`). |
+
 ```bash
-python -m pytest tests/ -v
-python validate_gui.py
+python -m pytest tests/ -v                              # 1027 passing + 8 skipped; see tests/test_readme_contract.py
+python validate_gui.py                                  # 10-step full-stack GUI & API contract verification
 ```
 
 Python **3.11+** is required: `engine/dependencies.py` reads `pyproject.toml` manifests with the
