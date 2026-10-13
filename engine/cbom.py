@@ -695,109 +695,146 @@ def generate_cbom(findings, enriched=False, subject_name="IndraMesh-Scanned-Arte
     dependencies = []
     uses_targets = []
 
+    def _algo_key_name(f):
+        name = f.get("name")
+        if not isinstance(name, str) or not name:
+            return "unknown"
+        return name
+
+    def _resolve_pa(f):
+        try:
+            purpose = resolve_purpose(f)[0]
+        except Exception:  # noqa: BLE001 - never fail a report
+            purpose = PURPOSE_UNRESOLVED
+        try:
+            assurance = resolve_assurance(f)[0]
+        except Exception:  # noqa: BLE001 - never fail a report
+            assurance = "capability"
+        return str(purpose or PURPOSE_UNRESOLVED), str(assurance or "capability")
+
+    groups = {}
+    group_order = []
+
+    def _group(key, make):
+        if key not in groups:
+            groups[key] = make()
+            group_order.append(key)
+        return groups[key]
+
     for idx, f in enumerate(findings):
-        ref = f"crypto-asset-{idx}"
         primitive = _canonical_primitive(f.get("primitive"))
         is_library = f.get("type") == "library"
+        is_protocol = f.get("primitive") == "protocol" or f.get("type") == "protocol"
+        is_material = (not is_library and not is_protocol
+                       and _related_material_type(f) is not None)
         risk = f.get("risk") if enriched else None
         recommendation = f.get("recommendation") if enriched else None
 
+        occ = None
+        if f.get("file") or f.get("line"):
+            occ = {"bom-ref": f"occ-{idx}",
+                   "location": str(f.get("file", "") or "")}
+            try:
+                if f.get("line") not in (None, ""):
+                    occ["line"] = int(f.get("line"))
+            except (TypeError, ValueError):
+                pass
+
         if is_library:
-            # A library is a software component that *implements* algorithms, not an algorithm
-            # itself. Emitting it as cryptographic-asset with a fake primitive misrepresents it.
-            components.append({
+            lkey = ("library", str(f.get("name", "unknown") or "unknown"))
+            lname = str(f.get("name", "unknown") or "unknown")
+            lprops = _ecd_properties(f, risk, recommendation)
+            g = _group(lkey, lambda _n=lname, _p=lprops: {"comp": {
                 "type": "library",
-                "bom-ref": ref,
-                "name": f.get("name", "unknown"),
+                "bom-ref": f"crypto-asset-{len(group_order)}",
+                "name": _n,
                 "scope": "required",
-                "properties": _ecd_properties(f, risk, recommendation),
-            })
+                "properties": _p,
+            }, "has_file": False})
+            if occ:
+                g["comp"].setdefault("evidence", {}).setdefault(
+                    "occurrences", []).append(occ)
+                g["has_file"] = True
             continue
 
-        # A protocol (TLS, a configured cipher suite) is modelled by CycloneDX as
-        # assetType "protocol" with protocolProperties -- `protocol` is NOT a valid primitive.
-        if f.get("primitive") == "protocol" or f.get("type") == "protocol":
+        if is_protocol:
             proto_type = "tls" if "TLS" in str(f.get("name", "")).upper() else "other"
             if proto_type not in PROTOCOL_TYPE_ENUM:
                 proto_type = "other"
-            protocol = {"type": proto_type}
-            if f.get("match"):
-                protocol["version"] = str(f["match"])[:120]
-            components.append({
-                "type": "cryptographic-asset",
-                "bom-ref": ref,
-                "name": f.get("name", "unknown"),
-                "cryptoProperties": {
-                    "assetType": "protocol",
-                    "protocolProperties": protocol,
-                },
-                "properties": _ecd_properties(f, risk, recommendation),
-            })
-            if f.get("line"):
-                components[-1]["evidence"] = {
-                    "occurrences": [{"bom-ref": f"occ-{idx}",
-                                     "location": f.get("file", ""), "line": f.get("line")}]
-                }
+            pver = str(f.get("match", "") or "")[:120]
+            pkey = ("protocol", str(f.get("name", "unknown") or "unknown"),
+                    proto_type, pver)
+            pname = str(f.get("name", "unknown") or "unknown")
+            pprops = _ecd_properties(f, risk, recommendation)
+            pmatch = str(f["match"])[:120] if f.get("match") else None
+            def _mk_proto(_pt=proto_type, _n=pname, _p=pprops, _m=pmatch):
+                prot = {"type": _pt}
+                if _m:
+                    prot["version"] = _m
+                return {"comp": {
+                    "type": "cryptographic-asset",
+                    "bom-ref": f"crypto-asset-{len(group_order)}",
+                    "name": _n,
+                    "cryptoProperties": {"assetType": "protocol",
+                                         "protocolProperties": prot},
+                    "properties": _p,
+                }, "has_file": False}
+            g = _group(pkey, _mk_proto)
+            if occ:
+                g["comp"].setdefault("evidence", {}).setdefault(
+                    "occurrences", []).append(occ)
+                g["has_file"] = True
             continue
 
-        algo = _algorithm_properties(f, primitive)
-        # A PRIVATE KEY is not an algorithm, and `related-crypto-material` is the asset type
-        # CycloneDX 1.7 defines for exactly this: "other cryptographic assets related to
-        # algorithms, certificates, and protocols such as keys and tokens". Its properties object
-        # has NO `primitive` field, so the whole question of which enum member describes a PEM
-        # header simply does not arise -- the previous shape forced a hardcoded "key" primitive
-        # that canonicalised to `unknown`.
-        if _related_material_type(f) is not None:
+        if is_material:
             material = _related_material_type(f)
-            components.append({
-                "type": "cryptographic-asset",
-                "bom-ref": ref,
-                "name": f.get("name") or "unknown",
-                "cryptoProperties": {
-                    "assetType": "related-crypto-material",
-                    "relatedCryptoMaterialProperties": {
-                        "type": material,
-                        "state": "pre-activation",
-                    },
-                },
-                "properties": _ecd_properties(f, risk, recommendation),
-            })
-            if f.get("line"):
-                components[-1]["evidence"] = {
-                    "occurrences": [{"bom-ref": f"occ-{idx}",
-                                     "location": f.get("file", ""), "line": f.get("line")}]
-                }
+            mkey = ("related", str(f.get("name") or "unknown"), str(material))
+            mname = str(f.get("name") or "unknown")
+            mprops = _ecd_properties(f, risk, recommendation)
+            def _mk_mat(_t=material, _n=mname, _p=mprops):
+                return {"comp": {
+                    "type": "cryptographic-asset",
+                    "bom-ref": f"crypto-asset-{len(group_order)}",
+                    "name": _n,
+                    "cryptoProperties": {
+                        "assetType": "related-crypto-material",
+                        "relatedCryptoMaterialProperties": {
+                            "type": _t, "state": "pre-activation"}},
+                    "properties": _p,
+                }, "has_file": False}
+            g = _group(mkey, _mk_mat)
+            if occ:
+                g["comp"].setdefault("evidence", {}).setdefault(
+                    "occurrences", []).append(occ)
+                g["has_file"] = True
             continue
-        # `dict.get(k, default)` returns None when the key EXISTS with a None value, so a
-        # finding from an external source carrying `"name": null` produced `"name": null` and an
-        # invalid document. Falling back only on falsy covers both the missing key and the null.
-        # The value is also coerced to a hashable string: a JSON inventory can legitimately carry
-        # a list or dict for `name`, and an unhashable key raises TypeError deep inside a dict
-        # lookup -- taking the whole report down over one malformed field.
-        algo_name = f.get("name")
-        if not isinstance(algo_name, str) or not algo_name:
-            algo_name = "unknown"
-        component = {
-            "type": "cryptographic-asset",
-            "bom-ref": ref,
-            "name": algo_name,
-            "cryptoProperties": {"assetType": "algorithm", "algorithmProperties": algo},
-            "properties": _ecd_properties(f, risk, recommendation),
-        }
-        oid = OID_BY_NAME.get(algo_name)
-        if oid:
-            component["cryptoProperties"]["oid"] = oid
-        if f.get("line"):
-            component["evidence"] = {
-                "occurrences": [{
-                    "bom-ref": f"occ-{idx}",
-                    "location": f.get("file", ""),
-                    "line": f.get("line"),
-                }]
-            }
-        components.append(component)
-        if not f.get("file"):
-            uses_targets.append(ref)
+        algo_name = _algo_key_name(f)
+        purpose, assurance = _resolve_pa(f)
+        akey = ("algorithm", algo_name, primitive, purpose, assurance)
+        a_algo = _algorithm_properties(f, primitive)
+        a_props = _ecd_properties(f, risk, recommendation)
+        a_oid = OID_BY_NAME.get(algo_name)
+        def _mk_algo(_a=a_algo, _p=a_props, _o=a_oid, _n=algo_name):
+            comp = {
+                "type": "cryptographic-asset",
+                "bom-ref": f"crypto-asset-{len(group_order)}",
+                "name": _n,
+                "cryptoProperties": {"assetType": "algorithm",
+                                     "algorithmProperties": _a},
+                "properties": _p}
+            if _o:
+                comp["cryptoProperties"]["oid"] = _o
+            return {"comp": comp, "has_file": False}
+        g = _group(akey, _mk_algo)
+        if occ:
+            g["comp"].setdefault("evidence", {}).setdefault(
+                "occurrences", []).append(occ)
+            g["has_file"] = True
+
+    for _k in group_order:
+        components.append(groups[_k]["comp"])
+        if not groups[_k]["has_file"]:
+            uses_targets.append(groups[_k]["comp"]["bom-ref"])
 
     if uses_targets:
         # NO `dependencyType` field here. The vendored CycloneDX 1.7 `definitions.dependency`
