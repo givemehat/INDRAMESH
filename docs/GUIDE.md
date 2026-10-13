@@ -975,6 +975,10 @@ mutation_test.py   19 mutants, 100% killed
 ```powershell
 # the console (FastAPI + vanilla-JS; binds 127.0.0.1 unless you ask for more)
 python app.py
+# optional: require a token on every /api/* route except the /api/status healthcheck.
+# The console page itself cannot hold a secret, so gate deployments at the API or a proxy.
+$env:INDRAMESH_TOKEN = "<your-api-token>"
+python app.py
 
 # a headless scan with a schema-validated CBOM
 python cli.py <your-repo> --format cbom --out out

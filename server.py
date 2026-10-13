@@ -15,6 +15,7 @@ Interfaces directly with `engine/` modules:
 """
 import asyncio
 import datetime
+import hmac
 import html
 import json
 import os
@@ -24,7 +25,7 @@ from typing import Any, Dict, List, Optional
 
 from fastapi import FastAPI, HTTPException, Response, WebSocket
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
@@ -130,6 +131,53 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# ------------------------------------------------------------------------------------------
+# Optional API token (enterprise deployments).
+#
+# When INDRAMESH_TOKEN is set, every /api/* route except /api/status requires the token,
+# supplied as X-IndraMesh-Token, an Authorization: Bearer header, or a ?token= query
+# parameter (the query form exists for browser download links, which cannot set headers).
+# /api/status is exempt because the Docker HEALTHCHECK calls it unauthenticated, and it
+# exposes only liveness plus counts -- not inventory.
+#
+# The console HTML itself stays unauthenticated on purpose: a page cannot hold a secret,
+# so a token check on `/` would be theatre. The sensitive surface is the API, and it is
+# what this guard covers. app.py additionally refuses to bind off-loopback without an
+# explicit flag, so exposure is always a second, deliberate decision.
+#
+# The token is read per request (not at import) so tests can set and clear the variable.
+# Comparison is constant-time.
+# ------------------------------------------------------------------------------------------
+AUTH_EXEMPT_PATHS = {"/api/status"}
+
+
+def _enforced_token():
+    return os.environ.get("INDRAMESH_TOKEN") or None
+
+
+@app.middleware("http")
+async def indramesh_token_guard(request, call_next):
+    token = _enforced_token()
+    path = request.url.path
+    if not token or not path.startswith("/api/") or path in AUTH_EXEMPT_PATHS:
+        return await call_next(request)
+
+    supplied = request.headers.get("x-indramesh-token")
+    if not supplied:
+        auth = request.headers.get("authorization") or ""
+        if auth.lower().startswith("bearer "):
+            supplied = auth[7:]
+    if not supplied:
+        supplied = request.query_params.get("token")
+
+    if not hmac.compare_digest(supplied or "", token):
+        return JSONResponse(
+            {"detail": "a valid IndraMesh token is required "
+                       "(X-IndraMesh-Token header, Bearer, or ?token=)"},
+            status_code=401,
+        )
+    return await call_next(request)
 
 
 class ScanRequest(BaseModel):

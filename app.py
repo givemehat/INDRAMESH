@@ -76,6 +76,11 @@ def run_server(host: str = "127.0.0.1", port: int = 8501, reload: bool = False,
     print("IndraMesh -- Enterprise Cryptographic Discovery & Analysis Tool")
     print(f"  Console:       http://127.0.0.1:{port}")
     print(f"  API Docs:      http://127.0.0.1:{port}/docs")
+    if os.environ.get("INDRAMESH_TOKEN"):
+        print("  API auth:      INDRAMESH_TOKEN is set -- /api/* requires the token "
+              "(except /api/status)")
+    else:
+        print("  API auth:      none (set INDRAMESH_TOKEN to require a token on /api/*)")
     if off_loopback:
         print(f"  Bound to       {host} -- NO authentication; anyone who can reach this port can "
               f"read any path the process can read.")
