@@ -19,6 +19,7 @@ from engine.recommender import get_pqc_recommendation
 from engine.cbom import generate_cbom
 from engine.sarif import generate_sarif
 from engine.attest import build_payload, sign_attestation
+from engine.coverage_reconcile import reconcile as reconcile_coverage
 
 SEVERITY_ORDER = ["LOW", "MEDIUM", "HIGH", "CRITICAL"]
 
@@ -155,11 +156,23 @@ def main(argv=None):
     parser.add_argument("--no-ml", action="store_true",
                         help="Disable the PyTorch transformer (regex-only mode; no torch needed)")
     parser.add_argument("--subject", default=None, help="Subject name recorded in the CBOM metadata")
+    parser.add_argument("--coverage", action="store_true",
+                        help="Run coverage reconciliation and write out/coverage_reconciliation.json")
     args = parser.parse_args(argv)
 
     if not os.path.exists(args.target):
         print(f"[!] Target not found: {args.target}")
         return 2
+    if args.coverage:
+        report = reconcile_coverage()
+        cov_path = os.path.join(args.out, "coverage_reconciliation.json")
+        os.makedirs(args.out, exist_ok=True)
+        with open(cov_path, "w", encoding="utf-8") as fh:
+            json.dump(report, fh, indent=2)
+        print(f"[+] Coverage      -> {cov_path}")
+        print(f"    expected={report['expected']} scanned={report['scanned']}"
+              f" inaccessible={report['inaccessible']} unknown={report['unknown']}")
+        return 0
     return run_headless_scan(args.target, args.format, args.z, args.policy,
                              not args.no_ml, args.out, args.fail_on, args.subject)
 

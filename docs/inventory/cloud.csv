@@ -1,0 +1,4 @@
+id,name,kind,location,owned
+CLOUD-01,crypto-inventory-1,registry,PROD-ALL-01,0
+CLOUD-02,crypto-inventory-2,registry,PROD-ALL-02,0
+CLOUD-03,crypto-inventory-3,registry,PROD-ALL-03,0
