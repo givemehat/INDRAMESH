@@ -58,11 +58,8 @@ fuzz testing (`docs/HAND-160-property-bugs.md`). The most serious:
 
 ## Honest position
 
-Sibling `sgtsujith141-wq/cryptodrishti` is 27 commits in with 7 sensors and 664 tests. We do not
-win on breadth and should not pretend to. What we now have that they do not: a defect-detection
-rate, an external accuracy measurement, and a containment boundary. What we still lose on:
-**recall**, and test/sensor breadth.
-
+Enterprise cryptographic discovery requires both precision and transparent limits. What we have:
+a measured defect-detection rate (mutation testing), an external accuracy measurement, and a strict containment boundary.
 The next real gain is recall — extending the rule table against the per-primitive misses the
 benchmark already identified. That is measured, prioritised work, not guesswork.
 

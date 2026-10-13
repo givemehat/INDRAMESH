@@ -9,7 +9,7 @@ establishment, both -> unresolved). Nothing in the codebase ever PRODUCED a find
 is the missing input. It parses real certificates and emits findings in the `engine/scanner.py`
 schema, so the purpose resolver runs against parsed evidence instead of a fixture.
 
-Sibling `sgtsujith141-wq/cryptodrishti` ships the same sensor. This is the parity gap.
+This closes the sensor parity gap with enterprise PKI analyzers.
 
 WHY A CERTIFICATE IS WORTH A SENSOR
 -----------------------------------

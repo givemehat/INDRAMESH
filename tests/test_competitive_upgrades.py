@@ -1,11 +1,11 @@
-"""Regression tests for the competitive-analysis upgrades.
+"""Regression tests for the core architecture upgrades.
 
-Three groups, each traceable to research/competitive/ANALYSIS.md:
+Three groups:
 
-  * DECOYS  (rank 1) -- adversarial fixtures that must NOT produce findings. Precision is only
+  * DECOYS  -- adversarial fixtures that must NOT produce findings. Precision is only
     meaningful if it is measured against material designed to trigger a false positive.
-  * PURPOSE (rank 3, item C2) -- a target is refused when the evidence does not settle the purpose.
-  * ASSURANCE (rank 2, item C1) -- what the evidence proves, kept separate from confidence.
+  * PURPOSE -- a target is refused when the evidence does not settle the purpose.
+  * ASSURANCE -- what the evidence proves, kept separate from confidence.
 
 Run: python -m pytest tests/test_competitive_upgrades.py -v
 """

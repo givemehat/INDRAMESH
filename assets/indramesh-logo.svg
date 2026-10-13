@@ -325,8 +325,10 @@
       <text x="0" y="0" fill="#00f5d4" class="brand-title" font-size="58" filter="url(#glowFilter)" opacity="0.35">INDRAMESH</text>
       <!-- Crisp Foreground Title -->
       <text x="0" y="0" fill="url(#textNeon)" class="brand-title" font-size="58">INDRAMESH</text>
+      <!-- Devnagari Script Name -->
+      <text x="395" y="-6" fill="#ffd166" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans Devanagari', sans-serif" font-size="24" font-weight="700" letter-spacing="0.05em">इन्द्रमेश</text>
       <!-- Version & Security Class Super-Badge -->
-      <g transform="translate(432, -40)">
+      <g transform="translate(520, -40)">
         <rect width="78" height="22" rx="11" fill="#00f5d4" fill-opacity="0.12" stroke="#00f5d4" stroke-opacity="0.5" stroke-width="1.2"/>
         <text x="14" y="15" fill="#00f5d4" class="mono-badge" font-size="11">v2.4 PQC</text>
       </g>
@@ -391,23 +393,23 @@
         <text x="30" y="19" fill="#94a3b8" class="mono-badge">Zero CDN · Air-Gapped</text>
       </g>
 
-      <!-- Pill 6: 131+ Cryptographic Rules -->
+      <!-- Pill 6: 145+ Cryptographic Rules -->
       <g transform="translate(186, 0)">
-        <rect width="188" height="30" rx="7" fill="#0b1728" stroke="#38bdf8" stroke-width="1" stroke-opacity="0.4"/>
+        <rect width="194" height="30" rx="7" fill="#0b1728" stroke="#38bdf8" stroke-width="1" stroke-opacity="0.4"/>
         <circle cx="16" cy="15" r="3.5" fill="#38bdf8"/>
-        <text x="28" y="19" fill="#94a3b8" class="mono-badge">131 Detection Rules (9 Lang)</text>
+        <text x="28" y="19" fill="#94a3b8" class="mono-badge">145 Detection Rules (9 Lang)</text>
       </g>
 
-      <!-- Pill 7: 891+ Tests Verified -->
-      <g transform="translate(384, 0)">
-        <rect width="180" height="30" rx="7" fill="#0b1728" stroke="#10b981" stroke-width="1" stroke-opacity="0.4"/>
+      <!-- Pill 7: 1000+ Tests Verified -->
+      <g transform="translate(390, 0)">
+        <rect width="198" height="30" rx="7" fill="#0b1728" stroke="#10b981" stroke-width="1" stroke-opacity="0.4"/>
         <path d="M 12 15 L 15 18 L 20 12" fill="none" stroke="#10b981" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-        <text x="28" y="19" fill="#94a3b8" class="mono-badge">891+ Tests · 0 Regression</text>
+        <text x="28" y="19" fill="#94a3b8" class="mono-badge">1000+ Tests · 1027 Passing</text>
       </g>
 
       <!-- Pill 8: HNDL Threat Defense -->
-      <g transform="translate(574, 0)">
-        <rect width="206" height="30" rx="7" fill="#200d14" stroke="#f43f5e" stroke-width="1" stroke-opacity="0.5"/>
+      <g transform="translate(598, 0)">
+        <rect width="182" height="30" rx="7" fill="#200d14" stroke="#f43f5e" stroke-width="1" stroke-opacity="0.5"/>
         <circle cx="16" cy="15" r="3.5" fill="#fb7185"/>
         <text x="28" y="19" fill="#fda4af" class="mono-badge">HNDL Attack Surface Mitigation</text>
       </g>

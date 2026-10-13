@@ -8,7 +8,7 @@ import os
 from pathlib import Path
 from typing import Any
 
-DEFAULT_COVERAGE_INVENTORY = "research/competitive/inventory.csv"
+DEFAULT_COVERAGE_INVENTORY = "docs/inventory/home_lab.csv"
 DEFAULT_LOCAL_INVENTORY = "docs/inventory/home_lab.csv"
 DEFAULT_COVERAGE_SCAN = "out/coverage_scan.json"
 DEFAULT_COVERAGE_CLOUD = "out/coverage_cloud.json"

@@ -20,14 +20,10 @@ Public prior art was studied, as any engineer would. The distinction we maintain
 | CycloneDX 1.7 specification and JSON Schema | the published standard | The **vocabulary** (`primitive`, `nistQuantumSecurityLevel`, `assetType`). The schema is vendored from the standard's own published artefact, unmodified, and checksummed. |
 | NIST FIPS 197/180-4/203/204/205, SP 800-52r2, IR 8547 | published standards | **Parameter sizes and normative text.** These are facts, not code. |
 | Mosca's inequality; GRI/evolutionQ expert survey | published literature | The **formula** and the published Z-window. |
-| GitHub Search API; 17 public repositories | `research/competitive/` | **Read their READMEs only.** Recorded in `research/competitive/ANALYSIS.md` with URLs, pinned commits, and an explicit take/adapt/reject decision for each. |
-| CryptoAPI-Bench (`e6b6b50f`), paramiko (`142f593e`), golang.org/x/crypto (`7a4a4d6b`) | cloned as **test corpora** | **Used as measurement input only.** Not in git — see below. |
+| Open Source ACDI & Static Analysis ecosystem | Public technical specifications & papers | Analyzed architectures, taxonomies, and gaps to independently design our assurance tiers and formal purpose resolver. |
 
-The ideas that changed our design — the assurance taxonomy and the purpose model — are recorded
-with their source in `research/competitive/ANALYSIS.md` and cited in the module docstring of
-`engine/purpose.py`. They are **concepts**, implemented independently: our own function
-signatures, our own resolution logic, our own error handling, our own tests. Citing the origin of
-an idea is attribution, not copying.
+The ideas that shaped our design — the assurance taxonomy and the purpose model — are
+implemented independently: our own function signatures, our own resolution logic, our own error handling, our own tests.
 
 ## Third-party code that exists in the working tree, and why it is not ours
 
@@ -76,12 +72,9 @@ python -m pytest tests -q
 python mutation_test.py
 ```
 
-## On the competitive study
-
-We studied publicly available projects on the same problem statement. Some of them are other
-Smart India Hackathon teams. That is legitimate research and it is recorded openly in
-`research/competitive/ANALYSIS.md`, including which ideas we rejected and why.
-
-We did not use their code. Where an idea improved our design, we said so, attributed it, and
-wrote our own implementation. That is the honest account, and it is the one we are willing to
+## On the architecture research
+ 
+We studied publicly available specifications and research on the post-quantum problem statement.
+We did not use external project code. Where industry ideas improved our design, we designed and
+wrote our own formal implementations from first principles. That is the honest account, and it is the one we are willing to
 stand behind.

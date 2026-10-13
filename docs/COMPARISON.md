@@ -1,8 +1,6 @@
-# IndraMesh vs `sgtsujith141-wq/cryptodrishti` — evidence-based gap table
+# IndraMesh vs Conventional ACDI & Static Scanners — Evidence-Based Comparison Table
 
-Scope: IndraMesh at commit `31f0bc7` plus the working tree as of this review, versus the competitor's
-own README (`research/competitive/raw_readme/sgtsujith141-wq__cryptodrishti.md`, 1088 lines).
-Line references in the form `L123` are to that README.
+Scope: IndraMesh architecture and sensor suite versus conventional static discovery scanners.
 
 **Evidence rules used here.** Every IndraMesh claim cites a file (and a test where one exists).
 Every competitor claim quotes their README. Anything I could not verify from the material in

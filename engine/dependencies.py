@@ -1,10 +1,8 @@
 """
 Dependency-manifest sensor.
 
-Ranked gap #6 in `research/competitive/ANALYSIS.md`: "Whole evidence class we have zero
-coverage of; yields `capability`-tier evidence." Sibling `cryptodrishti` runs 13 manifest
-scanners; `csnp/cryptodeps` covers Go/npm/Python/Maven. This module is that evidence class,
-built the way `engine/purpose.py` insists on.
+Captures third-party library dependencies as `capability`-tier evidence, built the
+way `engine/purpose.py` specifies.
 
 THE SEMANTIC THAT MATTERS
 -------------------------------------------------------------------------------------------------

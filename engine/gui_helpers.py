@@ -75,7 +75,7 @@ POLICY_NOTES = {
         "requirement": "DRAFT. Quantum-vulnerable public-key algorithms at >= 128-bit strength "
                        "are disallowed after 2035. The 112-bit tier is deprecated after 2030 "
                        "and remains usable during migration, not disallowed.",
-        "source": "NIST IR 8547 ipd transition tables; research/sources/04-nist-ir-8547-transition.md",
+        "source": "NIST IR 8547 ipd transition tables",
     },
     "cnsa_2_0": {
         "requirement": "Exclusive use of ML-KEM-1024 for key establishment and ML-DSA-87 for "

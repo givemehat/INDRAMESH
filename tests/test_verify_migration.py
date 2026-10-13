@@ -1,11 +1,11 @@
 """
 Tests for the post-migration verifier (`engine/verify_migration.py`), which closes Phase-1
-gap G13 and ranked gap #7 in `research/competitive/ANALYSIS.md`.
+gap G13.
 
 The test that matters most here is `test_a_kyber_draft_marker_is_never_reported_as_ml_kem`.
 Phase-1 gap H6 and docs/CODE_REVIEW.md H6 both record a previous revision calling a
-pre-standardisation name a post-standardisation one. `jimbo111/open-quantum-secure` handles
-this by probing "pure ML-KEM + deprecated Kyber" as SEPARATE codepoints and badging maturity
+pre-standardisation name a post-standardisation one. PQC standards handle
+this by treating "pure ML-KEM + deprecated Kyber" as SEPARATE codepoints and badging maturity
 `final` vs `draft`; we do the same statically. If that distinction collapses, this module will
 tell a team their migration landed when it did not.
 

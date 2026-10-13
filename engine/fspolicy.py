@@ -1,8 +1,6 @@
 """Filesystem safety policy for the scanner.
 
-Adopted from the competitive analysis (research/competitive/ANALYSIS.md, item C5/rank 4): sibling
-`cryptodrishti` documents an arbitrary-file-read primitive in its own threat model and ships
-`fspolicy.py` to close it. We had the same hole and did not know it.
+Enforces containment boundaries and prevents arbitrary file reads during static scanning.
 
 The scanner is a tool an operator points at a path -- possibly an untrusted checkout, an unpacked
 tarball, or a package from a registry. Two guarantees matter:

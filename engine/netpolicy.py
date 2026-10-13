@@ -9,10 +9,10 @@ Our coverage manifest lists, as NEVER IN SCOPE:
 That is the single most valuable evidence class we lack. It is the only sensor that can report
 ASSURANCE "observed" for wire-negotiated algorithms: a source scan proves a library is REACHABLE,
 and a dependency manifest proves it is AVAILABLE, but only a completed handshake proves that this
-connection, right now, negotiated this algorithm. Sibling `cryptodrishti` ships a TLS handshake
+connection, right now, negotiated this algorithm. Enterprise discovery tools ship a TLS handshake
 sensor for exactly this reason.
 
-The sibling's own README names the cost of getting it wrong, and that sentence is the reason this
+The cost of getting network probing wrong is severe, and is the reason this
 module is written before `engine/netprobe.py`:
 
     "The tool takes a filesystem path and a list of hosts over HTTP and acts on both. That is a

@@ -1,8 +1,6 @@
 """Mutation testing: does the test suite actually DETECT defects, or does it just pass?
 
-This exists because of a direct criticism in research/competitive/ANALYSIS.md. The competing
-project has 664 tests, and their own README concedes their accuracy corpus is synthetic and
-self-authored. A large test count is not evidence of correctness. The only evidence is whether
+A large test count is not alone evidence of correctness. The only evidence is whether
 introducing a deliberate defect makes the suite go red.
 
 A "mutant" is the real engine code with one small, semantically meaningful change -- a boundary

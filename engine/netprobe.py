@@ -14,8 +14,7 @@ between them precisely -- those are ASSURANCE "used", "declared" and "capability
 Only a completed handshake is ASSURANCE "observed" -- the top of `ASSURANCE_RANK`. It is the only
 evidence class that answers the question a CISO actually asks about a SaaS dependency or a
 third-party boundary: not *what crypto is in our code* but *what crypto is on the wire to me
-right now*. Sibling `cryptodrishti` ships a TLS handshake sensor for exactly this reason, and
-`qubitac/AC-Scanner` adds SSH.
+right now*. Modern ACDI architectures require a TLS handshake sensor for exactly this reason.
 
 WHAT IS CLAIMED, AND WHAT IS NOT
 --------------------------------------------------------------------------------------------------

@@ -66,27 +66,33 @@
     }
     @keyframes msgReveal1 {
       0% { opacity: 0; transform: translateY(4px); }
-      4%, 100% { opacity: 1; transform: translateY(0); }
+      4%, 90% { opacity: 1; transform: translateY(0); }
+      96%, 100% { opacity: 0; transform: translateY(-2px); }
     }
     @keyframes msgReveal2 {
       0%, 12% { opacity: 0; transform: translateY(4px); }
-      16%, 100% { opacity: 1; transform: translateY(0); }
+      16%, 90% { opacity: 1; transform: translateY(0); }
+      96%, 100% { opacity: 0; transform: translateY(-2px); }
     }
     @keyframes msgReveal3 {
       0%, 28% { opacity: 0; transform: translateY(4px); }
-      32%, 100% { opacity: 1; transform: translateY(0); }
+      32%, 90% { opacity: 1; transform: translateY(0); }
+      96%, 100% { opacity: 0; transform: translateY(-2px); }
     }
     @keyframes msgReveal4 {
       0%, 44% { opacity: 0; transform: translateY(4px); }
-      48%, 100% { opacity: 1; transform: translateY(0); }
+      48%, 90% { opacity: 1; transform: translateY(0); }
+      96%, 100% { opacity: 0; transform: translateY(-2px); }
     }
     @keyframes msgReveal5 {
       0%, 60% { opacity: 0; transform: translateY(4px); }
-      64%, 100% { opacity: 1; transform: translateY(0); }
+      64%, 90% { opacity: 1; transform: translateY(0); }
+      96%, 100% { opacity: 0; transform: translateY(-2px); }
     }
     @keyframes msgReveal6 {
       0%, 76% { opacity: 0; transform: translateY(4px); }
-      80%, 100% { opacity: 1; transform: translateY(0); }
+      80%, 90% { opacity: 1; transform: translateY(0); }
+      96%, 100% { opacity: 0; transform: translateY(-2px); }
     }
 
     .radar-beam {
@@ -171,7 +177,7 @@
 
     <!-- Radar Label -->
     <text x="75" y="246" text-anchor="middle" fill="#00f5d4" class="term-font" font-size="9" font-weight="700">RADAR HUD</text>
-    <text x="75" y="258" text-anchor="middle" fill="#64748b" class="term-font" font-size="8">131 RULES</text>
+    <text x="75" y="258" text-anchor="middle" fill="#64748b" class="term-font" font-size="8">145 RULES</text>
   </g>
 
   <!-- Divider Line Between Radar and Terminal Log -->
@@ -194,48 +200,49 @@
       <rect x="0" y="-12" width="70" height="17" rx="3" fill="#0284c7" fill-opacity="0.2"/>
       <text x="8" y="0" fill="#38bdf8" font-weight="700">DISCOVERY</text>
       <text x="82" y="0" fill="#94a3b8">Scanning 203 source files &amp; manifests across 9 languages...</text>
-      <text x="618" y="0" fill="#10b981" font-weight="700">[131 RULES OK]</text>
+      <text x="800" y="0" text-anchor="end" fill="#10b981" font-weight="700">[145 RULES OK]</text>
     </g>
 
     <!-- Streamed Line 2: Cryptographic Artefacts Found -->
     <g transform="translate(0, 78)" class="term-msg-2">
       <rect x="0" y="-12" width="70" height="17" rx="3" fill="#6366f1" fill-opacity="0.2"/>
       <text x="8" y="0" fill="#818cf8" font-weight="700">INVENTORY</text>
-      <text x="82" y="0" fill="#94a3b8">Identified 128 cryptographic assets: RSA-4096 (14), ECDH P-384 (8), AES-256 (32)</text>
-      <text x="702" y="0" fill="#38bdf8" font-weight="700">[ECMA-424]</text>
+      <text x="82" y="0" fill="#94a3b8">Found 128 assets: RSA-4096 (14), ECDH P-384 (8), AES-256 (32)</text>
+      <text x="800" y="0" text-anchor="end" fill="#38bdf8" font-weight="700">[ECMA-424]</text>
     </g>
 
     <!-- Streamed Line 3: Mosca's Inequality Breach -->
     <g transform="translate(0, 108)" class="term-msg-3">
       <rect x="0" y="-12" width="70" height="17" rx="3" fill="#e11d48" fill-opacity="0.25"/>
       <text x="8" y="0" fill="#fb7185" font-weight="700">MOSCA X+Y</text>
-      <text x="82" y="0" fill="#e2e8f0">X(25y Statutory) + Y(3y Migration) = <tspan fill="#f43f5e" font-weight="700">28y &gt; Z(10y CRQC)</tspan></text>
-      <text x="560" y="0" fill="#f43f5e" font-weight="700">&#9888; CRITICAL (HNDL EXPOSURE DETECTED)</text>
+      <text x="82" y="0" fill="#e2e8f0">X(25y) + Y(3y) = <tspan fill="#f43f5e" font-weight="700">28y &gt; Z(10y CRQC)</tspan></text>
+      <text x="800" y="0" text-anchor="end" fill="#f43f5e" font-weight="700">&#9888; CRITICAL (HNDL EXPOSURE)</text>
     </g>
 
     <!-- Streamed Line 4: FIPS Recommendations -->
     <g transform="translate(0, 138)" class="term-msg-4">
       <rect x="0" y="-12" width="70" height="17" rx="3" fill="#ca8a04" fill-opacity="0.2"/>
       <text x="8" y="0" fill="#facc15" font-weight="700">PQC TARGET</text>
-      <text x="82" y="0" fill="#94a3b8">Assigned <tspan fill="#00f5d4" font-weight="700">NIST FIPS 203 (ML-KEM-768)</tspan> &amp; <tspan fill="#38bdf8" font-weight="700">FIPS 204 (ML-DSA-65)</tspan> with Hybrid AND/OR</text>
-      <text x="686" y="0" fill="#ffd166" font-weight="700">[COST MAPPED]</text>
+      <text x="82" y="0" fill="#94a3b8">Assigned <tspan fill="#00f5d4" font-weight="700">FIPS 203 (ML-KEM-768)</tspan> &amp; <tspan fill="#38bdf8" font-weight="700">FIPS 204 (ML-DSA-65)</tspan></text>
+      <text x="800" y="0" text-anchor="end" fill="#ffd166" font-weight="700">[COST MAPPED]</text>
     </g>
 
     <!-- Streamed Line 5: CycloneDX 1.7 CBOM Output -->
     <g transform="translate(0, 168)" class="term-msg-5">
       <rect x="0" y="-12" width="70" height="17" rx="3" fill="#059669" fill-opacity="0.2"/>
       <text x="8" y="0" fill="#34d399" font-weight="700">CBOM 1.7</text>
-      <text x="82" y="0" fill="#94a3b8">Exported Ecma-424 compliant CBOM document to <tspan fill="#e2e8f0">./indramesh_cbom.json</tspan></text>
-      <text x="668" y="0" fill="#10b981" font-weight="700">&#10004; SCHEMA VALID</text>
+      <text x="82" y="0" fill="#94a3b8">Exported CycloneDX 1.7 CBOM to <tspan fill="#e2e8f0">./indramesh_cbom.json</tspan></text>
+      <text x="800" y="0" text-anchor="end" fill="#10b981" font-weight="700">&#10004; SCHEMA VALID</text>
     </g>
 
     <!-- Streamed Line 6: Verification Guarantee & Blinking Cursor -->
     <g transform="translate(0, 198)" class="term-msg-6">
       <rect x="0" y="-12" width="70" height="17" rx="3" fill="#0d9488" fill-opacity="0.25"/>
       <text x="8" y="0" fill="#2dd4bf" font-weight="700">ASSURANCE</text>
-      <text x="82" y="0" fill="#00f5d4" font-weight="700">Air-Gapped: Zero-CDN Verified &#183; 893/893 Pytest Passed &#183; 0 Regressions</text>
-      <!-- Blinking Cursor -->
-      <rect x="660" y="-10" width="8" height="14" fill="#00f5d4" class="cursor-blink"/>
+      <text x="82" y="0" fill="#00f5d4" font-weight="700">Air-Gapped Zero-CDN &#183; 1,027 Passing Tests (1000+)</text>
+      <!-- Blinking Cursor positioned clearly without colliding -->
+      <rect x="520" y="-10" width="8" height="14" fill="#00f5d4" class="cursor-blink"/>
+      <text x="800" y="0" text-anchor="end" fill="#00f5d4" font-weight="700">&#10004; 0 REGRESSIONS</text>
     </g>
   </g>
 

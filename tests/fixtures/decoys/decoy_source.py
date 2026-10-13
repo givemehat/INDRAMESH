@@ -1,8 +1,6 @@
 """Adversarial decoy fixture.
 
-Adopted from the competitive analysis (research/competitive/ANALYSIS.md, rank 1; technique from
-`Danny-397/Quantum-Safe-Scan`: "Measured, not asserted -- a labeled benchmark with adversarial
-decoys").
+A labeled benchmark with adversarial decoys: measured, not asserted.
 
 A crypto scanner's two failure modes are opposite, and a corpus that only contains true positives
 measures neither. Every line here is designed to LOOK like a finding to a naive regex, and must

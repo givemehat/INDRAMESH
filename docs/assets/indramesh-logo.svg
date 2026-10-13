@@ -125,26 +125,32 @@
     }
 
     .anim-spin-cw {
+      transform-box: view-box;
       transform-origin: 200px 190px;
       animation: spinClockwise 24s linear infinite;
     }
     .anim-spin-cw-fast {
+      transform-box: view-box;
       transform-origin: 200px 190px;
       animation: spinClockwise 12s linear infinite;
     }
     .anim-spin-ccw {
+      transform-box: view-box;
       transform-origin: 200px 190px;
       animation: spinCounter 18s linear infinite;
     }
     .anim-radar {
+      transform-box: view-box;
       transform-origin: 200px 190px;
       animation: radarSweep 5s linear infinite;
     }
     .anim-pulse {
+      transform-box: view-box;
       transform-origin: 200px 190px;
       animation: pulseGlow 3.5s ease-in-out infinite;
     }
     .anim-core {
+      transform-box: view-box;
       transform-origin: 200px 190px;
       animation: coreBreathe 2.8s ease-in-out infinite;
     }
@@ -218,6 +224,7 @@
     <!-- Outermost Calibrated Radar Scale -->
     <circle cx="200" cy="190" r="148" fill="none" stroke="#00b4d8" stroke-opacity="0.25" stroke-width="1.5"/>
     <g class="anim-spin-cw" opacity="0.6">
+      <animateTransform attributeName="transform" type="rotate" from="0 200 190" to="360 200 190" dur="24s" repeatCount="indefinite"/>
       <circle cx="200" cy="190" r="142" fill="none" stroke="#00f5d4" stroke-width="2" class="anim-dash"/>
       <!-- Compass / Radar ticks -->
       <line x1="200" y1="44" x2="200" y2="52" stroke="#00f5d4" stroke-width="2.5"/>
@@ -233,12 +240,14 @@
 
     <!-- Radar Sweep Beam (Rotating 360°) -->
     <g class="anim-radar">
+      <animateTransform attributeName="transform" type="rotate" from="0 200 190" to="360 200 190" dur="5s" repeatCount="indefinite"/>
       <path d="M 200 190 L 338 120 A 148 148 0 0 0 200 42 Z" fill="url(#radarSweepGrad)"/>
       <line x1="200" y1="190" x2="338" y2="120" stroke="#00f5d4" stroke-width="2" stroke-linecap="round" filter="url(#softGlow)"/>
     </g>
 
     <!-- Middle Quantum Orbital Rings (Entangled Bloch Spheres) -->
     <g class="anim-spin-ccw">
+      <animateTransform attributeName="transform" type="rotate" from="360 200 190" to="0 200 190" dur="18s" repeatCount="indefinite"/>
       <ellipse cx="200" cy="190" rx="116" ry="46" fill="none" stroke="#7928ca" stroke-opacity="0.45" stroke-width="1.8" transform="rotate(30 200 190)"/>
       <ellipse cx="200" cy="190" rx="116" ry="46" fill="none" stroke="#00f5d4" stroke-opacity="0.5" stroke-width="1.8" class="anim-dash-fast" transform="rotate(-30 200 190)"/>
       <!-- Traveling Qubit Beads -->
@@ -252,6 +261,7 @@
 
     <!-- Central Outer Octagonal Shield Armor (Vajra Lattice Base) -->
     <g class="anim-spin-cw-fast" opacity="0.85">
+      <animateTransform attributeName="transform" type="rotate" from="0 200 190" to="360 200 190" dur="12s" repeatCount="indefinite"/>
       <polygon points="200,126 245,145 264,190 245,235 200,254 155,235 136,190 155,145" fill="none" stroke="#38bdf8" stroke-width="1.5" stroke-opacity="0.4"/>
       <circle cx="200" cy="126" r="3" fill="#38bdf8"/>
       <circle cx="264" cy="190" r="3" fill="#38bdf8"/>
@@ -315,8 +325,10 @@
       <text x="0" y="0" fill="#00f5d4" class="brand-title" font-size="58" filter="url(#glowFilter)" opacity="0.35">INDRAMESH</text>
       <!-- Crisp Foreground Title -->
       <text x="0" y="0" fill="url(#textNeon)" class="brand-title" font-size="58">INDRAMESH</text>
+      <!-- Devnagari Script Name -->
+      <text x="395" y="-6" fill="#ffd166" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans Devanagari', sans-serif" font-size="24" font-weight="700" letter-spacing="0.05em">इन्द्रमेश</text>
       <!-- Version & Security Class Super-Badge -->
-      <g transform="translate(432, -40)">
+      <g transform="translate(520, -40)">
         <rect width="78" height="22" rx="11" fill="#00f5d4" fill-opacity="0.12" stroke="#00f5d4" stroke-opacity="0.5" stroke-width="1.2"/>
         <text x="14" y="15" fill="#00f5d4" class="mono-badge" font-size="11">v2.4 PQC</text>
       </g>
@@ -381,23 +393,23 @@
         <text x="30" y="19" fill="#94a3b8" class="mono-badge">Zero CDN · Air-Gapped</text>
       </g>
 
-      <!-- Pill 6: 131+ Cryptographic Rules -->
+      <!-- Pill 6: 145+ Cryptographic Rules -->
       <g transform="translate(186, 0)">
-        <rect width="188" height="30" rx="7" fill="#0b1728" stroke="#38bdf8" stroke-width="1" stroke-opacity="0.4"/>
+        <rect width="194" height="30" rx="7" fill="#0b1728" stroke="#38bdf8" stroke-width="1" stroke-opacity="0.4"/>
         <circle cx="16" cy="15" r="3.5" fill="#38bdf8"/>
-        <text x="28" y="19" fill="#94a3b8" class="mono-badge">131 Detection Rules (9 Lang)</text>
+        <text x="28" y="19" fill="#94a3b8" class="mono-badge">145 Detection Rules (9 Lang)</text>
       </g>
 
-      <!-- Pill 7: 891+ Tests Verified -->
-      <g transform="translate(384, 0)">
-        <rect width="180" height="30" rx="7" fill="#0b1728" stroke="#10b981" stroke-width="1" stroke-opacity="0.4"/>
+      <!-- Pill 7: 1000+ Tests Verified -->
+      <g transform="translate(390, 0)">
+        <rect width="198" height="30" rx="7" fill="#0b1728" stroke="#10b981" stroke-width="1" stroke-opacity="0.4"/>
         <path d="M 12 15 L 15 18 L 20 12" fill="none" stroke="#10b981" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-        <text x="28" y="19" fill="#94a3b8" class="mono-badge">891+ Tests · 0 Regression</text>
+        <text x="28" y="19" fill="#94a3b8" class="mono-badge">1000+ Tests · 1027 Passing</text>
       </g>
 
       <!-- Pill 8: HNDL Threat Defense -->
-      <g transform="translate(574, 0)">
-        <rect width="206" height="30" rx="7" fill="#200d14" stroke="#f43f5e" stroke-width="1" stroke-opacity="0.5"/>
+      <g transform="translate(598, 0)">
+        <rect width="182" height="30" rx="7" fill="#200d14" stroke="#f43f5e" stroke-width="1" stroke-opacity="0.5"/>
         <circle cx="16" cy="15" r="3.5" fill="#fb7185"/>
         <text x="28" y="19" fill="#fda4af" class="mono-badge">HNDL Attack Surface Mitigation</text>
       </g>

@@ -24,10 +24,8 @@ align in a column and can be compared by eye. Two deliberate consequences:
 ORIGINALITY
 -----------
 Written for this project. The palette, the type pairing, the grid and every component below were
-authored here; no stylesheet, markup or design token was taken from another project. Where
-competitor research informed *what to show* -- an explicit sensor-status panel, an assurance tier
-that is not the same thing as confidence -- that is an idea, and ideas are attributed in
-`research/competitive/ANALYSIS.md` rather than copied as code.
+authored here; no stylesheet, markup or design token was taken from another project. Design
+principles prioritize defensibility, clear sensor-status telemetry, and explicit assurance tiers.
 
 The type pairing is "Instrument Serif" against "IBM Plex Mono": a high-contrast editorial serif
 for headings over a technical monospace for every number, chosen because this console is a report

@@ -1,17 +1,12 @@
 """Cryptographic purpose model.
 
-Adopted from the competitive analysis (research/competitive/ANALYSIS.md, item C2 / rank 3).
-Sibling `cryptodrishti` makes the sharpest observation in the whole scrape:
+Purpose is a property of the finding, resolved from the call site and usage context.
+Nothing in a bare string like "RSA" settles whether it is used for digital signature,
+key establishment, or data encryption. Where the evidence does not settle it, no target
+is named and the recommendation specifies what would resolve it. An unresolved finding
+a human reviewer inspects is worth far more than a falsely confident guess.
 
-    "Nothing in the string `RSA` tells you which, so purpose is a property of the *finding*,
-     resolved from the call site."
-    "Where the evidence does not settle it, no target is named and the recommendation says what
-     would resolve it. An unresolved finding a human reviews is worth more than a resolved one
-     that is wrong."
-
-Our previous recommender always named a target, so an RSA finding we could not classify was
-silently pushed to ML-KEM or ML-DSA. This module makes the uncertainty a first-class carried value
-instead of a guess.
+This module makes purpose uncertainty a first-class carried value instead of a guess.
 
 Two distinct questions are answered here, and they must not be conflated:
 

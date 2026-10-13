@@ -1,8 +1,7 @@
 """
 Post-migration verification: did the PQC migration actually LAND?
 
-Closes Phase-1 gap **G13** ("no surveyed product verifies migration from the artefact") and
-ranked gap #7 in `research/competitive/ANALYSIS.md`.
+Closes Phase-1 gap **G13** ("no surveyed product verifies migration from the artefact").
 
 THE INVERSE PROBLEM
 ------------------------------------------------------------------------------------------------
@@ -24,10 +23,9 @@ pre-standardisation draft: a different algorithm with different security claims.
 `tests/test_recommender.py::test_no_pre_standardisation_algorithm_names` guards against.
 
 So a Kyber marker is NEVER counted as ML-KEM. It produces its own status,
-`STATUS_DEPRECATED_VARIANT`, with the reason spelled out. `open-quantum-secure`
-(research/competitive/ANALYSIS.md, rank 7) is the model: its `--enumerate-groups` probes
-"classical + hybrid + pure ML-KEM + deprecated Kyber" as SEPARATE codepoints, and its README
-describes PQC maturity as a `final` or `draft` badge. We do the same, statically.
+`STATUS_DEPRECATED_VARIANT`, with the reason spelled out. PQC protocol standards treat
+"classical + hybrid + pure ML-KEM + deprecated Kyber" as SEPARATE codepoints, and
+describe PQC maturity as a `final` or `draft` state. We do the same, statically.
 
 The same rule applies to the other two pre-standardisation names: Dilithium is the old name
 for ML-DSA (FIPS 204) and SPHINCS+ the old name for SLH-DSA (FIPS 205). A shipped
@@ -212,8 +210,7 @@ HYBRID_SEMANTICS = (
 
 NOT_PROVEN = [
     "that a present marker is EXECUTED rather than dead code, a test fixture, or a comment",
-    "that a present marker is the one NEGOTIATED at runtime (needs a handshake capture; cf. "
-    "research/competitive/ANALYSIS.md rank 7 and open-quantum-secure's --enumerate-groups)",
+    "that a present marker is the one NEGOTIATED at runtime (needs a live handshake capture)",
     "that a present marker is correctly parameterised -- that needs Kestrel-style NTT-constant "
     "fingerprinting, which this module does NOT implement and does not claim",
     "absence in a binary whose symbols were stripped below the printable-string floor",

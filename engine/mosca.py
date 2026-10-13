@@ -77,7 +77,7 @@ Z_SENSITIVITY_YEARS = (5, 10, 15)   # band reported alongside every verdict
 
 POLICY_DEADLINES = {
     "india_dst_nqm": {"label": "India DST / National Quantum Mission (CII migration)", "year": 2029},
-    # STRENGTH-DEPENDENT, per the verified IR 8547 transition tables (research/sources/04).
+    # STRENGTH-DEPENDENT, per the verified NIST IR 8547 transition tables.
     # Quoting the draft: NIST "intends to instead deprecate rather than fully disallow classical
     # key-establishment schemes at the 112-bit security level. Organizations may continue using
     # these algorithms and parameter sets as they migrate." The 2035 DISALLOWANCE attaches to
@@ -650,7 +650,7 @@ def calculate_risk(finding, user_x=None, user_y=None, z_collapse_time=None,
         # Resolved per-artefact, not a flat per-policy year. For NIST IR 8547 the transition
         # tables are keyed on security strength, so a 112-bit RSA and a 256-bit RSA do NOT share
         # a verdict: the first is only deprecated, the second is disallowed. See
-        # resolve_policy_deadline and research/sources/04.
+        # resolve_policy_deadline and NIST IR 8547 specification.
         "policy_deadline": resolved_deadline,
         "x_reason": x_reason,
         "y_reason": y_reason,
