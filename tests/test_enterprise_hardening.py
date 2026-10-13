@@ -399,3 +399,117 @@ def test_cbom_occ_canonicalizes_paths():
             for o in c.get("evidence", {}).get("occurrences", [])]
     assert len(occs) == 2
     assert occs[0]["bom-ref"].rsplit("-", 1)[0] == occs[1]["bom-ref"].rsplit("-", 1)[0]
+
+
+def test_cbom_protocol_types_mapped_loop4():
+    """Enterprise-loop4: SSH/IPSEC/QUIC etc must not collapse to tls/other."""
+    from engine.cbom import PROTOCOL_TYPE_ENUM
+    cases = {
+        "TLS 1.2": "tls", "DTLS 1.2": "dtls", "SSH-2.0": "ssh",
+        "IPSEC ESP": "ipsec", "IKEv2": "ike", "SSTP": "sstp",
+        "WPA3": "wpa", "QUIC": "quic", "EAP-AKA": "eap-aka",
+        "mystery-proto": "other",
+    }
+    for name, want in cases.items():
+        doc = json.loads(generate_cbom(
+            [{"name": name, "primitive": "protocol", "file": "a.py", "line": 1}],
+            subject_name="proto-subj"))
+        comp = doc["components"][0]
+        got = comp["cryptoProperties"]["protocolProperties"]["type"]
+        assert got == want, f"{name}: expected {want}, got {got}"
+        assert got in PROTOCOL_TYPE_ENUM
+
+
+def test_cbom_library_protocol_case_insensitive_loop4():
+    doc = json.loads(generate_cbom([
+        {"name": "OpenSSL", "type": "LIBRARY", "file": "a.py", "line": 1},
+        {"name": "openssl", "type": "library", "file": "b.py", "line": 2},
+        {"name": "TLS 1.3", "primitive": "PROTOCOL", "file": "c.py", "line": 3},
+    ], subject_name="case-subj"))
+    libs = [c for c in doc["components"] if c["type"] == "library"]
+    protos = [c for c in doc["components"]
+              if c.get("cryptoProperties", {}).get("assetType") == "protocol"]
+    assert len(libs) == 1, f"LIBRARY vs library must dedup: {len(libs)}"
+    assert len(protos) == 1, "PROTOCOL primitive must be detected case-insensitively"
+
+
+def test_cbom_backslash_canonicalization_loop4():
+    f1 = {"name": "AES-128", "primitive": "block-cipher", "file": "a\\b.py", "line": 1}
+    f2 = {"name": "AES-128", "primitive": "block-cipher", "file": "a/b.py", "line": 1}
+    doc = json.loads(generate_cbom([f1, f2], subject_name="bs-subj"))
+    occs = [o for c in doc["components"]
+            for o in c.get("evidence", {}).get("occurrences", [])]
+    assert len(occs) == 2
+    stems = {o["bom-ref"].rsplit("-", 1)[0] for o in occs}
+    assert len(stems) == 1, f"backslash vs slash must canonicalize: {occs}"
+
+
+def test_graph_windows_path_and_padded_tier_loop4():
+    from engine.graph import generate_crypto_graph
+    from pyvis.network import Network
+    seen = []
+    orig = Network.add_node
+
+    def spy(self, n, *a, **k):
+        seen.append((n, k.get("color")))
+        return orig(self, n, *a, **k)
+    Network.add_node = spy
+    try:
+        generate_crypto_graph([
+            {"name": "A", "primitive": "p", "file": "a\\b.py", "line": 1,
+             "risk": {"tier": " critical "}},
+        ])
+        files = [n for n, _ in seen if "____" not in str(n) and n != "App"]
+        assert files == ["a/b.py"], f"windows path must normalize: {files}"
+        arts = [c for n, c in seen if "____" in str(n)]
+        assert arts and arts[0] == "#ff4b4b", f"padded tier must map to red: {arts}"
+    finally:
+        Network.add_node = orig
+
+
+def test_server_locked_snapshot_and_deepcopy_loop4():
+    import copy
+    from fastapi.testclient import TestClient
+    import server
+    with TestClient(server.app):
+        saved = copy.deepcopy(server._STATE)
+        try:
+            client = TestClient(server.app)
+            resp = client.post("/api/scan", json={
+                "target": "./dummy_target", "enable_ml": False,
+                "policy": "india_dst_nqm", "data_class": "operational-record",
+                "z_years": 10.0})
+            assert resp.status_code == 200, resp.text
+            # /api/status must return a deepcopy: mutating it must not mutate _STATE.
+            st = client.get("/api/status")
+            assert st.status_code == 200
+            st.json()["last_config"]["policy"] = "MUTATED"
+            assert server._STATE["last_config"]["policy"] != "MUTATED"
+            # history entry last_config must equal the scan config snapshot.
+            assert server._STATE["history"][0]["last_config"]["policy"] == "india_dst_nqm"
+            # LOAD must return a deepcopy: mutating response must not mutate _STATE.
+            eid = server._STATE["history"][0]["id"]
+            loaded = client.post("/api/history/load", json={"id": eid})
+            assert loaded.status_code == 200
+            loaded.json()["records"] = "MUTATED"
+            assert server._STATE["last_records"] != "MUTATED"
+            # /api/cbom must be a snapshot copy too.
+            cb = client.get("/api/cbom")
+            assert cb.status_code == 200
+            cb.json()["document"]["metadata"]["component"]["name"] = "MUTATED"
+            assert server._STATE["last_cbom_doc"]["metadata"]["component"]["name"] != "MUTATED"
+        finally:
+            server._STATE.clear()
+            server._STATE.update(saved)
+
+
+def test_coverage_scripts_contract_loop4():
+    """Both coverage scripts must enforce the 12/10/1/1 + out_of_scope contract."""
+    import pathlib
+    gen = pathlib.Path(ROOT / "scripts" / "generate_coverage.py").read_text(encoding="utf-8")
+    chk = pathlib.Path(ROOT / "scripts" / "check_coverage.py").read_text(encoding="utf-8")
+    for needle in ['assert report["expected"] == 12', 'assert report["scanned"] == 10',
+                   'assert report["inaccessible"] == 1', 'assert report["unknown"] == 1',
+                   "CLOUD-01"]:
+        assert needle in gen, f"generate_coverage.py missing contract: {needle}"
+        assert needle in chk, f"check_coverage.py missing contract: {needle}"

@@ -299,6 +299,18 @@ def _compute_scan_bundle(target: str, enable_ml: bool, policy: str, data_class: 
         validation = {"ok": False, "state": "error", "errors": [str(exc)], "message": f"CBOM error: {exc}"}
 
     # Save to state (locked: parallel /api/scan must not publish a torn bundle).
+    # Enterprise-grade atomic publish: snapshot the config under the same lock
+    # so history_entry.last_config can never read a torn mid-update value.
+    import copy as _copy_state
+    cfg_snapshot = {
+        "target": target,
+        "enable_ml": enable_ml,
+        "policy": policy,
+        "data_class": data_class,
+        "z_years": z_years,
+        "x_override": x_override,
+        "y_override": y_override,
+    }
     with _STATE_LOCK:
         _STATE["last_scan"] = scan_info
         _STATE["last_records"] = records
@@ -306,15 +318,7 @@ def _compute_scan_bundle(target: str, enable_ml: bool, policy: str, data_class: 
         _STATE["last_cbom_doc"] = cbom_doc
         _STATE["last_cbom_validation"] = validation
         _STATE["last_target"] = target
-        _STATE["last_config"] = {
-            "target": target,
-            "enable_ml": enable_ml,
-            "policy": policy,
-            "data_class": data_class,
-            "z_years": z_years,
-            "x_override": x_override,
-            "y_override": y_override,
-        }
+        _STATE["last_config"] = _copy_state.deepcopy(cfg_snapshot)
 
     payload = _build_response_payload(scan_info, records, validation, policy, z_years)
 
@@ -340,7 +344,7 @@ def _compute_scan_bundle(target: str, enable_ml: bool, policy: str, data_class: 
         "records": _copy_hist.deepcopy(records),
         "scan_info": _copy_hist.deepcopy(scan_info),
         "validation": _copy_hist.deepcopy(validation),
-        "last_config": _copy_hist.deepcopy(_STATE.get("last_config") or {}),
+        "last_config": _copy_hist.deepcopy(cfg_snapshot),
     }
     with _STATE_LOCK:
         _STATE.setdefault("history", []).insert(0, history_entry)
@@ -422,6 +426,11 @@ def _build_response_payload(scan_info: dict, records: list, validation: dict, po
 @app.get("/api/status")
 def get_status():
     """Engine health, rule counts, and configuration presets."""
+    import copy as _copy_rd
+    with _STATE_LOCK:
+        has_active = _STATE["last_scan"] is not None
+        last_target = _STATE["last_target"]
+        last_config = _copy_rd.deepcopy(_STATE["last_config"])
     return {
         "status": "online",
         "app_name": "IndraMesh",
@@ -439,9 +448,9 @@ def get_status():
         "data_classes": DATA_CLASS_LIFETIME,
         "z_presets": Z_PRESETS,
         "default_z": DEFAULT_Z,
-        "has_active_scan": _STATE["last_scan"] is not None,
-        "last_target": _STATE["last_target"],
-        "last_config": _STATE["last_config"],
+        "has_active_scan": has_active,
+        "last_target": last_target,
+        "last_config": last_config,
     }
 
 
@@ -467,11 +476,12 @@ def run_scan_endpoint(req: ScanRequest):
 @app.post("/api/rate")
 def rate_findings_endpoint(req: RateRequest):
     """Re-rate existing findings when the user changes Z, Policy, or Data Class (no re-scan needed)."""
-    scan_info = _STATE.get("last_scan")
+    import copy as _copy_rate
+    with _STATE_LOCK:
+        scan_info = _copy_rate.deepcopy(_STATE.get("last_scan"))
+        cfg = _copy_rate.deepcopy(_STATE["last_config"])
     if not scan_info:
         raise HTTPException(status_code=400, detail="No scan loaded yet. Run a scan first.")
-
-    cfg = _STATE["last_config"]
     policy = req.policy or cfg["policy"]
     data_class = req.data_class or cfg["data_class"]
     z_years = req.z_years if req.z_years is not None else cfg["z_years"]
@@ -519,21 +529,27 @@ def rate_findings_endpoint(req: RateRequest):
 @app.get("/api/cbom")
 def get_cbom():
     """Retrieve the generated CycloneDX 1.7 CBOM document and its offline schema validation report."""
-    if not _STATE["last_cbom_doc"]:
+    import copy as _copy_cbom
+    with _STATE_LOCK:
+        doc = _copy_cbom.deepcopy(_STATE["last_cbom_doc"])
+        validation = _copy_cbom.deepcopy(_STATE["last_cbom_validation"])
+    if not doc:
         raise HTTPException(status_code=404, detail="No CBOM available. Run a scan first.")
     return {
-        "validation": _STATE["last_cbom_validation"],
-        "document": _STATE["last_cbom_doc"],
+        "validation": validation,
+        "document": doc,
     }
 
 
 @app.get("/api/cbom/download")
 def download_cbom():
     """Download the validated CycloneDX 1.7 CBOM as JSON."""
-    if not _STATE["last_cbom"]:
+    with _STATE_LOCK:
+        cbom_str = _STATE["last_cbom"]
+    if not cbom_str:
         raise HTTPException(status_code=404, detail="No CBOM generated yet.")
     return Response(
-        content=_STATE["last_cbom"],
+        content=cbom_str,
         media_type="application/json",
         headers={"Content-Disposition": 'attachment; filename="indramesh_report.json"'},
     )
@@ -542,7 +558,9 @@ def download_cbom():
 @app.get("/api/coverage/download")
 def download_coverage():
     """Download the coverage manifest JSON."""
-    scan = _STATE.get("last_scan")
+    import copy as _copy_cov
+    with _STATE_LOCK:
+        scan = _copy_cov.deepcopy(_STATE.get("last_scan"))
     if not scan:
         raise HTTPException(status_code=404, detail="No scan data available.")
     return Response(
@@ -555,11 +573,13 @@ def download_coverage():
 @app.get("/api/recommendations/download")
 def download_recommendations():
     """Download the actionable recommendations payload JSON."""
-    scan = _STATE.get("last_scan")
-    records = _STATE.get("last_records")
+    import copy as _copy_rec
+    with _STATE_LOCK:
+        scan = _copy_rec.deepcopy(_STATE.get("last_scan"))
+        records = _copy_rec.deepcopy(_STATE.get("last_records"))
+        cfg = _copy_rec.deepcopy(_STATE["last_config"])
     if not scan or not records:
         raise HTTPException(status_code=404, detail="No scan data available.")
-    cfg = _STATE["last_config"]
     payload = recommendations_payload(
         records,
         target=scan["target"],
@@ -611,6 +631,7 @@ def get_scan_history():
 @app.post("/api/history/load")
 def load_scan_history(req: LoadHistoryRequest):
     """Load a past scan from history (memory first, then the durable store)."""
+    import copy as _copy_load
     def _apply(h):
         import copy as _copy
         _STATE["last_scan"] = _copy.deepcopy(h["scan_info"])
@@ -637,18 +658,20 @@ def load_scan_history(req: LoadHistoryRequest):
                 "x_override": prev.get("x_override"),
                 "y_override": prev.get("y_override"),
             }
-    for h in _STATE.get("history", []):
+    with _STATE_LOCK:
+        hist_snapshot = list(_STATE.get("history", []))
+    for h in hist_snapshot:
         if h["id"] == req.id:
             with _STATE_LOCK:
                 _apply(h)
-            return h["bundle"]
+            return _copy_load.deepcopy(h["bundle"])
     try:
         h = history_get(req.id)
     except Exception as exc:
         print(f"[IndraMesh] History store read notice: {exc}")
         h = None
     if h and all(k in h for k in ("scan_info", "records", "cbom_str",
-                                  "cbom_doc", "validation", "target", "bundle")):
+                                   "cbom_doc", "validation", "target", "bundle")):
         with _STATE_LOCK:
             _apply(h)
             # Enterprise-grade: a DB-loaded entry must be visible to
@@ -660,15 +683,17 @@ def load_scan_history(req: LoadHistoryRequest):
                 _STATE.setdefault("history", []).insert(0, _copy2.deepcopy(h))
                 if len(_STATE["history"]) > _HIST_RETAIN:
                     _STATE["history"] = _STATE["history"][:_HIST_RETAIN]
-        return h["bundle"]
+        return _copy_load.deepcopy(h["bundle"])
     raise HTTPException(status_code=404, detail="Scan history entry not found.")
 
 
 def generate_executive_report_html() -> str:
-    scan = _STATE.get("last_scan")
-    records = _STATE.get("last_records") or []
-    cbom_val = _STATE.get("last_cbom_validation") or {}
-    cfg = _STATE.get("last_config") or {}
+    import copy as _copy_rep
+    with _STATE_LOCK:
+        scan = _copy_rep.deepcopy(_STATE.get("last_scan"))
+        records = _copy_rep.deepcopy(_STATE.get("last_records") or [])
+        cbom_val = _copy_rep.deepcopy(_STATE.get("last_cbom_validation") or {})
+        cfg = _copy_rep.deepcopy(_STATE.get("last_config") or {})
     if not scan:
         return "<html><body><h2>No scan available to generate report. Run a scan first.</h2></body></html>"
 
@@ -851,11 +876,14 @@ def get_executive_report_html():
 @app.get("/api/report/download")
 def download_executive_report_json():
     """Download executive assessment summary JSON."""
-    scan = _STATE.get("last_scan")
-    records = _STATE.get("last_records") or []
+    import copy as _copy_rdl
+    with _STATE_LOCK:
+        scan = _copy_rdl.deepcopy(_STATE.get("last_scan"))
+        records = _copy_rdl.deepcopy(_STATE.get("last_records") or [])
+        cfg = _copy_rdl.deepcopy(_STATE.get("last_config") or {})
+        cbom_val = _copy_rdl.deepcopy(_STATE.get("last_cbom_validation"))
     if not scan:
         raise HTTPException(status_code=404, detail="No scan data available.")
-    cfg = _STATE.get("last_config") or {}
     t_counts = tier_counts(records)
     score_raw = risk_score(records) if records else 0
     score_num = score_raw.get("score", 0) if isinstance(score_raw, dict) else (score_raw or 0)
@@ -880,7 +908,7 @@ def download_executive_report_json():
             "z_years": cfg.get("z_years"),
             "policy_deadline": active_policy.get("year"),
         },
-        "cbom_validation": _STATE.get("last_cbom_validation"),
+        "cbom_validation": cbom_val,
         # The blind spots travel with the report: a JSON export that lists findings but not
         # what could not be read invites the same "0 findings == clean" misreading the console
         # exists to prevent.
@@ -900,8 +928,10 @@ def download_executive_report_json():
 @app.get("/api/topology")
 def get_topology():
     """Return nodes and links for cryptographic topology visualization."""
-    records = _STATE.get("last_records") or []
-    target = _STATE.get("last_target") or "App"
+    import copy as _copy_topo
+    with _STATE_LOCK:
+        records = _copy_topo.deepcopy(_STATE.get("last_records") or [])
+        target = _STATE.get("last_target") or "App"
     root_label = os.path.basename(target.rstrip("/\\")) or "Target Estate"
 
     nodes = [{"id": "root", "label": root_label, "type": "root", "size": 32, "color": "#00F0FF"}]

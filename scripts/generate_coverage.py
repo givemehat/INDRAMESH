@@ -82,6 +82,15 @@ def main():
     print("[IndraMesh] out_of_scope:", report["out_of_scope"])
     print("[IndraMesh] not_in_inventory:", report["not_in_inventory"])
     print("[IndraMesh] control_gap_rows:", report["control_gap_rows"])
+    # Enterprise-grade: same contract as check_coverage.py so both scripts
+    # fail fast on drift instead of silently writing a wrong artifact.
+    assert report["expected"] == 12, report
+    assert report["scanned"] == 10, report
+    assert report["inaccessible"] == 1, report
+    assert report["unknown"] == 1, report
+    assert set(report["out_of_scope"]) == {"CLOUD-01", "CLOUD-02", "CLOUD-03"}, report
+    assert len(report["not_in_inventory"]) == 3, report
+    assert all(g["reason"] for g in report["control_gap_rows"]), report
     return 0
 
 

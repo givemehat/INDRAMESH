@@ -6,6 +6,7 @@ differently from a primitive that code actually calls.
 """
 import functools
 import os
+import posixpath
 import re
 import tempfile
 
@@ -52,12 +53,11 @@ def generate_crypto_graph(findings):
         raw_file = str(f.get("file") or "unknown").replace("\\", "/").strip() or "unknown"
         # Canonicalize: collapse ./, //, trailing / while keeping full-path
         # semantics (d1/u.py vs d2/u.py must stay separate).
-        import posixpath as _posixpath
-        raw_file = _posixpath.normpath(raw_file)
+        raw_file = posixpath.normpath(raw_file)
         # Node id keeps the normalized relative path (avoids d1/u.py vs d2/u.py
         # collapse from basename), label stays human-readable basename.
         file_node = raw_file
-        file_label = _posixpath.basename(raw_file) or raw_file
+        file_label = posixpath.basename(raw_file) or raw_file
         _risk = f.get("risk")
         if isinstance(_risk, dict):
             risk = str(_risk.get("tier", "LOW") or "LOW").strip().upper() or "LOW"

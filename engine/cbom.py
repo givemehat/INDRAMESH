@@ -791,7 +791,27 @@ def generate_cbom(findings, enriched=False, subject_name="IndraMesh-Scanned-Arte
             continue
 
         if is_protocol:
-            proto_type = "tls" if "TLS" in str(f.get("name", "")).upper() else "other"
+            _pname_up = str(f.get("name", "")).upper()
+            if "TLS" in _pname_up or "DTLS" in _pname_up:
+                proto_type = "dtls" if "DTLS" in _pname_up else "tls"
+            elif "SSH" in _pname_up:
+                proto_type = "ssh"
+            elif "IPSEC" in _pname_up or "IP-SEC" in _pname_up:
+                proto_type = "ipsec"
+            elif "IKE" in _pname_up:
+                proto_type = "ike"
+            elif "SSTP" in _pname_up:
+                proto_type = "sstp"
+            elif "WPA" in _pname_up:
+                proto_type = "wpa"
+            elif "QUIC" in _pname_up:
+                proto_type = "quic"
+            elif "EAP" in _pname_up:
+                proto_type = "eap-aka-prime" if "PRIME" in _pname_up else "eap-aka"
+            elif "PRINS" in _pname_up or "5G-AKA" in _pname_up or "5G_AKA" in _pname_up:
+                proto_type = "prins" if "PRINS" in _pname_up else "5g-aka"
+            else:
+                proto_type = "other"
             if proto_type not in PROTOCOL_TYPE_ENUM:
                 proto_type = "other"
             pver = str(f.get("match", "") or "")[:120]
