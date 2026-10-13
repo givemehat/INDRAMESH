@@ -513,3 +513,41 @@ def test_coverage_scripts_contract_loop4():
                    "CLOUD-01"]:
         assert needle in gen, f"generate_coverage.py missing contract: {needle}"
         assert needle in chk, f"check_coverage.py missing contract: {needle}"
+
+
+def test_cbom_components_canonical_order_loop5():
+    """Enterprise-loop5: component order + numbering must not depend on input order."""
+    a = _mk("RSA", "b.py", 2, primitive="pke", key_length=2048)
+    b = _mk("AES-128", "a.py", 1)
+    doc1 = json.loads(generate_cbom([a, b], subject_name="s"))
+    doc2 = json.loads(generate_cbom([b, a], subject_name="s"))
+    assert doc1["components"] == doc2["components"], \
+        "swapping inputs must not reorder/renumber components"
+    refs = [c["bom-ref"] for c in doc1["components"]]
+    assert refs == sorted(refs), f"components must be in canonical order: {refs}"
+
+
+def test_cbom_occurrences_sorted_and_tools_have_bom_ref_loop5():
+    doc = json.loads(generate_cbom([_mk("AES-128", "b.py", 2),
+                                    _mk("AES-128", "a.py", 1)],
+                                   subject_name="s"))
+    comp = doc["components"][0]
+    occs = [o["bom-ref"] for o in comp["evidence"]["occurrences"]]
+    assert occs == sorted(occs), f"occurrences must be sorted: {occs}"
+    tools = doc["metadata"]["tools"]["components"]
+    assert tools and all("bom-ref" in t for t in tools), "tools need bom-ref"
+
+
+def test_cbom_fileless_findings_count_auditable_loop5():
+    doc = json.loads(generate_cbom([{"name": "RSA", "primitive": "pke",
+                                     "key_length": 2048},
+                                    {"name": "RSA", "primitive": "pke",
+                                     "key_length": 2048}],
+                                   subject_name="ambient-subj"))
+    assert len(doc["components"]) == 1
+    comp = doc["components"][0]
+    assert "occurrences" not in comp.get("evidence", {}), \
+        "file-less findings must not invent locations"
+    props = {p["name"]: p["value"] for p in comp.get("properties", [])}
+    assert props.get("im:findings_count") == "2", \
+        f"merged ambient findings must stay countable: {props}"

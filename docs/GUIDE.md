@@ -643,10 +643,10 @@ Explained in Â§11.4. Most tools have one confidence number. We have two orthog
 
 # Part 4 â€” Proving it works
 
-## 14. Testing: 1024 tests, and why count is not proof
+## 14. Testing: 1027 tests, and why count is not proof
 
 ```
-1024 passed, 8 skipped, 0 failing
+1027 passed, 8 skipped, 0 failing
 ```
 
 **A test count is not evidence of correctness.** Eight hundred trivial always-passing assertions

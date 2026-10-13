@@ -726,7 +726,9 @@ def generate_cbom(findings, enriched=False, subject_name="IndraMesh-Scanned-Arte
     def _group(key, make):
         if key not in groups:
             groups[key] = make()
+            groups[key]["count"] = 0
             group_order.append(key)
+        groups[key]["count"] = groups[key].get("count", 0) + 1
         return groups[key]
 
     _occ_counters: dict[str, int] = {}
@@ -889,7 +891,24 @@ def generate_cbom(findings, enriched=False, subject_name="IndraMesh-Scanned-Arte
                 "occurrences", []).append(occ)
             g["has_file"] = True
 
-    for _k in group_order:
+    # Enterprise-grade determinism: input order must not renumber components.
+    # Keys are already normalized (casefold/strip), so sorting by repr gives a
+    # stable canonical order. bom-refs are reassigned in that order and every
+    # occurrence list is sorted by bom-ref, making the whole document diffable.
+    sorted_keys = sorted(group_order, key=lambda k: repr(k))
+    for _i, _k in enumerate(sorted_keys):
+        _comp = groups[_k]["comp"]
+        _comp["bom-ref"] = f"crypto-asset-{_i}"
+        _occs = _comp.get("evidence", {}).get("occurrences")
+        if isinstance(_occs, list) and len(_occs) > 1:
+            _occs.sort(key=lambda o: str(o.get("bom-ref", "")))
+        _count = groups[_k].get("count", 0)
+        if _count:
+            _props = _comp.setdefault("properties", [])
+            if not any(p.get("name") == f"{PROPERTY_NS}:findings_count" for p in _props):
+                _props.append({"name": f"{PROPERTY_NS}:findings_count",
+                               "value": str(_count)})
+    for _k in sorted_keys:
         components.append(groups[_k]["comp"])
         # Enterprise-grade: the scanned app uses every discovered asset,
         # file-backed or ambient. Earlier builds only listed file-less
@@ -934,7 +953,8 @@ def generate_cbom(findings, enriched=False, subject_name="IndraMesh-Scanned-Arte
     metadata = {
         "timestamp": timestamp,
         "tools": {"components": [
-            {"type": "application", "name": "indramesh", "version": "0.2.0"},
+            {"type": "application", "name": "indramesh", "version": "0.2.0",
+             "bom-ref": "indramesh-tool-0.2.0"},
         ]},
         "component": metadata_component,
     }
