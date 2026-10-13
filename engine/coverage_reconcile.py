@@ -64,7 +64,7 @@ def reconcile(records=None, scan_results=None, cloud_rows=None):
                 "reason": "no probe issued for controlled target"})
 
     outsider_ids = {r.id for r in records if not r.owned}
-    not_tracked = [r for r in cloud_rows if r.get("id") not in outsider_ids]
+    not_tracked = [r for r in cloud_rows if r.get("id") and r.get("id") not in outsider_ids]
 
     scanned_inventory = {r.id: r for r in scoped if r.probe_status == "scanned"}
     cloud_ids = {r.get("id") for r in cloud_rows if r.get("id")}

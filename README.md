@@ -28,7 +28,7 @@
 
 <!-- Security & Quality Badges -->
 [![Air Gapped](https://img.shields.io/badge/Air--Gapped-Zero_CDN_%C2%B7_Zero_Telemetry-10B981?style=for-the-badge&logo=checkmarx&logoColor=white)](#)
-[![Tests Passing](https://img.shields.io/badge/Pytest-1012_Passing_%C2%B7_0_Regressions-10B981?style=for-the-badge&logo=pytest&logoColor=white)](#)
+[![Tests Passing](https://img.shields.io/badge/Pytest-1018_Passing_%C2%B7_0_Regressions-10B981?style=for-the-badge&logo=pytest&logoColor=white)](#)
 [![Rules](https://img.shields.io/badge/Detection-145_Rules_%C2%B7_9_Languages-38BDF8?style=for-the-badge&logo=codewars&logoColor=040812)](#)
 [![Python](https://img.shields.io/badge/Python-3.11_%7C_3.12_%7C_3.13_%7C_3.14-3776AB?style=for-the-badge&logo=python&logoColor=white)](#)
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue?style=for-the-badge&logo=apache&logoColor=white)](#)
@@ -210,7 +210,7 @@ python cli_advanced.py ./your-project                   # secondary sensor suite
 python cli_certificates.py certs ./your-project         # X.509 certificate sensor
 
 python app.py                                           # launch FastAPI web console
-python -m pytest tests/ -v                              # 1012 passing + 8 skipped; see tests/test_readme_contract.py
+python -m pytest tests/ -v                              # 1018 passing + 8 skipped; see tests/test_readme_contract.py
 ```
 
 `--format sarif` writes `indramesh.sarif`: relative paths, one rule per artefact, and a level

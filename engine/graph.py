@@ -37,6 +37,10 @@ def _vendor_assets():
 
 
 def generate_crypto_graph(findings):
+    # Enterprise-grade: tolerate None / non-list callers (e.g. empty scan
+    # bundle) -- render the App-only skeleton instead of raising TypeError.
+    if not isinstance(findings, (list, tuple)):
+        findings = []
     net = Network(height="620px", width="100%", bgcolor="#0e1117", font_color="white", directed=True)
     added = set()
     net.add_node("App", label="Scanned application", color="#00ff9f", shape="star", size=30)
@@ -53,7 +57,7 @@ def generate_crypto_graph(findings):
         # Node id keeps the normalized relative path (avoids d1/u.py vs d2/u.py
         # collapse from basename), label stays human-readable basename.
         file_node = raw_file
-        file_label = os.path.basename(raw_file) or raw_file
+        file_label = _posixpath.basename(raw_file) or raw_file
         _risk = f.get("risk")
         if isinstance(_risk, dict):
             risk = str(_risk.get("tier", "LOW") or "LOW").strip().upper() or "LOW"
@@ -134,20 +138,21 @@ def generate_crypto_graph(findings):
     # Enterprise-grade air-gap: pyvis template pulls Bootstrap from jsdelivr.
     # The graph works without it; strip remote refs so topology view never
     # phones home on open in an isolated enclave.
+    # Both double- and single-quoted attrs, plus protocol-relative //CDN refs.
     html = re.sub(
-        r'<link[^>]*href="https?://[^"]*bootstrap[^"]*"[^>]*>',
+        r"""<link[^>]*href=["'](?:https?:)?//[^"']*bootstrap[^"']*["'][^>]*>""",
         "<!-- bootstrap css removed for air-gap -->",
         html, flags=re.IGNORECASE,
     )
     html = re.sub(
-        r'<script[^>]*src="https?://[^"]*bootstrap[^"]*"[^>]*>\s*</script>',
+        r"""<script[^>]*src=["'](?:https?:)?//[^"']*bootstrap[^"']*["'][^>]*>\s*</script>""",
         "<!-- bootstrap js removed for air-gap -->",
         html, flags=re.IGNORECASE,
     )
     # Belt-and-braces: drop any other remote src/href that slipped through
-    # (match both double- and single-quoted attributes).
+    # (match both double- and single-quoted attributes, incl. //host form).
     html = re.sub(
-        r"""\s(?:src|href)=["']https?://(?!www\.w3\.org)[^"']*["']""",
+        r"""\s(?:src|href)=["'](?:https?:)?//(?!www\.w3\.org)[^"']*["']""",
         ' data-removed-remote="1"',
         html,
     )

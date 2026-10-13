@@ -47,8 +47,10 @@ def _connect(path):
         conn.execute("PRAGMA journal_mode=WAL")
         conn.execute("PRAGMA busy_timeout=10000")
         conn.execute("PRAGMA synchronous=NORMAL")
-    except sqlite3.Error:
-        pass
+    except sqlite3.Error as exc:
+        # Degraded but functional (rollback-journal mode); surface once so
+        # operators know durability is reduced instead of failing silently.
+        print(f"[IndraMesh] History store pragma notice: {exc}")
     conn.execute(_TABLE)
     return conn
 

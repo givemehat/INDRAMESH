@@ -736,8 +736,13 @@ def generate_cbom(findings, enriched=False, subject_name="IndraMesh-Scanned-Arte
         # order changes; hash(file|line|name|primitive) is stable across runs.
         # Per-digest counter guarantees uniqueness on exact duplicates while
         # keeping distinct findings fully order-independent.
+        # File is canonicalized (backslash -> slash, ./ and // collapsed) so
+        # the same logical file with different spellings shares one digest.
+        import posixpath as _pp
+        _raw = str(f.get("file") or "").replace("\\", "/").strip()
+        _canon = _pp.normpath(_raw) if _raw else ""
         base = "|".join([
-            str(f.get("file") or "").strip(),
+            _canon,
             str(f.get("line") or "").strip(),
             str(f.get("name") or "").strip().casefold(),
             str(f.get("primitive") or "").strip().casefold(),

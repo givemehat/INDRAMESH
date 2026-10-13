@@ -322,6 +322,7 @@ def _compute_scan_bundle(target: str, enable_ml: bool, policy: str, data_class: 
     # ID includes micros + random suffix: two scans in the same second must not
     # overwrite each other via INSERT OR REPLACE.
     from engine.history_store import RETAIN as _HIST_RETAIN
+    import copy as _copy_hist
     scan_id = datetime.datetime.now().strftime("%Y%m%d_%H%M%S_%f") + "_" + uuid.uuid4().hex[:6]
     history_entry = {
         "id": scan_id,
@@ -333,13 +334,13 @@ def _compute_scan_bundle(target: str, enable_ml: bool, policy: str, data_class: 
         "cbom_valid": validation.get("ok", False),
         "policy": policy,
         "z_years": z_years,
-        "bundle": payload,
+        "bundle": _copy_hist.deepcopy(payload),
         "cbom_str": cbom_str,
-        "cbom_doc": cbom_doc,
-        "records": records,
-        "scan_info": scan_info,
-        "validation": validation,
-        "last_config": dict(_STATE.get("last_config") or {}),
+        "cbom_doc": _copy_hist.deepcopy(cbom_doc),
+        "records": _copy_hist.deepcopy(records),
+        "scan_info": _copy_hist.deepcopy(scan_info),
+        "validation": _copy_hist.deepcopy(validation),
+        "last_config": _copy_hist.deepcopy(_STATE.get("last_config") or {}),
     }
     with _STATE_LOCK:
         _STATE.setdefault("history", []).insert(0, history_entry)
@@ -498,17 +499,19 @@ def rate_findings_endpoint(req: RateRequest):
     except Exception as exc:
         validation = {"ok": False, "state": "error", "errors": [str(exc)], "message": f"CBOM error: {exc}"}
 
-    _STATE["last_records"] = records
-    _STATE["last_cbom"] = cbom_str
-    _STATE["last_cbom_doc"] = cbom_doc
-    _STATE["last_cbom_validation"] = validation
-    _STATE["last_config"].update({
-        "policy": policy,
-        "data_class": data_class,
-        "z_years": z_years,
-        "x_override": x_override,
-        "y_override": y_override,
-    })
+    # Enterprise-grade: locked so parallel /api/scan cannot interleave.
+    with _STATE_LOCK:
+        _STATE["last_records"] = records
+        _STATE["last_cbom"] = cbom_str
+        _STATE["last_cbom_doc"] = cbom_doc
+        _STATE["last_cbom_validation"] = validation
+        _STATE["last_config"].update({
+            "policy": policy,
+            "data_class": data_class,
+            "z_years": z_years,
+            "x_override": x_override,
+            "y_override": y_override,
+        })
 
     return _build_response_payload(scan_info, records, validation, policy, z_years)
 
@@ -573,7 +576,8 @@ def download_recommendations():
 @app.get("/api/history")
 def get_scan_history():
     """Return list of past scans (memory first, durable-store fallback)."""
-    hist = _STATE.get("history", [])
+    with _STATE_LOCK:
+        hist = list(_STATE.get("history", []))
     if not hist:
         # Enterprise-grade: after a restart without lifespan (or a memory
         # wipe in tests), the DB still has data — serve it instead of [].
@@ -586,6 +590,8 @@ def get_scan_history():
                 hist = restored
         except Exception as exc:
             print(f"[IndraMesh] History store list notice: {exc}")
+    with _STATE_LOCK:
+        snapshot = list(_STATE.get("history", []))
     return [
         {
             "id": h["id"],
@@ -598,7 +604,7 @@ def get_scan_history():
             "policy": h["policy"],
             "z_years": h["z_years"],
         }
-        for h in _STATE.get("history", [])
+        for h in snapshot
     ]
 
 
@@ -619,7 +625,7 @@ def load_scan_history(req: LoadHistoryRequest):
         # Deep-copy so later _STATE["last_config"].update() cannot mutate history.
         cfg = h.get("last_config")
         if isinstance(cfg, dict) and cfg:
-            _STATE["last_config"] = dict(cfg)
+            _STATE["last_config"] = _copy.deepcopy(cfg)
         else:
             prev = _STATE.get("last_config") or {}
             _STATE["last_config"] = {
@@ -646,10 +652,12 @@ def load_scan_history(req: LoadHistoryRequest):
         with _STATE_LOCK:
             _apply(h)
             # Enterprise-grade: a DB-loaded entry must be visible to
-            # GET /api/history afterwards — re-insert it at the head.
+            # GET /api/history afterwards — re-insert a deepcopy at the head
+            # so later _STATE mutations cannot alias the durable row.
             if not any(e.get("id") == h.get("id") for e in _STATE.get("history", [])):
                 from engine.history_store import RETAIN as _HIST_RETAIN
-                _STATE.setdefault("history", []).insert(0, h)
+                import copy as _copy2
+                _STATE.setdefault("history", []).insert(0, _copy2.deepcopy(h))
                 if len(_STATE["history"]) > _HIST_RETAIN:
                     _STATE["history"] = _STATE["history"][:_HIST_RETAIN]
         return h["bundle"]

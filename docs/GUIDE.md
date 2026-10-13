@@ -38,7 +38,7 @@
 11. [System architecture](#11-system-architecture)
 12. [The fourteen engines](#12-the-fourteen-engines)
 13. [The three ideas that make IndraMesh different](#13-the-three-ideas-that-make-indramesh-different)
-14. [Testing: 1012 tests, and why count is not proof](#14-testing-998-tests-and-why-count-is-not-proof)
+ 14. [Testing: 1018 tests, and why count is not proof](#14-testing-998-tests-and-why-count-is-not-proof)
 
 **Part 4 â€” Proving it works**
 15. [Mutation testing: breaking our own tests on purpose](#15-mutation-testing-breaking-our-own-tests-on-purpose)
@@ -643,10 +643,10 @@ Explained in Â§11.4. Most tools have one confidence number. We have two orthog
 
 # Part 4 â€” Proving it works
 
-## 14. Testing: 1012 tests, and why count is not proof
+## 14. Testing: 1018 tests, and why count is not proof
 
 ```
-1012 passed, 8 skipped, 0 failing
+1018 passed, 8 skipped, 0 failing
 ```
 
 **A test count is not evidence of correctness.** Eight hundred trivial always-passing assertions
@@ -961,7 +961,7 @@ cli.py             headless + CBOM
 cli_advanced.py    verify-migration
 cli_certificates.py X.509
 schemas/           vendored CycloneDX 1.7 JSON Schema (offline validation)
-tests/             30 files, 1012 tests
+tests/             30 files, 1018 tests
 docs/GUIDE.md      <- this document
 docs/COMPARISON.md measured comparison with the sibling project
 research/competitive/ANALYSIS.md   17 repos analysed, take/adapt/reject each

@@ -337,3 +337,65 @@ def test_history_apply_deepcopies_config():
         finally:
             server._STATE.clear()
             server._STATE.update(saved)
+
+
+def test_graph_none_input_renders_skeleton():
+    from engine.graph import generate_crypto_graph
+    html = generate_crypto_graph(None)
+    assert "Scanned application" in html
+
+
+def test_graph_protocol_relative_stripped():
+    from engine.graph import generate_crypto_graph
+    html = generate_crypto_graph([{"name": "A", "file": "a.py", "line": 1}])
+    # Inject a protocol-relative ref and ensure the stripper catches it.
+    import re as _re
+    probe = html + '<script src="//cdn.example.com/x.js"></script>'
+    stripped = _re.sub(
+        r"""\s(?:src|href)=["'](?:https?:)?//(?!www\.w3\.org)[^"']*["']""",
+        ' data-removed-remote="1"', probe)
+    assert "//cdn.example.com" not in stripped
+
+
+def test_graph_posix_basename():
+    from engine.graph import generate_crypto_graph
+    from pyvis.network import Network as _Net
+    seen = []
+    orig = _Net.add_node
+    def _rec(self, nid, **kw):
+        seen.append((nid, kw.get("label")))
+        return orig(self, nid, **kw)
+    _Net.add_node = _rec
+    try:
+        generate_crypto_graph([{"name": "AES-128", "file": "d1/./u.py", "line": 1}])
+        files = [n for n, _ in seen if "____" not in str(n) and n != "App"]
+        assert files == ["d1/u.py"], files
+    finally:
+        _Net.add_node = orig
+
+
+def test_coverage_not_in_inventory_filters_blank():
+    recs = [Record(id="A1", name="a", kind="k", location="l", owned=True)]
+    report = reconcile(records=recs, scan_results={"A1": {"status": "scanned"}},
+                       cloud_rows=[{"id": ""}, {"id": None}, {}, {"id": "CLOUD-09"}])
+    ids = [r["id"] for r in report["not_in_inventory"]]
+    assert "" not in ids and None not in ids
+    assert "CLOUD-09" in ids
+
+
+def test_coverage_load_records_skips_blank_id(tmp_path, monkeypatch):
+    from engine import coverage_records as _cr
+    p = tmp_path / "inv.csv"
+    p.write_text("id,name,kind,location,owned\nA1,a,k,l,1\n,,k,l,1\n", encoding="utf-8")
+    recs = _cr.load_records(str(p))
+    assert [r.id for r in recs] == ["A1"]
+
+
+def test_cbom_occ_canonicalizes_paths():
+    f1 = {"name": "AES-128", "primitive": "block-cipher", "file": "./a.py", "line": 1}
+    f2 = {"name": "AES-128", "primitive": "block-cipher", "file": "a.py", "line": 1}
+    doc = json.loads(generate_cbom([f1, f2], subject_name="canon-subj"))
+    occs = [o for c in doc["components"]
+            for o in c.get("evidence", {}).get("occurrences", [])]
+    assert len(occs) == 2
+    assert occs[0]["bom-ref"].rsplit("-", 1)[0] == occs[1]["bom-ref"].rsplit("-", 1)[0]

@@ -54,9 +54,14 @@ def load_records(inventory_path=""):
     rows = _read_csv(inventory_path or _default_path("INDRAMESH_COVERAGE_INVENTORY")) or []
     records = []
     for row in rows:
+        rec_id = str(row.get("id") or row.get("repo") or "").strip()
+        # Enterprise-grade: skip blank-id rows so a trailing newline or an
+        # untracked placeholder never inflates `expected`.
+        if not rec_id:
+            continue
         records.append(
             Record(
-                id=str(row.get("id") or row.get("repo") or "").strip(),
+                id=rec_id,
                 name=str(row.get("name") or row.get("repo") or "").strip(),
                 kind=str(row.get("kind") or "platform").strip(),
                 location=str(row.get("location") or "").strip(),
