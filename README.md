@@ -21,7 +21,7 @@
 </div>
 
 > [!TIP]
-> ### 🛡️ 1,000+ Verified Test Cases · 1,034 Passing Tests (0 Regressions)
+> ### 🛡️ 1,000+ Verified Test Cases · 1,027 Passing Tests (0 Regressions)
 > **Empirically Proven Authenticity:** Formally validated across frozen enterprise benchmark corpora (`CryptoAPI-Bench`, `Paramiko`, `Go x/crypto`), Hypothesis property-based fuzzing, and 100% killed AST mutation tests to guarantee zero false claims and absolute cryptographic veracity.
 
 > [!NOTE]
@@ -273,7 +273,7 @@ python cli_advanced.py ./your-project                   # secondary sensor suite
 python cli_certificates.py certs ./your-project         # X.509 certificate sensor
 
 python app.py                                           # launch FastAPI web console
-python -m pytest tests/ -v                              # 1034 passing + 8 skipped; see tests/test_readme_contract.py
+python -m pytest tests/ -v                              # 1027 passing + 8 skipped; see tests/test_readme_contract.py
 ```
 
 `--format sarif` writes `indramesh.sarif`: relative paths, one rule per artefact, and a level
@@ -416,7 +416,7 @@ IndraMesh is rigorously tested across more than **1,000+ automated test cases** 
 | **Air-Gapped Compliance** | Zero-CDN contract enforcement | Verifies 0 external network dependencies, 0 remote fonts, and 0 telemetry requests (`test_frontend_assets.py`). |
 
 ```bash
-python -m pytest tests/ -v                              # 1034 passing + 8 skipped; see tests/test_readme_contract.py
+python -m pytest tests/ -v                              # 1027 passing + 8 skipped; see tests/test_readme_contract.py
 python validate_gui.py                                  # 10-step full-stack GUI & API contract verification
 ```
 
