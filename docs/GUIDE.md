@@ -1287,13 +1287,13 @@ Explained in Â§11.4. Most tools have one confidence number. We have two orthog
 
 
 
-## 14. Testing: 1027 tests, and why count is not proof
+## 14. Testing: 1034 tests, and why count is not proof
 
 
 
 ```
 
-1027 passed, 8 skipped, 0 failing
+1034 passed, 8 skipped, 0 failing
 
 ```
 

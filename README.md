@@ -15,13 +15,13 @@
 **Smart India Hackathon 2026 &bull; Problem Statement SIH26164 &bull; National Technical Research Organisation (NTRO)**
 
 <p align="center">
-  <a href="#testing"><img src="https://img.shields.io/badge/AUTHENTICITY%20GUARANTEE-1000%2B%20TEST%20CASES%20%C2%B7%201027%20PASSING-00F5D4?style=for-the-badge&logo=shield&logoColor=040812" height="34" alt="1000+ Test Cases Verified"/></a>
+  <a href="#testing"><img src="https://img.shields.io/badge/AUTHENTICITY%20GUARANTEE-1000%2B%20TEST%20CASES%20%C2%B7%201034%20PASSING-00F5D4?style=for-the-badge&logo=shield&logoColor=040812" height="34" alt="1000+ Test Cases Verified"/></a>
 </p>
 
 </div>
 
 > [!TIP]
-> ### 🛡️ 1,000+ Verified Test Cases · 1,027 Passing Tests (0 Regressions)
+> ### 🛡️ 1,000+ Verified Test Cases · 1,034 Passing Tests (0 Regressions)
 > **Empirically Proven Authenticity:** Formally validated across frozen enterprise benchmark corpora (`CryptoAPI-Bench`, `Paramiko`, `Go x/crypto`), Hypothesis property-based fuzzing, and 100% killed AST mutation tests to guarantee zero false claims and absolute cryptographic veracity.
 
 > [!NOTE]
@@ -44,7 +44,7 @@
 
 <!-- Security & Quality Badges -->
 [![Air Gapped](https://img.shields.io/badge/Air--Gapped-Zero_CDN_%C2%B7_Zero_Telemetry-10B981?style=for-the-badge&logo=checkmarx&logoColor=white)](#)
-[![Tests Passing](https://img.shields.io/badge/Pytest-1027_Passing_%C2%B7_1000%2B_Test_Cases-10B981?style=for-the-badge&logo=pytest&logoColor=white)](#)
+[![Tests Passing](https://img.shields.io/badge/Pytest-1034_Passing_%C2%B7_1000%2B_Test_Cases-10B981?style=for-the-badge&logo=pytest&logoColor=white)](#)
 [![Rules](https://img.shields.io/badge/Detection-145_Rules_%C2%B7_9_Languages-38BDF8?style=for-the-badge&logo=codewars&logoColor=040812)](#)
 [![Python](https://img.shields.io/badge/Python-3.11_%7C_3.12_%7C_3.13_%7C_3.14-3776AB?style=for-the-badge&logo=python&logoColor=white)](#)
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue?style=for-the-badge&logo=apache&logoColor=white)](#)
@@ -273,7 +273,7 @@ python cli_advanced.py ./your-project                   # secondary sensor suite
 python cli_certificates.py certs ./your-project         # X.509 certificate sensor
 
 python app.py                                           # launch FastAPI web console
-python -m pytest tests/ -v                              # 1027 passing + 8 skipped; see tests/test_readme_contract.py
+python -m pytest tests/ -v                              # 1034 passing + 8 skipped; see tests/test_readme_contract.py
 ```
 
 `--format sarif` writes `indramesh.sarif`: relative paths, one rule per artefact, and a level
@@ -416,7 +416,7 @@ IndraMesh is rigorously tested across more than **1,000+ automated test cases** 
 | **Air-Gapped Compliance** | Zero-CDN contract enforcement | Verifies 0 external network dependencies, 0 remote fonts, and 0 telemetry requests (`test_frontend_assets.py`). |
 
 ```bash
-python -m pytest tests/ -v                              # 1027 passing + 8 skipped; see tests/test_readme_contract.py
+python -m pytest tests/ -v                              # 1034 passing + 8 skipped; see tests/test_readme_contract.py
 python validate_gui.py                                  # 10-step full-stack GUI & API contract verification
 ```
 

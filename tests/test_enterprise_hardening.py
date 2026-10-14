@@ -551,3 +551,141 @@ def test_cbom_fileless_findings_count_auditable_loop5():
     props = {p["name"]: p["value"] for p in comp.get("properties", [])}
     assert props.get("im:findings_count") == "2", \
         f"merged ambient findings must stay countable: {props}"
+
+
+def test_graph_curve_mode_primitive_variant_loop6():
+    """Enterprise-loop6: curve/mode/primitive/type must split graph nodes, not merge."""
+    from engine.graph import generate_crypto_graph
+    from pyvis.network import Network
+    seen = []
+    orig = Network.add_node
+
+    def spy(self, n, *a, **k):
+        seen.append(n)
+        return orig(self, n, *a, **k)
+    Network.add_node = spy
+    try:
+        generate_crypto_graph([
+            {"name": "EC", "primitive": "key-agree", "type": "algorithm",
+             "curve": "P-256", "mode": "GCM", "file": "a.py", "line": 1,
+             "risk": {"tier": "HIGH"}},
+            {"name": "EC", "primitive": "key-agree", "type": "algorithm",
+             "curve": "P-384", "mode": "GCM", "file": "a.py", "line": 2,
+             "risk": {"tier": "HIGH"}},
+            {"name": "EC", "primitive": "key-agree", "type": "algorithm",
+             "curve": "P-256", "mode": "CBC", "file": "a.py", "line": 3,
+             "risk": {"tier": "HIGH"}},
+            {"name": "EC", "primitive": "signature", "type": "algorithm",
+             "curve": "P-256", "mode": "GCM", "file": "a.py", "line": 4,
+             "risk": {"tier": "HIGH"}},
+        ])
+        artefacts = [n for n in seen if "____" in str(n)]
+        assert len(artefacts) == 4, f"curve/mode/primitive variants must not merge: {artefacts}"
+    finally:
+        Network.add_node = orig
+
+
+def test_graph_tier_colors_all_loop6():
+    from engine.graph import COLORS, generate_crypto_graph
+    from pyvis.network import Network
+    captured = {}
+    orig = Network.add_node
+
+    def spy(self, n, *a, **k):
+        captured[str(n)] = dict(k)
+        return orig(self, n, *a, **k)
+    Network.add_node = spy
+    try:
+        for tier in ("CRITICAL", "HIGH", "MEDIUM", "LOW", "bogus-tier"):
+            generate_crypto_graph([{"name": f"A-{tier}", "primitive": "hash",
+                                    "file": f"{tier}.py", "line": 1,
+                                    "risk": {"tier": tier}}])
+        for tier in ("CRITICAL", "HIGH", "MEDIUM", "LOW"):
+            nodes = [v for kn, v in captured.items()
+                     if f"A-{tier}" in str(v.get("label", ""))]
+            assert nodes, f"no node captured for tier {tier}"
+            assert nodes[0].get("color") == COLORS[tier], \
+                f"tier {tier} must map to {COLORS[tier]}, got {nodes[0].get('color')}"
+        bogus = [v for kn, v in captured.items() if "A-bogus-tier" in str(v.get("label", ""))]
+        assert bogus and bogus[0].get("color") == COLORS["LOW"], \
+            "invalid tier must fall back to LOW color"
+    finally:
+        Network.add_node = orig
+
+
+def test_graph_tuple_app_collision_keylabel_loop6():
+    from engine.graph import generate_crypto_graph
+    from pyvis.network import Network
+    seen = []
+    labels = {}
+    orig = Network.add_node
+
+    def spy(self, n, *a, **k):
+        seen.append(n)
+        if "label" in k:
+            labels[str(n)] = k["label"]
+        return orig(self, n, *a, **k)
+    Network.add_node = spy
+    try:
+        # tuple input must behave like list (no TypeError, App skeleton + files).
+        html = generate_crypto_graph(({"name": "AES", "file": "a.py", "line": 1},))
+        assert "Scanned application" in html
+        seen.clear()
+        labels.clear()
+        # file literally named "App" must not collide with the root App node.
+        generate_crypto_graph([{"name": "AES", "file": "App", "line": 1},
+                               {"name": "AES", "file": "a.py", "line": 2}])
+        assert seen.count("App") == 1, f"App node must appear once: {seen}"
+        seen.clear()
+        labels.clear()
+        # key_length must appear in the artefact label.
+        generate_crypto_graph([{"name": "RSA", "primitive": "pke", "file": "k.py",
+                                "line": 1, "key_length": 2048}])
+        artefacts = [n for n in seen if "____" in str(n)]
+        assert artefacts, "expected artefact node"
+        assert "2048" in str(labels.get(str(artefacts[0]), "")), \
+            f"key_length suffix missing in label: {labels}"
+    finally:
+        Network.add_node = orig
+
+
+def test_cbom_collision_dependsOn_still_valid_loop6():
+    doc = json.loads(generate_cbom([_mk("AES-128", "a.py", 1),
+                                    _mk("RSA", "b.py", 2, primitive="pke",
+                                        key_length=2048)],
+                                   subject_name="crypto-asset-0"))
+    valid = {c["bom-ref"] for c in doc["components"]}
+    deps = doc["dependencies"][0]
+    assert deps["ref"] == doc["metadata"]["component"]["bom-ref"]
+    assert deps["ref"].startswith("subject-")
+    assert set(deps["dependsOn"]) == valid, \
+        "dependsOn must still cover every component after subject collision"
+
+
+def test_history_retention_bounds_store_loop6(tmp_path, monkeypatch):
+    from engine import history_store
+    p = tmp_path / "retain.db"
+    monkeypatch.setenv("INDRAMESH_HISTORY_DB", str(p))
+    for i in range(history_store.RETAIN + 10):
+        assert history_store.append({"id": f"S{i:03d}",
+                                     "scanned_at": f"2026-01-01T00:00:{i:02d}Z"}) is True
+    listed = history_store.list_recent(limit=200)
+    assert len(listed) == history_store.RETAIN, \
+        f"store must retain exactly RETAIN rows, got {len(listed)}"
+
+
+def test_lifespan_restores_before_preseed_loop6():
+    import pathlib
+    src = pathlib.Path(ROOT / "server.py").read_text(encoding="utf-8")
+    restore_pos = src.find("history_list(_HIST_RETAIN)")
+    seed_pos = src.find("_compute_scan_bundle(")
+    assert restore_pos != -1 and seed_pos != -1, "lifespan wiring missing"
+    assert restore_pos < seed_pos, "restore must run BEFORE auto-seed preseed"
+
+
+def test_coverage_blank_ids_filtered_loop6():
+    recs = [Record(id="A1", name="a", kind="k", location="l", owned=True)]
+    report = reconcile(records=recs, scan_results={},
+                       cloud_rows=[{"id": ""}, {"id": None}, {"id": "CLOUD-9"}])
+    assert report["out_of_scope"] == ["CLOUD-9"], \
+        f"blank cloud ids must be filtered: {report['out_of_scope']}"
