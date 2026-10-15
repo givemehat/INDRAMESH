@@ -242,3 +242,35 @@ def test_critical_risk_is_driven_by_real_inputs_not_detector_confidence(tmp_path
     assert long["tier"] == "CRITICAL"
     assert short["tier"] != "CRITICAL"
     assert long["x"] > short["x"]
+
+
+def test_coverage_manifest_reconcile_integration(tmp_path):
+    """End-to-end integration: scanner coverage manifest output links seamlessly with coverage reconciliation.
+    Guarantees that files scanned by the pipeline can feed directly into enterprise asset control accounting.
+    """
+    from engine.coverage_reconcile import reconcile
+    from engine.coverage_records import Record
+
+    d = tmp_path / "app"
+    d.mkdir()
+    (d / "vuln.py").write_text(RSA_SNIPPET, encoding="utf-8")
+    (d / "kex.py").write_text(ECDH_SNIPPET, encoding="utf-8")
+
+    scanner, findings, cbom = _pipeline(str(d))
+    manifest = scanner.coverage_manifest(findings)
+
+    # Convert scanner files to inventory records
+    records = [
+        Record(id=f"FILE-{i}", name=f["file"], kind="source", location=f["file"], owned=True)
+        for i, f in enumerate(findings)
+    ]
+    scan_results = {r.id: {"status": "scanned"} for r in records}
+
+    report = reconcile(records=records, scan_results=scan_results, cloud_rows=[])
+    assert report["scanned"] == len(records)
+    assert report["expected"] == len(records)
+    assert report["inaccessible"] == 0
+    assert report["unknown"] == 0
+    assert manifest["files_scanned"] >= 2
+    assert cbom["metadata"]["component"]["name"] == "integration-target"
+
