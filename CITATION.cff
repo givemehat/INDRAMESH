@@ -1,0 +1,21 @@
+cff-version: 1.2.0
+message: "If you utilize the INDRAMESH Cryptographic Discovery and Quantum Risk Analysis tool in your research, please cite it as below."
+title: "INDRAMESH: Enterprise Cryptographic Discovery & Quantum Risk Analysis Engine via Mosca's Theorem"
+authors:
+  - family-names: "Singh"
+    given-names: "Rajnish"
+    orcid: ""
+    affiliation: "Technology Innovation Hub (TIH), IIT Guwahati"
+date-released: 2026-10-18
+url: "https://github.com/givemehat/INDRAMESH"
+repository-code: "https://github.com/givemehat/INDRAMESH"
+keywords:
+  - "post-quantum cryptography"
+  - "cryptographic discovery"
+  - "mosca theorem"
+  - "quantum risk"
+  - "cbom"
+  - "cyclonedx"
+  - "cybersecurity"
+  - "smart india hackathon"
+license: "MIT"
